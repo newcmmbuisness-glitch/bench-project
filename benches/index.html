@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Benches - Interaktive Karte</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        body { margin:0; font-family: Arial, sans-serif; }
+        #map { height:100vh; }
+        .custom-bench-icon { 
+            background:#4caf50; 
+            color:white; 
+            border-radius:50%; 
+            width:30px; 
+            height:30px; 
+            display:flex; 
+            align-items:center; 
+            justify-content:center; 
+            font-size:16px; 
+            border:3px solid white; 
+            box-shadow:0 2px 8px rgba(0,0,0,0.25); 
+        }
+        .admin-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 1001;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none; /* Nur für Admins sichtbar */
+        }
+        .auth-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            display: flex;
+            gap: 10px;
+        }
+        .login-btn, .logout-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+
+    position: relative;    /* Position relativ machen */
+    left: -5px;           /* 10px nach links verschieben */
+	top: 50px;      /* nach unten */
+}
+        .logout-btn { background: #f44336; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: none;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 10px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover { color: black; }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: #f1f1f1;
+            cursor: pointer;
+        }
+        .tab-btn.active { background: #4caf50; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .tab-content input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .tab-content button {
+            padding: 12px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .captcha-box {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .captcha-box p { margin: 5px 0; font-weight: bold; }
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            z-index: 2001;
+            display: none;
+        }
+        .notification.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .notification.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .plz-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 2000;
+            text-align: center;
+            min-width: 350px;
+        }
+        .plz-modal h2 { margin-bottom: 20px; color: #333; }
+        .plz-modal input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .plz-modal button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .add-bench-btn { 
+            position: fixed; 
+            bottom:30px; 
+            right:30px; 
+            background:#4caf50; 
+            color:#fff; 
+            border:none; 
+            width:60px; 
+            height:60px; 
+            border-radius:50%; 
+            font-size:24px; 
+            z-index:1001; 
+            cursor:pointer; 
+            box-shadow:0 6px 18px rgba(76,175,80,0.3);
+            transition: all 0.3s ease;
+            display: none;
+        }
+        .add-bench-btn:hover { 
+            transform: scale(1.1);
+            box-shadow:0 8px 25px rgba(76,175,80,0.4);
+        }
+        .add-bench-btn.cancel { 
+            background:#f44336; 
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow:0 6px 18px rgba(244,67,54,0.3); }
+            50% { box-shadow:0 6px 25px rgba(244,67,54,0.6); }
+            100% { box-shadow:0 6px 18px rgba(244,67,54,0.3); }
+        }
+        .map-instruction {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(76,175,80,0.95);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1500;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .app-title {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            font-family: Arial, sans-serif;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .app-title h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+            font-weight: bold;
+            text-align: center;
+        }
+        .popup-content h3 { margin: 0 0 5px 0; color: #333; }
+        .popup-content p { margin: 4px 0; color: #666; }
+        .image-viewer { 
+            position: fixed; 
+            inset:0; 
+            background: rgba(0,0,0,0.8); 
+            display:none; 
+            z-index:2000; 
+            align-items:center; 
+            justify-content:center; 
+            padding: 20px;
+        }
+        .image-container { 
+            display:flex; 
+            gap:18px; 
+            justify-content: center; 
+            align-items:flex-start;
+            max-width:100%;
+            max-height:80%;
+            flex-wrap: nowrap;
+        }
+        .image-box { 
+            background:white; 
+            border-radius:12px; 
+            padding:12px; 
+            min-width:320px; 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .image-box h4 { margin: 0 0 10px 0; text-align: center; color: #333; }
+        .image-box img { width:100%; height:300px; object-fit:cover; border-radius:8px; display:block; }
+        .close-btn { 
+            position:absolute; 
+            top:18px; 
+            right:26px; 
+            background:white; 
+            border-radius:50%; 
+            width:40px; 
+            height:40px; 
+            border:none; 
+            font-size:18px; 
+            cursor:pointer; 
+            z-index: 2100;
+        }
+        .add-bench-form {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 2000;
+            min-width: 400px;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: none;
+        }
+        .add-bench-form h2 { margin-bottom: 20px; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { 
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; 
+            box-sizing: border-box;
+        }
+        .form-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .form-buttons button { 
+            flex: 1; padding: 12px; border: none; border-radius: 5px; 
+            cursor: pointer; font-size: 16px;
+        }
+        .btn-submit { background: #4caf50; color: white; }
+        .btn-cancel { background: #f44336; color: white; }
+        .image-upload {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .image-upload.dragover {
+            border-color: #4caf50;
+            background: #f0f8f0;
+        }
+        .image-preview {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .remove-image {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="app-title"><h1>🪑 Benches</h1></div>
+    
+    <!-- Login/Admin Buttons -->
+    <div id="authButtons" class="auth-buttons">
+        <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
+    </div>
+    
+    <!-- Admin Button -->
+    <button class="admin-btn" id="adminBtn" onclick="openAdmin()">⚙️ Admin</button>
+    
+    <!-- Add Bench Button (nur für eingeloggte User) -->
+    <button class="add-bench-btn" id="addBenchBtn" onclick="checkLoginAndAdd()" title="Bank hinzufügen">➕</button>
+    
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLogin()">&times;</span>
+            <h2>Anmelden / Registrieren</h2>
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="showTab('login')">Anmelden</button>
+                <button class="tab-btn" onclick="showTab('register')">Registrieren</button>
+            </div>
+            
+            <div id="loginTab" class="tab-content active">
+                <form onsubmit="login(event)">
+                    <input type="email" id="loginEmail" placeholder="E-Mail" required>
+                    <input type="password" id="loginPassword" placeholder="Passwort" required>
+                    <div class="captcha-box">
+                        <p id="loginCaptcha"></p>
+                        <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
+                    </div>
+                    <button type="submit">Anmelden</button>
+                </form>
+            </div>
+            
+            <div id="registerTab" class="tab-content">
+                <form onsubmit="register(event)">
+                    <input type="email" id="registerEmail" placeholder="E-Mail" required>
+                    <input type="password" id="registerPassword" placeholder="Passwort (min. 6 Zeichen)" required>
+                    <div class="captcha-box">
+                        <p id="registerCaptcha"></p>
+                        <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" required>
+                    </div>
+                    <button type="submit">Registrieren</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="map-instruction" id="mapInstruction">
+        📍 Klicken Sie auf die Karte, um die neue Bank zu platzieren
+        <br><small style="font-weight: normal; margin-top: 10px; display: block;">
+            Oder klicken Sie auf ❌ zum Abbrechen
+        </small>
+    </div>
+    
+    <!-- PLZ Modal -->
+    <div id="plzModal" class="plz-modal">
+        <h2>🗺️ Willkommen bei Benches!</h2>
+        <p>Wählen Sie Ihren Startbereich für die Karte:</p>
+        <input type="text" id="plzInput" placeholder="PLZ eingeben (z.B. 88400)" maxlength="5" pattern="[0-9]{5}">
+        <br>
+        <button onclick="goToLocation()" style="background: #4caf50;">🗺️ Zur Karte</button>
+        <button onclick="useCurrentLocation()" style="background: #2196F3;">📍 Mein Standort</button>
+        <button onclick="useDefaultLocation()" style="background: #666;">Stuttgart nutzen</button>
+    </div>
+    
+    <!-- Add Bench Form -->
+    <div id="addBenchForm" class="add-bench-form">
+        <h2>🪑 Neue Bank hinzufügen</h2>
+        <form onsubmit="submitBench(event)">
+            <div class="form-group">
+                <label>Name der Bank:</label>
+                <input type="text" id="benchName" placeholder="z.B. Aussichtsbank am Jordanbad" required>
+            </div>
+            <div class="form-group">
+                <label>Beschreibung der Aussicht:</label>
+                <textarea id="benchDescription" rows="3" placeholder="Beschreiben Sie die schöne Aussicht von dieser Bank..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>📸 Foto der Bank:</label>
+                <div class="image-upload" id="benchImageUpload">
+                    <p>Bild der Bank hochladen oder hierher ziehen</p>
+                    <input type="file" id="benchImageInput" accept="image/*" style="display:none">
+                    <button type="button" onclick="document.getElementById('benchImageInput').click()">Datei wählen</button>
+                </div>
+                <div class="image-preview" id="benchImagePreview"></div>
+            </div>
+            <div class="form-group">
+                <label>🌄 Foto der Aussicht:</label>
+                <div class="image-upload" id="viewImageUpload">
+                    <p>Bild der Aussicht hochladen oder hierher ziehen</p>
+                    <input type="file" id="viewImageInput" accept="image/*" style="display:none">
+                    <button type="button" onclick="document.getElementById('viewImageInput').click()">Datei wählen</button>
+                </div>
+                <div class="image-preview" id="viewImagePreview"></div>
+            </div>
+            <div class="form-group">
+                <strong>📍 Position:</strong> <span id="benchPosition"></span>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn-submit">📤 Bank einreichen</button>
+                <button type="button" class="btn-cancel" onclick="cancelAddBench()">❌ Abbrechen</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <div class="image-viewer" id="imageViewer">
+        <button class="close-btn" onclick="closeImageViewer()">✕</button>
+        <div class="image-container" id="imageContainer"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        let map, benches = [], benchMarkers = [], addMode = false;
+        let currentUser = null;
+        let loginCaptcha = null, registerCaptcha = null;
+        let pendingBenchLat = null, pendingBenchLng = null;
+        let benchImageFile = null, viewImageFile = null;
+        
+        // Simulate user data storage (in real app, use backend)
+        let users = JSON.parse(localStorage.getItem('benchUsers') || '[]');
+        let pendingBenches = JSON.parse(localStorage.getItem('pendingBenches') || '[]');
+        let approvedBenches = JSON.parse(localStorage.getItem('approvedBenches') || '[]');
+        
+        function initMap(){
+            // Check if user is coming back or first visit
+            currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            
+            if (!localStorage.getItem('hasVisited')) {
+                showLocationModal();
+                localStorage.setItem('hasVisited', 'true');
+                return;
+            }
+            
+            updateAuthButtons();
+            
+            const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]'); // Stuttgart
+            map = L.map('map', { center: coords, zoom: 12 });
+            
+            const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+                maxZoom:19, 
+                attribution: '© OpenStreetMap contributors' 
+            });
+            const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+                maxZoom:19, 
+                attribution: 'Tiles © Esri' 
+            });
+            osmStandard.addTo(map);
+            L.control.layers({ "OpenStreetMap": osmStandard, "Satellit": satellite }).addTo(map);
+            
+            loadBenches();
+            setupMapClick();
+            setupImageUpload();
+        }
+        
+        function showLocationModal() {
+            document.getElementById('plzModal').style.display = 'block';
+        }
+        
+        function goToLocation() {
+            const plz = document.getElementById('plzInput').value.trim();
+            if (plz.length === 5 && /^\d{5}$/.test(plz)) {
+                const coords = getCoordinatesFromPLZ(plz);
+                localStorage.setItem('mapCenter', JSON.stringify(coords));
+                document.getElementById('plzModal').style.display = 'none';
+                initMap();
+            } else {
+                showNotification('Bitte geben Sie eine gültige 5-stellige PLZ ein.', 'error');
+            }
+        }
+        
+        function useCurrentLocation() {
+            if (navigator.geolocation) {
+                showNotification('Standort wird ermittelt...', 'success');
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const coords = [position.coords.latitude, position.coords.longitude];
+                    localStorage.setItem('mapCenter', JSON.stringify(coords));
+                    document.getElementById('plzModal').style.display = 'none';
+                    initMap();
+                    showNotification('Standort erfolgreich ermittelt!', 'success');
+                }, function(error) {
+                    showNotification('Standort konnte nicht ermittelt werden. Stuttgart wird verwendet.', 'error');
+                    useDefaultLocation();
+                });
+            } else {
+                showNotification('Standortbestimmung nicht verfügbar.', 'error');
+                useDefaultLocation();
+            }
+        }
+        
+        function useDefaultLocation() {
+            localStorage.setItem('mapCenter', JSON.stringify([48.7758, 9.1829])); // Stuttgart
+            document.getElementById('plzModal').style.display = 'none';
+            initMap();
+        }
+        
+        function getCoordinatesFromPLZ(plz) {
+            // Erweiterte PLZ-Mapping für deutsche Städte
+            const plzMap = {
+                // Baden-Württemberg
+                '88400': [48.1668, 9.8333], // Biberach
+                '70173': [48.7758, 9.1829], // Stuttgart
+                '68159': [49.4875, 8.4660], // Mannheim
+                '76131': [49.0069, 8.4037], // Karlsruhe
+                '79098': [47.9990, 7.8421], // Freiburg
+                '89073': [48.3984, 9.9915], // Ulm
+                // Bayern
+                '80331': [48.1374, 11.5755], // München
+                '90402': [49.4521, 11.0767], // Nürnberg
+                '86150': [48.3668, 10.8986], // Augsburg
+                '97070': [49.7913, 9.9534], // Würzburg
+                // Nordrhein-Westfalen
+                '50667': [50.9375, 6.9603], // Köln
+                '40213': [51.2277, 6.7735], // Düsseldorf
+                '44135': [51.5136, 7.4653], // Dortmund
+                '45127': [51.4556, 7.0116], // Essen
+                // Hessen
+                '60311': [50.1109, 8.6821], // Frankfurt
+                '65183': [50.0755, 8.2417], // Wiesbaden
+                '34117': [51.3127, 9.4797], // Kassel
+                // Niedersachsen
+                '30159': [52.3759, 9.7320], // Hannover
+                '38100': [52.2689, 10.5268], // Braunschweig
+                '26122': [53.1435, 8.2146], // Oldenburg
+                // Weitere Bundesländer
+                '20095': [53.5511, 9.9937], // Hamburg
+                '10115': [52.5244, 13.4105], // Berlin
+                '28195': [53.0793, 8.8017], // Bremen
+                '01067': [51.0504, 13.7373], // Dresden
+                '04109': [51.3397, 12.3731], // Leipzig
+            };
+            return plzMap[plz] || [48.7758, 9.1829]; // Stuttgart als Fallback
+        }
+        
+        function updateAuthButtons() {
+            const authDiv = document.getElementById('authButtons');
+            const addBtn = document.getElementById('addBenchBtn');
+            const adminBtn = document.getElementById('adminBtn');
+            
+            if (currentUser) {
+                authDiv.innerHTML = `
+                    <span style="color: white; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 3px; margin-right: 10px;">
+                        👤 ${currentUser.email}
+                    </span>
+                    <button class="logout-btn" onclick="logout()">🚪 Abmelden</button>
+                `;
+                addBtn.style.display = 'block';
+                
+                if (currentUser.isAdmin) {
+                    adminBtn.style.display = 'block';
+                }
+            } else {
+                authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
+                addBtn.style.display = 'none';
+                adminBtn.style.display = 'none';
+            }
+        }
+        
+        function openAdmin() {
+            window.open('admin.html', '_blank');
+        }
+        
+        function showLogin() {
+            document.getElementById('loginModal').style.display = 'block';
+            generateCaptchas();
+        }
+        
+        function closeLogin() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(tab + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function generateCaptchas() {
+            loginCaptcha = generateCaptcha();
+            registerCaptcha = generateCaptcha();
+            document.getElementById('loginCaptcha').textContent = `🤖 Sind Sie ein Roboter? ${loginCaptcha.question}`;
+            document.getElementById('registerCaptcha').textContent = `🤖 Sind Sie ein Roboter? ${registerCaptcha.question}`;
+        }
+        
+        function generateCaptcha() {
+            const operations = [
+                () => {
+                    const a = Math.floor(Math.random() * 10) + 1;
+                    const b = Math.floor(Math.random() * 10) + 1;
+                    return { question: `${a} + ${b} = ?`, answer: a + b };
+                },
+                () => {
+                    const a = Math.floor(Math.random() * 10) + 5;
+                    const b = Math.floor(Math.random() * 5) + 1;
+                    return { question: `${a} - ${b} = ?`, answer: a - b };
+                },
+                () => {
+                    const a = Math.floor(Math.random() * 5) + 2;
+                    const b = Math.floor(Math.random() * 5) + 2;
+                    return { question: `${a} × ${b} = ?`, answer: a * b };
+                }
+            ];
+            return operations[Math.floor(Math.random() * operations.length)]();
+        }
+        
+        function register(event) {
+            event.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const captchaAnswer = parseInt(document.getElementById('registerCaptchaAnswer').value);
+            
+            if (password.length < 6) {
+                showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
+                return;
+            }
+            
+            if (captchaAnswer !== registerCaptcha.answer) {
+                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+                generateCaptchas();
+                document.getElementById('registerCaptchaAnswer').value = '';
+                return;
+            }
+            
+            if (users.find(u => u.email === email)) {
+                showNotification('Diese E-Mail ist bereits registriert!', 'error');
+                return;
+            }
+            
+            users.push({ email, password, isAdmin: false, registered: new Date().toISOString() });
+            localStorage.setItem('benchUsers', JSON.stringify(users));
+            
+            showNotification('✅ Registrierung erfolgreich! Sie können sich jetzt anmelden.', 'success');
+            showTab('login');
+            document.getElementById('registerEmail').value = '';
+            document.getElementById('registerPassword').value = '';
+            document.getElementById('registerCaptchaAnswer').value = '';
+        }
+        
+        function login(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
+            
+            if (captchaAnswer !== loginCaptcha.answer) {
+                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+                generateCaptchas();
+                document.getElementById('loginCaptchaAnswer').value = '';
+                return;
+            }
+            
+            // Check for admin account
+            if (email === 'admin@benchmap.com' && password === 'admin123') {
+                currentUser = { email, isAdmin: true };
+            } else {
+                const user = users.find(u => u.email === email && u.password === password);
+                if (!user) {
+                    showNotification('❌ Ungültige Anmeldedaten!', 'error');
+                    return;
+                }
+                currentUser = { email: user.email, isAdmin: user.isAdmin };
+            }
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            closeLogin();
+            updateAuthButtons();
+            showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
+            
+            // Clear form
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginCaptchaAnswer').value = '';
+        }
+        
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateAuthButtons();
+            showNotification('👋 Erfolgreich abgemeldet!', 'success');
+        }
+        
+        function checkLoginAndAdd() {
+            if (!currentUser) {
+                showNotification('🔐 Sie müssen sich anmelden, um eine Bank hinzuzufügen!', 'error');
+                showLogin();
+                return;
+            }
+            toggleAddMode();
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+        
+        function setupMapClick(){
+            map.on('click', function(e){
+                if (!addMode) return;
+                pendingBenchLat = e.latlng.lat.toFixed(6);
+                pendingBenchLng = e.latlng.lng.toFixed(6);
+                toggleAddMode();
+                showAddBenchForm();
+            });
+        }
+        
+        function showAddBenchForm() {
+            document.getElementById('benchPosition').textContent = `${pendingBenchLat}, ${pendingBenchLng}`;
+            document.getElementById('addBenchForm').style.display = 'block';
+        }
+        
+        function cancelAddBench() {
+            document.getElementById('addBenchForm').style.display = 'none';
+            resetForm();
+        }
+        
+        function resetForm() {
+            document.getElementById('benchName').value = '';
+            document.getElementById('benchDescription').value = '';
+            document.getElementById('benchImagePreview').innerHTML = '';
+            document.getElementById('viewImagePreview').innerHTML = '';
+            benchImageFile = null;
+            viewImageFile = null;
+        }
+        
+        function setupImageUpload() {
+            // Setup for bench image upload
+            setupSingleImageUpload('benchImageUpload', 'benchImageInput', 'benchImagePreview', (file) => {
+                benchImageFile = file;
+            });
+            
+            // Setup for view image upload
+            setupSingleImageUpload('viewImageUpload', 'viewImageInput', 'viewImagePreview', (file) => {
+                viewImageFile = file;
+            });
+        }
+        
+        function setupSingleImageUpload(uploadId, inputId, previewId, callback) {
+            const uploadArea = document.getElementById(uploadId);
+            const fileInput = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            
+            // Drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragover'), false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragover'), false);
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    handleImageFile(files[0], preview, callback);
+                }
+            }, false);
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    handleImageFile(this.files[0], preview, callback);
+                }
+            });
+        }
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function handleImageFile(file, preview, callback) {
+            if (file.size > 16 * 1024 * 1024) { // 16MB limit
+                showNotification('❌ Datei ist zu groß! Maximum: 16MB', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `
+                    <div class="preview-item">
+                        <img src="${e.target.result}" alt="Preview">
+                        <button class="remove-image" onclick="removeImage('${preview.id}')" type="button">×</button>
+                    </div>
+                `;
+                callback(file);
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeImage(previewId) {
+            document.getElementById(previewId).innerHTML = '';
+            if (previewId === 'benchImagePreview') benchImageFile = null;
+            if (previewId === 'viewImagePreview') viewImageFile = null;
+        }
+        
+        function submitBench(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('benchName').value.trim();
+            const description = document.getElementById('benchDescription').value.trim();
+            
+            if (!name || !description) {
+                showNotification('❌ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
+                return;
+            }
+            
+            if (!benchImageFile || !viewImageFile) {
+                showNotification('❌ Bitte laden Sie beide Bilder hoch (Bank und Aussicht)!', 'error');
+                return;
+            }
+            
+            // Convert images to base64 for storage
+            const reader1 = new FileReader();
+            reader1.onload = function(e) {
+                const benchImageData = e.target.result;
+                
+                const reader2 = new FileReader();
+                reader2.onload = function(e) {
+                    const viewImageData = e.target.result;
+                    
+                    const newBench = {
+                        id: Date.now(),
+                        name,
+                        description,
+                        lat: parseFloat(pendingBenchLat),
+                        lng: parseFloat(pendingBenchLng),
+                        benchImage: benchImageData,
+                        viewImage: viewImageData,
+                        user: currentUser.email,
+                        approved: false,
+                        created: new Date().toISOString()
+                    };
+                    
+                    pendingBenches.push(newBench);
+                    localStorage.setItem('pendingBenches', JSON.stringify(pendingBenches));
+                    
+                    cancelAddBench();
+                    showNotification('✅ Bank erfolgreich eingereicht! Sie wird nach Admin-Prüfung freigeschaltet.', 'success');
+                };
+                reader2.readAsDataURL(viewImageFile);
+            };
+            reader1.readAsDataURL(benchImageFile);
+        }
+        
+        function toggleAddMode(){
+            addMode = !addMode;
+            const btn = document.getElementById('addBenchBtn');
+            const instruction = document.getElementById('mapInstruction');
+            if (addMode) {
+                btn.innerHTML = '❌';
+                btn.classList.add('cancel');
+                btn.title = 'Abbrechen';
+                instruction.style.display = 'block';
+                map.getContainer().style.cursor = 'crosshair';
+            } else {
+                btn.innerHTML = '➕';
+                btn.classList.remove('cancel');
+                btn.title = 'Bank hinzufügen';
+                instruction.style.display = 'none';
+                map.getContainer().style.cursor = '';
+            }
+        }
+        
+        function loadBenches() {
+            // Only load approved benches for the map
+            approvedBenches.forEach(addSingleBenchToMap);
+        }
+        
+        function addSingleBenchToMap(b){
+            const benchIcon = L.divIcon({ 
+                html:'🪑', 
+                className:'custom-bench-icon', 
+                iconSize:[30,30], 
+                iconAnchor:[15,15] 
+            });
+            const marker = L.marker([b.lat, b.lng], { icon: benchIcon }).addTo(map);
+            const popupContent = `
+                <div class="popup-content">
+                    <h3>${escapeHtml(b.name)}</h3>
+                    <p><strong>Aussicht:</strong> ${escapeHtml(b.description)}</p>
+                    <p id="addr-${b.id}" style="font-weight:600; margin-top:8px; color:#666;">📍 <em>Adresse wird geladen...</em></p>
+                    <p style="font-size:12px; color:#999; margin-top:8px;">
+                        👤 Eingereicht von: ${escapeHtml(b.user)}<br>
+                        📅 ${new Date(b.created).toLocaleDateString('de-DE')}
+                    </p>
+                    <button onclick="showBenchImages(${b.id})" style="background:#4caf50; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-top:8px;">
+                        📸 Bilder ansehen
+                    </button>
+                </div>`;
+            marker.bindPopup(popupContent);
+            marker.on('popupopen', () => updateAddressForBench(b.id, b.lat, b.lng));
+            benchMarkers.push({ marker, bench: b });
+        }
+        
+        async function updateAddressForBench(id, lat, lng) {
+            const el = document.getElementById(`addr-${id}`);
+            if (!el) return;
+            
+            try {
+                const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=de`);
+                const data = await resp.json();
+                const ad = data.address || {};
+                
+                const street = [ad.road, ad.house_number].filter(Boolean).join(' ');
+                const city = ad.city || ad.town || ad.village || ad.hamlet || '';
+                const postcode = ad.postcode ? ad.postcode + ' ' : '';
+                
+                let addressLine = '';
+                if (street && city) {
+                    addressLine = `${street}, ${postcode}${city}`;
+                } else if (street) {
+                    addressLine = street;
+                } else if (city) {
+                    addressLine = `${postcode}${city}`;
+                } else {
+                    addressLine = data.display_name || 'Adresse nicht verfügbar';
+                }
+                
+                el.innerHTML = `📍 ${addressLine}`;
+            } catch (error) {
+                el.innerHTML = '📍 Adresse nicht verfügbar';
+            }
+        }
+        
+        function showBenchImages(id){
+            const bench = approvedBenches.find(b => b.id === id);
+            if (!bench) return;
+            
+            const cont = document.getElementById('imageContainer');
+            const fallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CaWxkIG5pY2h0IGxhZGJhcjwvdGV4dD48L3N2Zz4=';
+            
+            cont.innerHTML = `
+                <div class="image-box">
+                    <h4>🪑 Die Bank</h4>
+                    <img src="${bench.benchImage || fallback}" alt="Bank" onerror="this.src='${fallback}'">
+                </div>
+                <div class="image-box">
+                    <h4>🌄 Die Aussicht</h4>
+                    <img src="${bench.viewImage || fallback}" alt="Aussicht" onerror="this.src='${fallback}'">
+                </div>
+            `;
+            document.getElementById('imageViewer').style.display = 'flex';
+        }
+        
+        function closeImageViewer(){ 
+            document.getElementById('imageViewer').style.display = 'none'; 
+        }
+        
+        function escapeHtml(text){
+            return String(text).replace(/[&<>"']/g, m => ({
+                '&':'&amp;',
+                '<':'&lt;',
+                '>':'&gt;',
+                '"':'&quot;',
+                "'":'&#39;'
+            }[m]));
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', e => { 
+            if (e.key === 'Escape') { 
+                closeImageViewer(); 
+                if (addMode) toggleAddMode(); 
+                closeLogin();
+                if (document.getElementById('addBenchForm').style.display === 'block') {
+                    cancelAddBench();
+                }
+            } 
+        });
+        
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add some sample approved benches if none exist
+            if (approvedBenches.length === 0) {
+                const sampleBenches = [
+                    {
+                        id: 1,
+                        name: "Panoramabank Jordanbad",
+                        description: "Wunderschöner Blick über das Jordanbad und die umliegenden Hügel. Besonders schön bei Sonnenuntergang!",
+                        lat: 48.1668,
+                        lng: 9.8333,
+                        benchImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2E4ZDVhOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM0Y2FmNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn6qRPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CYW5rIGFtIEpvcmRhbmJhZDwvdGV4dD48L3N2Zz4=",
+                        viewImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2FkZGZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiMyMTk2RjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn4yEPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5QYW5vcmFtYS1BdXNzaWNodDwvdGV4dD48L3N2Zz4=",
+                        user: "system@benchmap.com",
+                        approved: true,
+                        created: new Date().toISOString()
+                    },
+                    {
+                        id: 2,
+                        name: "Waldbank Schönbuch",
+                        description: "Ruhige Bank im Naturpark Schönbuch mit Blick auf die Waldlichtung. Ideal zum Entspannen und Vogelbeobachten.",
+                        lat: 48.6000,
+                        lng: 9.0500,
+                        benchImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Q0ZWRkYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM0Y2FmNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn6qRPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5XYWxkYmFuayBTY2jDtm5idWNoPC90ZXh0Pjwvc3ZnPg==",
+                        viewImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y0ZjhmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM2NmJiNmEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn4y0PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5XYWxkbGljaHR1bmctQXVzc2ljaHQ8L3RleHQ+PC9zdmc+",
+                        user: "system@benchmap.com",
+                        approved: true,
+                        created: new Date().toISOString()
+                    }
+                ];
+                approvedBenches = sampleBenches;
+                localStorage.setItem('approvedBenches', JSON.stringify(approvedBenches));
+            }
+            
+            initMap();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neue Bank hinzufügen</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #4caf50;
+            padding-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], input[type="number"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            border-color: #4caf50;
+            outline: none;
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .coord-group {
+            display: flex;
+            gap: 10px;
+        }
+        .coord-group .form-group {
+            flex: 1;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .btn-primary { background: #4caf50; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn:hover { opacity: 0.9; }
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+        }
+        .map-helper {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .map-helper h4 {
+            margin: 0 0 10px 0;
+            color: #2e7d32;
+        }
+        .current-location {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🪑 Neue Bank hinzufügen</h1>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-error">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="current-location" id="locationInfo" style="display: none;">
+            📍 <strong>Aktuelle Position:</strong> <span id="currentCoords">Wird ermittelt...</span>
+            <button type="button" onclick="useCurrentLocation()" style="margin-left: 10px; padding: 5px 10px; background: #4caf50; color: white; border: none; border-radius: 3px; cursor: pointer;">Verwenden</button>
+        </div>
+
+        <div class="map-helper">
+            <h4>💡 Tipp: Koordinaten finden</h4>
+            <p>• Öffnen Sie <a href="https://www.google.com/maps" target="_blank">Google Maps</a> oder <a href="https://www.openstreetmap.org" target="_blank">OpenStreetMap</a></p>
+            <p>• Rechtsklick auf die gewünschte Stelle → Koordinaten kopieren</p>
+            <p>• Oder nutzen Sie den Button unten für Ihre aktuelle Position</p>
+        </div>
+
+        <form action="/add_bench" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Name der Bank *</label>
+                <input type="text" id="name" name="name" required placeholder="z.B. Aussichtsbank Jordanbad">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Beschreibung der Aussicht *</label>
+                <textarea id="description" name="description" required placeholder="Beschreiben Sie die Aussicht von dieser Bank..."></textarea>
+            </div>
+
+            <div class="coord-group">
+                <div class="form-group">
+                    <label for="lat">Breitengrad (Latitude) *</label>
+                    <input type="number" id="lat" name="lat" step="any" required placeholder="48.1023" value="{{ lat }}">
+                </div>
+                <div class="form-group">
+                    <label for="lng">Längengrad (Longitude) *</label>
+                    <input type="number" id="lng" name="lng" step="any" required placeholder="9.7889" value="{{ lng }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="bench_image">Bild der Bank</label>
+                <input type="file" id="bench_image" name="bench_image" accept="image/*">
+                <div class="file-info">Unterstützte Formate: JPG, PNG, GIF, WebP (max. 16MB)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="view_image">Bild der Aussicht</label>
+                <input type="file" id="view_image" name="view_image" accept="image/*">
+                <div class="file-info">Unterstützte Formate: JPG, PNG, GIF, WebP (max. 16MB)</div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">✅ Bank hinzufügen</button>
+                <a href="/admin" class="btn btn-secondary">❌ Abbrechen</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Aktuelle Position ermitteln
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude.toFixed(6);
+                        const lng = position.coords.longitude.toFixed(6);
+                        document.getElementById('currentCoords').textContent = `${lat}, ${lng}`;
+                        document.getElementById('locationInfo').style.display = 'block';
+                    },
+                    function(error) {
+                        console.log('Standortermittlung fehlgeschlagen:', error);
+                    }
+                );
+            }
+        }
+
+        function useCurrentLocation() {
+            const coords = document.getElementById('currentCoords').textContent.split(', ');
+            if (coords.length === 2) {
+                document.getElementById('lat').value = coords[0];
+                document.getElementById('lng').value = coords[1];
+            }
+        }
+
+        // Beim Laden der Seite versuchen, die aktuelle Position zu ermitteln
+        window.addEventListener('load', function() {
+            getCurrentLocation();
+        });
+
+        // Form-Validierung
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const lat = document.getElementById('lat').value;
+            const lng = document.getElementById('lng').value;
+            
+            if (!lat || !lng) {
+                alert('Bitte geben Sie gültige Koordinaten ein!');
+                e.preventDefault();
+                return;
+            }
+            
+            if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+                alert('Ungültige Koordinaten! Breitengrad: -90 bis 90, Längengrad: -180 bis 180');
+                e.preventDefault();
+                return;
+            }
+        });
+    </script>
+</body>
+</html>

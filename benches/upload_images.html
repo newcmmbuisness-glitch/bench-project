@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilder verwalten</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #4caf50;
+            padding-bottom: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn:hover { opacity: 0.9; }
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .image-card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .image-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .image-filename {
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+        .image-info {
+            font-size: 11px;
+            color: #999;
+        }
+        .no-images {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: #fafafa;
+        }
+        .upload-area.dragover {
+            border-color: #4caf50;
+            background: #f0f8f0;
+        }
+        #fileInput {
+            display: none;
+        }
+        .upload-btn {
+            background: #4caf50;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .file-list {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #e8f5e8;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4caf50;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ Bilder verwalten</h1>
+            <a href="/admin" class="btn btn-secondary">← Zurück zum Admin</a>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <h3>📤 Bilder hochladen</h3>
+            <p>Ziehen Sie Bilder hierher oder klicken Sie zum Auswählen</p>
+            <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Dateien auswählen
+            </button>
+            <input type="file" id="fileInput" multiple accept="image/*">
+            <div class="file-list" id="fileList"></div>
+            <div class="progress-bar" id="progressBar" style="display: none;">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <h2>Vorhandene Bilder ({{ images|length }})</h2>
+        
+        {% if images %}
+        <div class="images-grid">
+            {% for image in images %}
+            <div class="image-card">
+                <img src="bilder/{{ image }}" alt="{{ image }}" loading="lazy">
+                <div class="image-filename">{{ image }}</div>
+                <div class="image-info">
+                    Pfad: bilder/{{ image }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-images">
+            <h3>Keine Bilder vorhanden</h3>
+            <p>Laden Sie Bilder hoch, um sie hier zu sehen.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+
+        // Drag & Drop Funktionalität
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            uploadArea.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            fileList.innerHTML = '';
+            
+            if (files.length === 0) return;
+
+            // Zeige ausgewählte Dateien
+            for (let file of files) {
+                if (file.type.startsWith('image/')) {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <span>${file.name}</span>
+                        <span>${formatFileSize(file.size)}</span>
+                    `;
+                    fileList.appendChild(fileItem);
+                }
+            }
+
+            // Upload-Button hinzufügen
+            const uploadBtn = document.createElement('button');
+            uploadBtn.className = 'upload-btn';
+            uploadBtn.textContent = `${files.length} Dateien hochladen`;
+            uploadBtn.style.marginTop = '15px';
+            uploadBtn.onclick = () => uploadFiles(files);
+            fileList.appendChild(uploadBtn);
+        }
+
+        function uploadFiles(files) {
+            const formData = new FormData();
+            
+            for (let file of files) {
+                if (file.type.startsWith('image/')) {
+                    formData.append('images', file);
+                }
+            }
+
+            progressBar.style.display = 'block';
+            
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressFill.style.width = percentComplete + '%';
+                }
+            });
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    alert('Bilder erfolgreich hochgeladen!');
+                    location.reload();
+                } else {
+                    alert('Fehler beim Hochladen der Bilder.');
+                }
+                progressBar.style.display = 'none';
+            };
+
+            xhr.onerror = function() {
+                alert('Fehler beim Hochladen der Bilder.');
+                progressBar.style.display = 'none';
+            };
+
+            // Hier müssten Sie einen entsprechenden Upload-Endpoint erstellen
+            // xhr.open('POST', '/upload_multiple_images');
+            // xhr.send(formData);
+            
+            // Für diese Demo simulieren wir den Upload
+            setTimeout(() => {
+                alert('Upload-Funktionalität ist in dieser Demo nicht implementiert.\nKopieren Sie Bilder manuell in den "bilder/" Ordner.');
+                progressBar.style.display = 'none';
+            }, 2000);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

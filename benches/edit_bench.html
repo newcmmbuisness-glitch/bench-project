@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank bearbeiten - {{ bench.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #4caf50;
+            padding-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], input[type="number"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            border-color: #4caf50;
+            outline: none;
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .coord-group {
+            display: flex;
+            gap: 10px;
+        }
+        .coord-group .form-group {
+            flex: 1;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .btn-primary { background: #4caf50; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn:hover { opacity: 0.9; }
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .current-images {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .current-image {
+            text-align: center;
+        }
+        .current-image img {
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+        }
+        .current-image small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+        }
+        .image-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✏️ Bank bearbeiten</h1>
+            <h2>{{ bench.name }}</h2>
+        </div>
+
+        <form action="/edit_bench/{{ bench.id }}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Name der Bank *</label>
+                <input type="text" id="name" name="name" required value="{{ bench.name }}">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Beschreibung der Aussicht *</label>
+                <textarea id="description" name="description" required>{{ bench.description }}</textarea>
+            </div>
+
+            <div class="coord-group">
+                <div class="form-group">
+                    <label for="lat">Breitengrad (Latitude) *</label>
+                    <input type="number" id="lat" name="lat" step="any" required value="{{ bench.lat }}">
+                </div>
+                <div class="form-group">
+                    <label for="lng">Längengrad (Longitude) *</label>
+                    <input type="number" id="lng" name="lng" step="any" required value="{{ bench.lng }}">
+                </div>
+            </div>
+
+            <div class="image-section">
+                <h3>Aktuelle Bilder</h3>
+                <div class="current-images">
+                    <div class="current-image">
+                        <img src="{{ bench.benchImage }}" alt="Aktuelle Bank" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDE1MCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjE1MCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI3NSIgeT0iNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTIiPktlaW4gQmlsZDwvdGV4dD48L3N2Zz4='">
+                        <small>Bank</small>
+                    </div>
+                    <div class="current-image">
+                        <img src="{{ bench.viewImage }}" alt="Aktuelle Aussicht" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDE1MCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjE1MCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI3NSIgeT0iNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTIiPktlaW4gQmlsZDwvdGV4dD48L3N2Zz4='">
+                        <small>Aussicht</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="bench_image">Neues Bild der Bank (optional)</label>
+                <input type="file" id="bench_image" name="bench_image" accept="image/*">
+                <div class="file-info">Nur auswählen, wenn Sie das Bank-Bild ersetzen möchten. Unterstützte Formate: JPG, PNG, GIF, WebP (max. 16MB)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="view_image">Neues Bild der Aussicht (optional)</label>
+                <input type="file" id="view_image" name="view_image" accept="image/*">
+                <div class="file-info">Nur auswählen, wenn Sie das Aussicht-Bild ersetzen möchten. Unterstützte Formate: JPG, PNG, GIF, WebP (max. 16MB)</div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">💾 Änderungen speichern</button>
+                <a href="/admin" class="btn btn-secondary">❌ Abbrechen</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Form-Validierung
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const lat = document.getElementById('lat').value;
+            const lng = document.getElementById('lng').value;
+            
+            if (!lat || !lng) {
+                alert('Bitte geben Sie gültige Koordinaten ein!');
+                e.preventDefault();
+                return;
+            }
+            
+            if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+                alert('Ungültige Koordinaten! Breitengrad: -90 bis 90, Längengrad: -180 bis 180');
+                e.preventDefault();
+                return;
+            }
+        });
+    </script>
+</body>
+</html>
