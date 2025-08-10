@@ -574,16 +574,29 @@
                 const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]'); // Stuttgart
                 map = L.map('map', { center: coords, zoom: 12 });
                 
-                const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-                    maxZoom:19, 
-                    attribution: '© OpenStreetMap contributors' 
-                });
-                const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
-                    maxZoom:19, 
-                    attribution: 'Tiles © Esri' 
-                });
-                osmStandard.addTo(map);
-                L.control.layers({ "OpenStreetMap": osmStandard, "Satellit": satellite }).addTo(map);
+               const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+    maxZoom:19, 
+    attribution: '© OpenStreetMap contributors' 
+});
+const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+    maxZoom:19, 
+    attribution: 'Tiles © Esri' 
+});
+osmStandard.addTo(map);
+
+let currentLayer = 'osm'; // Merker für aktuellen Layer
+
+document.getElementById('layerToggleBtn').onclick = function() {
+    if(currentLayer === 'osm') {
+        map.removeLayer(osmStandard);
+        satellite.addTo(map);
+        currentLayer = 'sat';
+    } else {
+        map.removeLayer(satellite);
+        osmStandard.addTo(map);
+        currentLayer = 'osm';
+    }
+};
                 
                 setupMapClick();
                 setupImageUpload();
