@@ -409,23 +409,6 @@
             background: #45a049;
             transform: scale(1.05);
         }
-        
-        .admin-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            z-index: 1001;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            display: none; /* Nur für Admins sichtbar */
-        }
     </style>
 </head>
 <body>
@@ -571,8 +554,6 @@
                 return;
             }
             
-            updateAuthButtons();
-            
             // Only create map if it doesn't exist yet
             if (!map) {
                 const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]'); // Stuttgart
@@ -597,6 +578,8 @@
                 map.setView(coords, 12);
             }
             
+            // Diese Funktionen sollten immer ausgeführt werden
+            updateAuthButtons();
             loadBenches();
         }
         
@@ -620,7 +603,13 @@
                     localStorage.setItem('mapCenter', JSON.stringify(coords));
                     document.getElementById('plzModal').style.display = 'none';
                     showNotification(`Karte wird zu PLZ ${plz} geladen...`, 'success');
-                    initMap();
+                    
+                    // Nur Kartenposition ändern, nicht neu initialisieren
+                    if (map) {
+                        map.setView(coords, 13);
+                    } else {
+                        initMap(); // Nur wenn Karte noch nicht existiert
+                    }
                 } else {
                     showNotification(`PLZ ${plz} konnte nicht gefunden werden. Stuttgart wird verwendet.`, 'error');
                     useDefaultLocation();
@@ -683,7 +672,13 @@
                     const coords = [position.coords.latitude, position.coords.longitude];
                     localStorage.setItem('mapCenter', JSON.stringify(coords));
                     document.getElementById('plzModal').style.display = 'none';
-                    initMap();
+                    
+                    // Karte initialisieren oder Position ändern
+                    if (map) {
+                        map.setView(coords, 13);
+                    } else {
+                        initMap();
+                    }
                     showNotification('Standort erfolgreich ermittelt!', 'success');
                 }, function(error) {
                     showNotification('Standort konnte nicht ermittelt werden. Stuttgart wird verwendet.', 'error');
@@ -698,52 +693,11 @@
         function useDefaultLocation() {
             localStorage.setItem('mapCenter', JSON.stringify([48.7758, 9.1829])); // Stuttgart
             document.getElementById('plzModal').style.display = 'none';
-            initMap();
-        }
-        
-        function getCoordinatesFromPLZ(plz) {
-            // Erweiterte PLZ-Mapping für deutsche Städte
-            const plzMap = {
-                // Baden-Württemberg
-                '88400': [48.1668, 9.8333], // Biberach
-                '70173': [48.7758, 9.1829], // Stuttgart
-                '68159': [49.4875, 8.4660], // Mannheim
-                '76131': [49.0069, 8.4037], // Karlsruhe
-                '79098': [47.9990, 7.8421], // Freiburg
-                '89073': [48.3984, 9.9915], // Ulm
-                // Bayern
-                '80331': [48.1374, 11.5755], // München
-                '90402': [49.4521, 11.0767], // Nürnberg
-                '86150': [48.3668, 10.8986], // Augsburg
-                '97070': [49.7913, 9.9534], // Würzburg
-                // Nordrhein-Westfalen
-                '50667': [50.9375, 6.9603], // Köln
-                '40213': [51.2277, 6.7735], // Düsseldorf
-                '44135': [51.5136, 7.4653], // Dortmund
-                '45127': [51.4556, 7.0116], // Essen
-                // Hessen
-                '60311': [50.1109, 8.6821], // Frankfurt
-                '65183': [50.0755, 8.2417], // Wiesbaden
-                '34117': [51.3127, 9.4797], // Kassel
-                // Niedersachsen
-                '30159': [52.3759, 9.7320], // Hannover
-                '38100': [52.2689, 10.5268], // Braunschweig
-                '26122': [53.1435, 8.2146], // Oldenburg
-                // Weitere Bundesländer
-                '20095': [53.5511, 9.9937], // Hamburg
-                '10115': [52.5244, 13.4105], // Berlin
-                '28195': [53.0793, 8.8017], // Bremen
-                '01067': [51.0504, 13.7373], // Dresden
-                '04109': [51.3397, 12.3731], // Leipzig
-            };
             
-            const coordinates = plzMap[plz];
-            if (coordinates) {
-                console.log('PLZ gefunden:', plz, 'Koordinaten:', coordinates);
-                return coordinates;
+            if (map) {
+                map.setView([48.7758, 9.1829], 12);
             } else {
-                console.log('PLZ nicht in der Datenbank gefunden:', plz, 'Verwende Stuttgart als Fallback');
-                return [48.7758, 9.1829]; // Stuttgart als Fallback
+                initMap();
             }
         }
         
@@ -761,13 +715,13 @@
                 `;
                 addBtn.style.display = 'block';
                 
-                if (currentUser.isAdmin) {
+                if (currentUser.isAdmin && adminBtn) {
                     adminBtn.style.display = 'block';
                 }
             } else {
                 authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
                 addBtn.style.display = 'none';
-                adminBtn.style.display = 'none';
+                if (adminBtn) adminBtn.style.display = 'none';
             }
         }
         
