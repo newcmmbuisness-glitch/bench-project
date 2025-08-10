@@ -358,6 +358,74 @@
             cursor: pointer;
             font-size: 12px;
         }
+        
+        /* PLZ Control Styling */
+        .plz-control {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            display: flex;
+            gap: 5px;
+            background: rgba(255,255,255,0.95);
+            padding: 8px 12px;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+        
+        .plz-control input {
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            padding: 6px 12px;
+            font-size: 14px;
+            width: 80px;
+            text-align: center;
+            box-sizing: border-box;
+            outline: none;
+        }
+        
+        .plz-control input:focus {
+            border-color: #4caf50;
+            box-shadow: 0 0 5px rgba(76,175,80,0.3);
+        }
+        
+        .plz-control button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .plz-control button:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+        
+        .admin-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 1001;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none; /* Nur für Admins sichtbar */
+        }
     </style>
 </head>
 <body>
@@ -369,8 +437,11 @@
         <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
     </div>
     
-    <!-- Admin Button -->
-    <button class="admin-btn" id="adminBtn" onclick="openAdmin()">⚙️ Admin</button>
+        <!-- PLZ Change Control (permanent) -->
+        <div class="plz-control">
+            <input type="text" id="plzChangeInput" placeholder="PLZ eingeben" maxlength="5" pattern="[0-9]{5}">
+            <button onclick="changePlzLocation()" title="Zu PLZ navigieren">🔍</button>
+        </div>
     
     <!-- Add Bench Button (nur für eingeloggte User) -->
     <button class="add-bench-btn" id="addBenchBtn" onclick="checkLoginAndAdd()" title="Bank hinzufügen">➕</button>
@@ -543,13 +614,66 @@
                 return;
             }
             
-            const coords = getCoordinatesFromPLZ(plz);
-            console.log('Koordinaten für PLZ', plz, ':', coords); // Debug-Output
+            // Verwende Nominatim API für echte PLZ-Geocodierung
+            geocodePlz(plz).then(coords => {
+                if (coords) {
+                    localStorage.setItem('mapCenter', JSON.stringify(coords));
+                    document.getElementById('plzModal').style.display = 'none';
+                    showNotification(`Karte wird zu PLZ ${plz} geladen...`, 'success');
+                    initMap();
+                } else {
+                    showNotification(`PLZ ${plz} konnte nicht gefunden werden. Stuttgart wird verwendet.`, 'error');
+                    useDefaultLocation();
+                }
+            });
+        }
+        
+        function changePlzLocation() {
+            const plz = document.getElementById('plzChangeInput').value.trim();
             
-            localStorage.setItem('mapCenter', JSON.stringify(coords));
-            document.getElementById('plzModal').style.display = 'none';
-            showNotification(`Karte wird zu PLZ ${plz} (${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}) geladen...`, 'success');
-            initMap();
+            if (plz.length !== 5 || !/^\d{5}$/.test(plz)) {
+                showNotification('Bitte geben Sie eine gültige 5-stellige PLZ ein.', 'error');
+                document.getElementById('plzChangeInput').focus();
+                return;
+            }
+            
+            showNotification(`PLZ ${plz} wird gesucht...`, 'success');
+            
+            geocodePlz(plz).then(coords => {
+                if (coords) {
+                    localStorage.setItem('mapCenter', JSON.stringify(coords));
+                    if (map) {
+                        map.setView(coords, 13);
+                        showNotification(`✅ Karte zu PLZ ${plz} navigiert!`, 'success');
+                    }
+                    document.getElementById('plzChangeInput').value = '';
+                } else {
+                    showNotification(`❌ PLZ ${plz} konnte nicht gefunden werden.`, 'error');
+                    document.getElementById('plzChangeInput').focus();
+                }
+            });
+        }
+        
+        // Neue Funktion für echte PLZ-Geocodierung mit Nominatim
+        async function geocodePlz(plz) {
+            try {
+                // Nominatim API für deutsche Postleitzahlen
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${plz}&country=DE&format=json&limit=1&addressdetails=1`);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lng = parseFloat(data[0].lon);
+                    console.log(`PLZ ${plz} gefunden:`, lat, lng, data[0].display_name);
+                    return [lat, lng];
+                } else {
+                    console.log(`PLZ ${plz} nicht in Nominatim gefunden`);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Fehler bei PLZ-Geocodierung:', error);
+                return null;
+            }
         }
         
         function useCurrentLocation() {
