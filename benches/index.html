@@ -413,19 +413,27 @@
 </head>
 <body>
     <div id="map"></div>
-	<button id="layerToggleBtn" style="
-    position: fixed;
-    top: 80px;
-    left: 20px;
-    z-index: 1002;
-    background: #fff;
-    color: #222;
-    border: 2px solid #4caf50;
-    border-radius: 8px;
-    padding: 8px 18px;
-    font-size: 16px;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+	<button id="layerToggleBtn" title="Kartenansicht wechseln" style="
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1100;
+  background: #fff;
+  color: #222;
+  border: 2px solid #4caf50;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+">
+  🗺️
+</button>
 ">🌍 Karte / 🛰️ Satellit</button>
 	<button id="adminBtn" class="admin-btn" onclick="openAdmin()">🛠️ Admin</button>
     <div class="app-title"><h1>🪑 Benches</h1></div>
