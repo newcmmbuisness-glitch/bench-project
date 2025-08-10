@@ -528,16 +528,30 @@
         }
         
         function goToLocation() {
-            const plz = document.getElementById('plzInput').value.trim();
-            if (plz.length === 5 && /^\d{5}$/.test(plz)) {
-                const coords = getCoordinatesFromPLZ(plz);
-                localStorage.setItem('mapCenter', JSON.stringify(coords));
-                document.getElementById('plzModal').style.display = 'none';
-                initMap();
-            } else {
-                showNotification('Bitte geben Sie eine gültige 5-stellige PLZ ein.', 'error');
-            }
-        }
+    const plz = document.getElementById('plzInput').value.trim();
+    if (plz.length === 5 && /^\d{5}$/.test(plz)) {
+        fetch(`https://nominatim.openstreetmap.org/search?postalcode=${plz}&country=Germany&format=json`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+                    localStorage.setItem('mapCenter', JSON.stringify(coords));
+                    document.getElementById('plzModal').style.display = 'none';
+                    initMap();
+                } else {
+                    showNotification('PLZ nicht gefunden, zeige Standardstandort.', 'error');
+                    useDefaultLocation();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                useDefaultLocation();
+            });
+    } else {
+        showNotification('Bitte geben Sie eine gültige 5-stellige PLZ ein.', 'error');
+    }
+}
+
         
         function useCurrentLocation() {
             if (navigator.geolocation) {
