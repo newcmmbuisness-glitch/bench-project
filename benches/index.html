@@ -502,23 +502,31 @@
             
             updateAuthButtons();
             
-            const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]'); // Stuttgart
-            map = L.map('map', { center: coords, zoom: 12 });
-            
-            const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-                maxZoom:19, 
-                attribution: '© OpenStreetMap contributors' 
-            });
-            const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
-                maxZoom:19, 
-                attribution: 'Tiles © Esri' 
-            });
-            osmStandard.addTo(map);
-            L.control.layers({ "OpenStreetMap": osmStandard, "Satellit": satellite }).addTo(map);
+            // Only create map if it doesn't exist yet
+            if (!map) {
+                const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]'); // Stuttgart
+                map = L.map('map', { center: coords, zoom: 12 });
+                
+                const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+                    maxZoom:19, 
+                    attribution: '© OpenStreetMap contributors' 
+                });
+                const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+                    maxZoom:19, 
+                    attribution: 'Tiles © Esri' 
+                });
+                osmStandard.addTo(map);
+                L.control.layers({ "OpenStreetMap": osmStandard, "Satellit": satellite }).addTo(map);
+                
+                setupMapClick();
+                setupImageUpload();
+            } else {
+                // Map already exists, just change center
+                const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]');
+                map.setView(coords, 12);
+            }
             
             loadBenches();
-            setupMapClick();
-            setupImageUpload();
         }
         
         function showLocationModal() {
@@ -956,6 +964,12 @@
         }
         
         function loadBenches() {
+            // Clear existing bench markers first
+            benchMarkers.forEach(item => {
+                map.removeLayer(item.marker);
+            });
+            benchMarkers = [];
+            
             // Only load approved benches for the map
             approvedBenches.forEach(addSingleBenchToMap);
         }
