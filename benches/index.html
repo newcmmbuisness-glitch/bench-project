@@ -162,6 +162,7 @@
             border-radius: 8px;
             font-size: 16px;
             margin: 10px 0;
+            box-sizing: border-box;
         }
         .plz-modal button {
             background: #4caf50;
@@ -431,10 +432,7 @@
     <!-- Add Bench Form -->
     <div id="addBenchForm" class="add-bench-form">
         <h2>🪑 Neue Bank hinzufügen</h2>
-        <form action="/.netlify/functions/add_bench" method="post" enctype="multipart/form-data">
-  <!-- Formularfelder -->
-</form>
-
+        <form onsubmit="submitBench(event)">
             <div class="form-group">
                 <label>Name der Bank:</label>
                 <input type="text" id="benchName" placeholder="z.B. Aussichtsbank am Jordanbad" required>
@@ -528,30 +526,23 @@
         }
         
         function goToLocation() {
-    const plz = document.getElementById('plzInput').value.trim();
-    if (plz.length === 5 && /^\d{5}$/.test(plz)) {
-        fetch(`https://nominatim.openstreetmap.org/search?postalcode=${plz}&country=Germany&format=json`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.length > 0) {
-                    const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-                    localStorage.setItem('mapCenter', JSON.stringify(coords));
-                    document.getElementById('plzModal').style.display = 'none';
-                    initMap();
-                } else {
-                    showNotification('PLZ nicht gefunden, zeige Standardstandort.', 'error');
-                    useDefaultLocation();
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                useDefaultLocation();
-            });
-    } else {
-        showNotification('Bitte geben Sie eine gültige 5-stellige PLZ ein.', 'error');
-    }
-}
-
+            const plz = document.getElementById('plzInput').value.trim();
+            console.log('Eingegeben PLZ:', plz); // Debug-Output
+            
+            // Überprüfung ob PLZ 5 Ziffern hat
+            if (plz.length !== 5 || !/^\d{5}$/.test(plz)) {
+                showNotification('Bitte geben Sie eine gültige 5-stellige PLZ ein.', 'error');
+                return;
+            }
+            
+            const coords = getCoordinatesFromPLZ(plz);
+            console.log('Koordinaten für PLZ', plz, ':', coords); // Debug-Output
+            
+            localStorage.setItem('mapCenter', JSON.stringify(coords));
+            document.getElementById('plzModal').style.display = 'none';
+            showNotification(`Karte wird zu PLZ ${plz} (${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}) geladen...`, 'success');
+            initMap();
+        }
         
         function useCurrentLocation() {
             if (navigator.geolocation) {
@@ -613,7 +604,15 @@
                 '01067': [51.0504, 13.7373], // Dresden
                 '04109': [51.3397, 12.3731], // Leipzig
             };
-            return plzMap[plz] || [48.7758, 9.1829]; // Stuttgart als Fallback
+            
+            const coordinates = plzMap[plz];
+            if (coordinates) {
+                console.log('PLZ gefunden:', plz, 'Koordinaten:', coordinates);
+                return coordinates;
+            } else {
+                console.log('PLZ nicht in der Datenbank gefunden:', plz, 'Verwende Stuttgart als Fallback');
+                return [48.7758, 9.1829]; // Stuttgart als Fallback
+            }
         }
         
         function updateAuthButtons() {
