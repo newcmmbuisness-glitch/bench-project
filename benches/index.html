@@ -431,7 +431,10 @@
     <!-- Add Bench Form -->
     <div id="addBenchForm" class="add-bench-form">
         <h2>🪑 Neue Bank hinzufügen</h2>
-        <form onsubmit="submitBench(event)">
+        <form action="/.netlify/functions/add_bench" method="post" enctype="multipart/form-data">
+  <!-- Formularfelder -->
+</form>
+
             <div class="form-group">
                 <label>Name der Bank:</label>
                 <input type="text" id="benchName" placeholder="z.B. Aussichtsbank am Jordanbad" required>
