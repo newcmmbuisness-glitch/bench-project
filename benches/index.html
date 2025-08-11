@@ -35,7 +35,7 @@
             text-decoration: none;
             font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            display: none; /* Nur für Admins sichtbar */
+            display: none;
         }
         .auth-buttons {
             position: fixed;
@@ -46,19 +46,18 @@
             gap: 10px;
         }
         .login-btn, .logout-btn {
-    background: #2196F3;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-
-    position: relative;    /* Position relativ machen */
-    left: -5px;           /* 10px nach links verschieben */
-	top: 50px;      /* nach unten */
-}
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            position: relative;
+            left: -5px;
+            top: 50px;
+        }
         .logout-btn { background: #f44336; }
         .modal {
             display: none;
@@ -359,7 +358,6 @@
             font-size: 12px;
         }
         
-        /* PLZ Control Styling */
         .plz-control {
             position: fixed;
             top: 20px;
@@ -433,25 +431,22 @@
   justify-content: center;
 ">
   🗺️
+</button>
 		
 	<button id="adminBtn" class="admin-btn" onclick="openAdmin()">🛠️ Admin</button>
     <div class="app-title"><h1>🪑 Benches</h1></div>
     
-    <!-- Login/Admin Buttons -->
     <div id="authButtons" class="auth-buttons">
         <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
     </div>
     
-        <!-- PLZ Change Control (permanent) -->
-        <div class="plz-control">
-            <input type="text" id="plzChangeInput" placeholder="PLZ eingeben" maxlength="5" pattern="[0-9]{5}">
-            <button onclick="changePlzLocation()" title="Zu PLZ navigieren">🔍</button>
-        </div>
+    <div class="plz-control">
+        <input type="text" id="plzChangeInput" placeholder="PLZ eingeben" maxlength="5" pattern="[0-9]{5}">
+        <button onclick="changePlzLocation()" title="Zu PLZ navigieren">🔍</button>
+    </div>
     
-    <!-- Add Bench Button (nur für eingeloggte User) -->
     <button class="add-bench-btn" id="addBenchBtn" onclick="checkLoginAndAdd()" title="Bank hinzufügen">➕</button>
     
-    <!-- Login Modal -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeLogin()">&times;</span>
@@ -494,7 +489,6 @@
         </small>
     </div>
     
-    <!-- PLZ Modal -->
     <div id="plzModal" class="plz-modal">
         <h2>🗺️ Willkommen bei Benches!</h2>
         <p>Wählen Sie Ihren Startbereich für die Karte:</p>
@@ -505,7 +499,6 @@
         <button onclick="useDefaultLocation()" style="background: #666;">Stuttgart nutzen</button>
     </div>
     
-    <!-- Add Bench Form -->
     <div id="addBenchForm" class="add-bench-form">
         <h2>🪑 Neue Bank hinzufügen</h2>
         <form onsubmit="submitBench(event)">
@@ -545,7 +538,6 @@
         </form>
     </div>
     
-    <!-- Notification -->
     <div id="notification" class="notification"></div>
 
     <div class="image-viewer" id="imageViewer">
@@ -561,13 +553,10 @@
         let pendingBenchLat = null, pendingBenchLng = null;
         let benchImageFile = null, viewImageFile = null;
         
-        // Simulate user data storage (in real app, use backend)
-        let users = JSON.parse(localStorage.getItem('benchUsers') || '[]');
-        let pendingBenches = JSON.parse(localStorage.getItem('pendingBenches') || '[]');
+        // Fallback für localStorage während Entwicklung
         let approvedBenches = JSON.parse(localStorage.getItem('approvedBenches') || '[]');
         
         function initMap(){
-            // Check if user is coming back or first visit
             currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
             
             if (!localStorage.getItem('hasVisited')) {
@@ -576,44 +565,41 @@
                 return;
             }
             
-            // Only create map if it doesn't exist yet
             if (!map) {
-                const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]'); // Stuttgart
+                const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]');
                 map = L.map('map', { center: coords, zoom: 12 });
                 
-               const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-    maxZoom:19, 
-    attribution: '© OpenStreetMap contributors' 
-});
-const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
-    maxZoom:19, 
-    attribution: 'Tiles © Esri' 
-});
-osmStandard.addTo(map);
+                const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+                    maxZoom:19, 
+                    attribution: '© OpenStreetMap contributors' 
+                });
+                const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+                    maxZoom:19, 
+                    attribution: 'Tiles © Esri' 
+                });
+                osmStandard.addTo(map);
 
-let currentLayer = 'osm'; // Merker für aktuellen Layer
+                let currentLayer = 'osm';
 
-document.getElementById('layerToggleBtn').onclick = function() {
-    if(currentLayer === 'osm') {
-        map.removeLayer(osmStandard);
-        satellite.addTo(map);
-        currentLayer = 'sat';
-    } else {
-        map.removeLayer(satellite);
-        osmStandard.addTo(map);
-        currentLayer = 'osm';
-    }
-};
+                document.getElementById('layerToggleBtn').onclick = function() {
+                    if(currentLayer === 'osm') {
+                        map.removeLayer(osmStandard);
+                        satellite.addTo(map);
+                        currentLayer = 'sat';
+                    } else {
+                        map.removeLayer(satellite);
+                        osmStandard.addTo(map);
+                        currentLayer = 'osm';
+                    }
+                };
                 
                 setupMapClick();
                 setupImageUpload();
             } else {
-                // Map already exists, just change center
                 const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]');
                 map.setView(coords, 12);
             }
             
-            // Diese Funktionen sollten immer ausgeführt werden
             updateAuthButtons();
             loadBenches();
         }
@@ -624,26 +610,22 @@ document.getElementById('layerToggleBtn').onclick = function() {
         
         function goToLocation() {
             const plz = document.getElementById('plzInput').value.trim();
-            console.log('Eingegeben PLZ:', plz); // Debug-Output
             
-            // Überprüfung ob PLZ 5 Ziffern hat
             if (plz.length !== 5 || !/^\d{5}$/.test(plz)) {
                 showNotification('Bitte geben Sie eine gültige 5-stellige PLZ ein.', 'error');
                 return;
             }
             
-            // Verwende Nominatim API für echte PLZ-Geocodierung
             geocodePlz(plz).then(coords => {
                 if (coords) {
                     localStorage.setItem('mapCenter', JSON.stringify(coords));
                     document.getElementById('plzModal').style.display = 'none';
                     showNotification(`Karte wird zu PLZ ${plz} geladen...`, 'success');
                     
-                    // Nur Kartenposition ändern, nicht neu initialisieren
                     if (map) {
                         map.setView(coords, 13);
                     } else {
-                        initMap(); // Nur wenn Karte noch nicht existiert
+                        initMap();
                     }
                 } else {
                     showNotification(`PLZ ${plz} konnte nicht gefunden werden. Stuttgart wird verwendet.`, 'error');
@@ -678,20 +660,16 @@ document.getElementById('layerToggleBtn').onclick = function() {
             });
         }
         
-        // Neue Funktion für echte PLZ-Geocodierung mit Nominatim
         async function geocodePlz(plz) {
             try {
-                // Nominatim API für deutsche Postleitzahlen
                 const response = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${plz}&country=DE&format=json&limit=1&addressdetails=1`);
                 const data = await response.json();
                 
                 if (data && data.length > 0) {
                     const lat = parseFloat(data[0].lat);
                     const lng = parseFloat(data[0].lon);
-                    console.log(`PLZ ${plz} gefunden:`, lat, lng, data[0].display_name);
                     return [lat, lng];
                 } else {
-                    console.log(`PLZ ${plz} nicht in Nominatim gefunden`);
                     return null;
                 }
             } catch (error) {
@@ -708,7 +686,6 @@ document.getElementById('layerToggleBtn').onclick = function() {
                     localStorage.setItem('mapCenter', JSON.stringify(coords));
                     document.getElementById('plzModal').style.display = 'none';
                     
-                    // Karte initialisieren oder Position ändern
                     if (map) {
                         map.setView(coords, 13);
                     } else {
@@ -726,7 +703,7 @@ document.getElementById('layerToggleBtn').onclick = function() {
         }
         
         function useDefaultLocation() {
-            localStorage.setItem('mapCenter', JSON.stringify([48.7758, 9.1829])); // Stuttgart
+            localStorage.setItem('mapCenter', JSON.stringify([48.7758, 9.1829]));
             document.getElementById('plzModal').style.display = 'none';
             
             if (map) {
@@ -809,93 +786,83 @@ document.getElementById('layerToggleBtn').onclick = function() {
             return operations[Math.floor(Math.random() * operations.length)]();
         }
         
-      function register(event) {
-    event.preventDefault();
-    const email = document.getElementById('registerEmail').value;
-    const password = document.getElementById('registerPassword').value;
-    const captchaAnswer = parseInt(document.getElementById('registerCaptchaAnswer').value);
+        function register(event) {
+            event.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const captchaAnswer = parseInt(document.getElementById('registerCaptchaAnswer').value);
 
-    if (password.length < 6) {
-        showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
-        return;
-    }
-
-    if (captchaAnswer !== registerCaptcha.answer) {
-        showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
-        generateCaptchas();
-        document.getElementById('registerCaptchaAnswer').value = '';
-        return;
-    }
-
-    fetch('/.netlify/functions/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'register', email, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('✅ Registrierung erfolgreich! Sie können sich jetzt anmelden.', 'success');
-            showTab('login');
-        } else {
-            showNotification(data.error || 'Registrierung fehlgeschlagen', 'error');
-        }
-    });
-}
-        
-      function login(event) {
-    event.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
-
-    if (captchaAnswer !== loginCaptcha.answer) {
-        showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
-        generateCaptchas();
-        document.getElementById('loginCaptchaAnswer').value = '';
-        return;
-    }
-
-    fetch('/.netlify/functions/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', email, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            currentUser = { email: data.email, isAdmin: data.isAdmin };
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            closeLogin();
-            updateAuthButtons();
-            showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
-        } else {
-            showNotification(data.error || '❌ Ungültige Anmeldedaten!', 'error');
-        }
-    });
-}
-            
-            // Check for admin account
-            if (email === 'admin@benchmap.com' && password === 'admin123') {
-                currentUser = { email, isAdmin: true };
-            } else {
-                const user = users.find(u => u.email === email && u.password === password);
-                if (!user) {
-                    showNotification('❌ Ungültige Anmeldedaten!', 'error');
-                    return;
-                }
-                currentUser = { email: user.email, isAdmin: user.isAdmin };
+            if (password.length < 6) {
+                showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
+                return;
             }
+
+            if (captchaAnswer !== registerCaptcha.answer) {
+                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+                generateCaptchas();
+                document.getElementById('registerCaptchaAnswer').value = '';
+                return;
+            }
+
+            fetch('/.netlify/functions/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'register', email, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('✅ Registrierung erfolgreich! Sie können sich jetzt anmelden.', 'success');
+                    showTab('login');
+                } else {
+                    showNotification(data.error || 'Registrierung fehlgeschlagen', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('❌ Netzwerkfehler bei Registrierung!', 'error');
+                console.error('Register error:', error);
+            });
+        }
             
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            closeLogin();
-            updateAuthButtons();
-            showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
-            
-            // Clear form
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('loginCaptchaAnswer').value = '';
+        function login(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
+
+            if (captchaAnswer !== loginCaptcha.answer) {
+                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+                generateCaptchas();
+                document.getElementById('loginCaptchaAnswer').value = '';
+                return;
+            }
+
+            fetch('/.netlify/functions/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', email, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    currentUser = { email: data.email, isAdmin: data.isAdmin };
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    closeLogin();
+                    updateAuthButtons();
+                    showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
+                    
+                    // Clear form
+                    document.getElementById('loginEmail').value = '';
+                    document.getElementById('loginPassword').value = '';
+                    document.getElementById('loginCaptchaAnswer').value = '';
+                } else {
+                    showNotification(data.error || '❌ Ungültige Anmeldedaten!', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('❌ Netzwerkfehler beim Login!', 'error');
+                console.error('Login error:', error);
+            });
         }
         
         function logout() {
@@ -955,12 +922,10 @@ document.getElementById('layerToggleBtn').onclick = function() {
         }
         
         function setupImageUpload() {
-            // Setup for bench image upload
             setupSingleImageUpload('benchImageUpload', 'benchImageInput', 'benchImagePreview', (file) => {
                 benchImageFile = file;
             });
             
-            // Setup for view image upload
             setupSingleImageUpload('viewImageUpload', 'viewImageInput', 'viewImagePreview', (file) => {
                 viewImageFile = file;
             });
@@ -971,7 +936,6 @@ document.getElementById('layerToggleBtn').onclick = function() {
             const fileInput = document.getElementById(inputId);
             const preview = document.getElementById(previewId);
             
-            // Drag and drop
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 uploadArea.addEventListener(eventName, preventDefaults, false);
             });
@@ -1004,7 +968,7 @@ document.getElementById('layerToggleBtn').onclick = function() {
         }
         
         function handleImageFile(file, preview, callback) {
-            if (file.size > 16 * 1024 * 1024) { // 16MB limit
+            if (file.size > 16 * 1024 * 1024) {
                 showNotification('❌ Datei ist zu groß! Maximum: 16MB', 'error');
                 return;
             }
@@ -1028,50 +992,26 @@ document.getElementById('layerToggleBtn').onclick = function() {
             if (previewId === 'viewImagePreview') viewImageFile = null;
         }
         
-       function submitBench(event) {
-    event.preventDefault();
+        function submitBench(event) {
+            event.preventDefault();
 
-    const name = document.getElementById('benchName').value.trim();
-    const description = document.getElementById('benchDescription').value.trim();
+            const name = document.getElementById('benchName').value.trim();
+            const description = document.getElementById('benchDescription').value.trim();
 
-    if (!name || !description) {
-        showNotification('❌ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
-        return;
-    }
+            if (!name || !description) {
+                showNotification('❌ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
+                return;
+            }
 
-    if (!benchImageFile || !viewImageFile) {
-        showNotification('❌ Bitte laden Sie beide Bilder hoch (Bank und Aussicht)!', 'error');
-        return;
-    }
+            if (!benchImageFile || !viewImageFile) {
+                showNotification('❌ Bitte laden Sie beide Bilder hoch (Bank und Aussicht)!', 'error');
+                return;
+            }
 
-    const lat = parseFloat(pendingBenchLat);
-    const lng = parseFloat(pendingBenchLng);
+            const lat = parseFloat(pendingBenchLat);
+            const lng = parseFloat(pendingBenchLng);
 
-    // Sende die Bankdaten an die Netlify-Function
-    fetch('/.netlify/functions/add_bench', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            name, description, lat, lng
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data && data.message) {
-            cancelAddBench();
-            showNotification('✅ Bank erfolgreich eingereicht!', 'success');
-        } else if (data && data.error) {
-            showNotification('❌ Fehler beim Speichern: ' + data.error, 'error');
-        } else {
-            showNotification('❌ Unbekannter Fehler beim Speichern!', 'error');
-        }
-    })
-    .catch(err => {
-        showNotification('❌ Netzwerkfehler: ' + err.message, 'error');
-    });
-}
-            
-            // Convert images to base64 for storage
+            // Convert images to base64 for database storage
             const reader1 = new FileReader();
             reader1.onload = function(e) {
                 const benchImageData = e.target.result;
@@ -1080,30 +1020,38 @@ document.getElementById('layerToggleBtn').onclick = function() {
                 reader2.onload = function(e) {
                     const viewImageData = e.target.result;
                     
-                    const newBench = {
-                        id: Date.now(),
-                        name,
-                        description,
-                        lat: parseFloat(pendingBenchLat),
-                        lng: parseFloat(pendingBenchLng),
-                        benchImage: benchImageData,
-                        viewImage: viewImageData,
-                        user: currentUser.email,
-                        approved: false,
-                        created: new Date().toISOString()
-                    };
-                    
-                    pendingBenches.push(newBench);
-                    localStorage.setItem('pendingBenches', JSON.stringify(pendingBenches));
-                    
-                    cancelAddBench();
-                    showNotification('✅ Bank erfolgreich eingereicht! Sie wird nach Admin-Prüfung freigeschaltet.', 'success');
+                    // Send to Netlify function
+                    fetch('/.netlify/functions/add_bench', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name, 
+                            description, 
+                            lat, 
+                            lng,
+                            benchImage: benchImageData,
+                            viewImage: viewImageData,
+                            userEmail: currentUser.email
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            cancelAddBench();
+                            showNotification('✅ Bank erfolgreich eingereicht! Sie wird nach Admin-Prüfung freigeschaltet.', 'success');
+                        } else {
+                            showNotification('❌ Fehler beim Speichern: ' + (data.error || 'Unbekannter Fehler'), 'error');
+                        }
+                    })
+                    .catch(err => {
+                        showNotification('❌ Netzwerkfehler: ' + err.message, 'error');
+                    });
                 };
                 reader2.readAsDataURL(viewImageFile);
             };
             reader1.readAsDataURL(benchImageFile);
         }
-        
+            
         function toggleAddMode(){
             addMode = !addMode;
             const btn = document.getElementById('addBenchBtn');
@@ -1124,14 +1072,39 @@ document.getElementById('layerToggleBtn').onclick = function() {
         }
         
         function loadBenches() {
-            // Clear existing bench markers first
-            benchMarkers.forEach(item => {
-                map.removeLayer(item.marker);
+            // Load benches from database
+            fetch('/.netlify/functions/get_benches', {
+                method: 'GET'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.benches) {
+                    // Clear existing markers
+                    benchMarkers.forEach(item => {
+                        map.removeLayer(item.marker);
+                    });
+                    benchMarkers = [];
+                    
+                    // Add approved benches to map
+                    data.benches.forEach(addSingleBenchToMap);
+                } else {
+                    // Fallback to localStorage if database not available
+                    benchMarkers.forEach(item => {
+                        map.removeLayer(item.marker);
+                    });
+                    benchMarkers = [];
+                    approvedBenches.forEach(addSingleBenchToMap);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading benches:', error);
+                // Fallback to localStorage
+                benchMarkers.forEach(item => {
+                    map.removeLayer(item.marker);
+                });
+                benchMarkers = [];
+                approvedBenches.forEach(addSingleBenchToMap);
             });
-            benchMarkers = [];
-            
-            // Only load approved benches for the map
-            approvedBenches.forEach(addSingleBenchToMap);
         }
         
         function addSingleBenchToMap(b){
@@ -1148,8 +1121,8 @@ document.getElementById('layerToggleBtn').onclick = function() {
                     <p><strong>Aussicht:</strong> ${escapeHtml(b.description)}</p>
                     <p id="addr-${b.id}" style="font-weight:600; margin-top:8px; color:#666;">📍 <em>Adresse wird geladen...</em></p>
                     <p style="font-size:12px; color:#999; margin-top:8px;">
-                        👤 Eingereicht von: ${escapeHtml(b.user)}<br>
-                        📅 ${new Date(b.created).toLocaleDateString('de-DE')}
+                        👤 Eingereicht von: ${escapeHtml(b.user || b.user_email || 'Unbekannt')}<br>
+                        📅 ${new Date(b.created || b.created_at).toLocaleDateString('de-DE')}
                     </p>
                     <button onclick="showBenchImages(${b.id})" style="background:#4caf50; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-top:8px;">
                         📸 Bilder ansehen
@@ -1191,7 +1164,10 @@ document.getElementById('layerToggleBtn').onclick = function() {
         }
         
         function showBenchImages(id){
-            const bench = approvedBenches.find(b => b.id === id);
+            // Find bench in current markers
+            const benchData = benchMarkers.find(item => item.bench.id === id);
+            const bench = benchData ? benchData.bench : null;
+            
             if (!bench) return;
             
             const cont = document.getElementById('imageContainer');
@@ -1200,11 +1176,11 @@ document.getElementById('layerToggleBtn').onclick = function() {
             cont.innerHTML = `
                 <div class="image-box">
                     <h4>🪑 Die Bank</h4>
-                    <img src="${bench.benchImage || fallback}" alt="Bank" onerror="this.src='${fallback}'">
+                    <img src="${bench.benchImage || bench.bench_image || fallback}" alt="Bank" onerror="this.src='${fallback}'">
                 </div>
                 <div class="image-box">
                     <h4>🌄 Die Aussicht</h4>
-                    <img src="${bench.viewImage || fallback}" alt="Aussicht" onerror="this.src='${fallback}'">
+                    <img src="${bench.viewImage || bench.view_image || fallback}" alt="Aussicht" onerror="this.src='${fallback}'">
                 </div>
             `;
             document.getElementById('imageViewer').style.display = 'flex';
@@ -1238,7 +1214,7 @@ document.getElementById('layerToggleBtn').onclick = function() {
         
         // Initialize app when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Add some sample approved benches if none exist
+            // Add some sample approved benches if none exist (fallback)
             if (approvedBenches.length === 0) {
                 const sampleBenches = [
                     {
@@ -1249,18 +1225,6 @@ document.getElementById('layerToggleBtn').onclick = function() {
                         lng: 9.8333,
                         benchImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2E4ZDVhOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM0Y2FmNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn6qRPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CYW5rIGFtIEpvcmRhbmJhZDwvdGV4dD48L3N2Zz4=",
                         viewImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2FkZGZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiMyMTk2RjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn4yEPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5QYW5vcmFtYS1BdXNzaWNodDwvdGV4dD48L3N2Zz4=",
-                        user: "system@benchmap.com",
-                        approved: true,
-                        created: new Date().toISOString()
-                    },
-                    {
-                        id: 2,
-                        name: "Waldbank Schönbuch",
-                        description: "Ruhige Bank im Naturpark Schönbuch mit Blick auf die Waldlichtung. Ideal zum Entspannen und Vogelbeobachten.",
-                        lat: 48.6000,
-                        lng: 9.0500,
-                        benchImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Q0ZWRkYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM0Y2FmNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn6qRPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5XYWxkYmFuayBTY2jDtm5idWNoPC90ZXh0Pjwvc3ZnPg==",
-                        viewImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y0ZjhmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM2NmJiNmEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn4y0PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5XYWxkbGljaHR1bmctQXVzc2ljaHQ8L3RleHQ+PC9zdmc+",
                         user: "system@benchmap.com",
                         approved: true,
                         created: new Date().toISOString()
