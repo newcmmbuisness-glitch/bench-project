@@ -18,7 +18,6 @@ exports.handler = async (event, context) => {
   try {
     const { name, description, lat, lng, benchImage, viewImage, userEmail } = JSON.parse(event.body);
 
-    // Validierung
     if (!name || !description || !lat || !lng || !benchImage || !viewImage || !userEmail) {
       return {
         statusCode: 400,
@@ -27,10 +26,9 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Verbindung zur Neon-Datenbank
-    const sql = neon(process.env.NETLIFY_DATABASE_URL);
+    console.log('DB URL:', process.env.NETLIFY_DATABASE_URL);
+    const sql = await neon(process.env.NETLIFY_DATABASE_URL);
 
-    // Datensatz einfügen
     const result = await sql`
       INSERT INTO pending_benches (
         name, description, lat, lng,
@@ -52,7 +50,7 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error(error);
+    console.error('Error in add_bench:', error);
     return {
       statusCode: 500,
       headers,
@@ -60,5 +58,4 @@ exports.handler = async (event, context) => {
     };
   }
 };
-
 
