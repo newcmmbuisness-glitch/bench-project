@@ -1,4 +1,5 @@
 const { neon } = require('@neondatabase/serverless');
+const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -26,8 +27,8 @@ exports.handler = async (event, context) => {
       };
     }
 
-    console.log('DB URL:', process.env.NETLIFY_DATABASE_URL);
-    const sql = await neon(process.env.NETLIFY_DATABASE_URL);
+
+  
 
     const result = await sql`
       INSERT INTO pending_benches (
@@ -58,4 +59,5 @@ exports.handler = async (event, context) => {
     };
   }
 };
+
 
