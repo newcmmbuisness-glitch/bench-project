@@ -28,7 +28,7 @@ exports.handler = async (event, context) => {
     }
 
     // Verbindung zur Neon-Datenbank
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
     // Datensatz einfügen
     const result = await sql`
@@ -60,4 +60,5 @@ exports.handler = async (event, context) => {
     };
   }
 };
+
 
