@@ -9,7 +9,6 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: 'ID fehlt' };
     }
 
-    // Bank aus pending_benches abrufen
     const bench = await sql`
       SELECT * FROM pending_benches WHERE id = ${id}
     `;
@@ -20,7 +19,18 @@ exports.handler = async (event) => {
 
     const b = bench[0];
 
-    // Insert in benches
     await sql`
       INSERT INTO benches (name, description, latitude, longitude, bench_image, view_image, user_email, created_at)
-      VALUES (${b.name}, ${b.description}, ${b.latitude}, ${b.longitude}, ${b.bench_image}, ${b.view_image}, ${b.user
+      VALUES (${b.name}, ${b.description}, ${b.latitude}, ${b.longitude}, ${b.bench_image}, ${b.view_image}, ${b.user_email}, ${b.created_at})
+    `;
+
+    await sql`
+      DELETE FROM pending_benches WHERE id = ${id}
+    `;
+
+    return { statusCode: 200, body: JSON.stringify({ success: true }) };
+  } catch (error) {
+    console.error(error);
+    return { statusCode: 500, body: 'Fehler beim Genehmigen der Bank' };
+  }
+};
