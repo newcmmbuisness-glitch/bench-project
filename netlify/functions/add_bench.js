@@ -5,7 +5,7 @@ exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE'
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   };
 
   if (event.httpMethod === 'OPTIONS') {
@@ -13,18 +13,21 @@ exports.handler = async (event, context) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
   }
 
   try {
-    // Ich nehme an, das Frontend sendet lat und lng, deswegen hier so:
     const { name, description, lat, lng, benchImage, viewImage, userEmail } = JSON.parse(event.body);
 
     if (!name || !description || !lat || !lng || !benchImage || !viewImage || !userEmail) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ success: false, error: 'Alle Felder sind erforderlich!' })
+        body: JSON.stringify({ success: false, error: 'Alle Felder sind erforderlich!' }),
       };
     }
 
@@ -45,7 +48,7 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, id: result[0].id })
+      body: JSON.stringify({ success: true, id: result[0].id }),
     };
 
   } catch (error) {
@@ -53,9 +56,7 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ success: false, error: 'Interner Serverfehler' })
+      body: JSON.stringify({ success: false, error: 'Interner Serverfehler' }),
     };
   }
 };
-
-
