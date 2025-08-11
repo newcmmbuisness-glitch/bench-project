@@ -17,6 +17,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Ich nehme an, das Frontend sendet lat und lng, deswegen hier so:
     const { name, description, lat, lng, benchImage, viewImage, userEmail } = JSON.parse(event.body);
 
     if (!name || !description || !lat || !lng || !benchImage || !viewImage || !userEmail) {
@@ -27,12 +28,9 @@ exports.handler = async (event, context) => {
       };
     }
 
-
-  
-
     const result = await sql`
       INSERT INTO pending_benches (
-        name, description, lat, lng,
+        name, description, latitude, longitude,
         bench_image, view_image, user_email,
         approved, created_at
       )
