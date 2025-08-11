@@ -809,51 +809,71 @@ document.getElementById('layerToggleBtn').onclick = function() {
             return operations[Math.floor(Math.random() * operations.length)]();
         }
         
-        function register(event) {
-            event.preventDefault();
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const captchaAnswer = parseInt(document.getElementById('registerCaptchaAnswer').value);
-            
-            if (password.length < 6) {
-                showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
-                return;
-            }
-            
-            if (captchaAnswer !== registerCaptcha.answer) {
-                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
-                generateCaptchas();
-                document.getElementById('registerCaptchaAnswer').value = '';
-                return;
-            }
-            
-            if (users.find(u => u.email === email)) {
-                showNotification('Diese E-Mail ist bereits registriert!', 'error');
-                return;
-            }
-            
-            users.push({ email, password, isAdmin: false, registered: new Date().toISOString() });
-            localStorage.setItem('benchUsers', JSON.stringify(users));
-            
+      function register(event) {
+    event.preventDefault();
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+    const captchaAnswer = parseInt(document.getElementById('registerCaptchaAnswer').value);
+
+    if (password.length < 6) {
+        showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
+        return;
+    }
+
+    if (captchaAnswer !== registerCaptcha.answer) {
+        showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+        generateCaptchas();
+        document.getElementById('registerCaptchaAnswer').value = '';
+        return;
+    }
+
+    fetch('/.netlify/functions/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'register', email, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
             showNotification('✅ Registrierung erfolgreich! Sie können sich jetzt anmelden.', 'success');
             showTab('login');
-            document.getElementById('registerEmail').value = '';
-            document.getElementById('registerPassword').value = '';
-            document.getElementById('registerCaptchaAnswer').value = '';
+        } else {
+            showNotification(data.error || 'Registrierung fehlgeschlagen', 'error');
         }
+    });
+}
         
-        function login(event) {
-            event.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
-            
-            if (captchaAnswer !== loginCaptcha.answer) {
-                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
-                generateCaptchas();
-                document.getElementById('loginCaptchaAnswer').value = '';
-                return;
-            }
+      function login(event) {
+    event.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
+
+    if (captchaAnswer !== loginCaptcha.answer) {
+        showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+        generateCaptchas();
+        document.getElementById('loginCaptchaAnswer').value = '';
+        return;
+    }
+
+    fetch('/.netlify/functions/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            currentUser = { email: data.email, isAdmin: data.isAdmin };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            closeLogin();
+            updateAuthButtons();
+            showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
+        } else {
+            showNotification(data.error || '❌ Ungültige Anmeldedaten!', 'error');
+        }
+    });
+}
             
             // Check for admin account
             if (email === 'admin@benchmap.com' && password === 'admin123') {
