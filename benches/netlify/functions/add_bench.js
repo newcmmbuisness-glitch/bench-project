@@ -1,23 +1,63 @@
-import { neon } from '@netlify/neon';
+const { neon } = require('@neondatabase/serverless');
 
-const sql = neon();
+exports.handler = async (event, context) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE'
+  };
 
-export async function handler(event) {
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
   try {
-    const { name, description, lat, lng } = JSON.parse(event.body);
+    const { name, description, lat, lng, benchImage, viewImage, userEmail } = JSON.parse(event.body);
 
-    await sql`
-      INSERT INTO benches (name, description, latitude, longitude)
-      VALUES (${name}, ${description}, ${lat}, ${lng})
+    // Validierung
+    if (!name || !description || !lat || !lng || !benchImage || !viewImage || !userEmail) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Alle Felder sind erforderlich!' })
+      };
+    }
+
+    // Verbindung zur Neon-Datenbank
+    const sql = neon(process.env.DATABASE_URL);
+
+    // Datensatz einfügen
+    const result = await sql`
+      INSERT INTO pending_benches (
+        name, description, lat, lng,
+        bench_image, view_image, user_email,
+        approved, created_at
+      )
+      VALUES (
+        ${name}, ${description}, ${lat}, ${lng},
+        ${benchImage}, ${viewImage}, ${userEmail},
+        false, NOW()
+      )
+      RETURNING id;
     `;
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: 'Bench added successfully!' }),
+      headers,
+      body: JSON.stringify({ success: true, id: result[0].id })
     };
+
   } catch (error) {
+    console.error(error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
+      headers,
+      body: JSON.stringify({ success: false, error: 'Interner Serverfehler' })
     };
   }
+};
+
