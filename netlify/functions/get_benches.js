@@ -22,7 +22,16 @@ exports.handler = async (event, context) => {
 
   try {
     const benches = await sql`
-      SELECT id, name, description, latitude, longitude, created_at
+      SELECT 
+        id, 
+        name, 
+        description, 
+        latitude, 
+        longitude, 
+        bench_image, 
+        view_image, 
+        user_email, 
+        created_at
       FROM benches
       ORDER BY created_at DESC
     `;
