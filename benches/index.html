@@ -1114,7 +1114,7 @@
                 iconSize:[30,30], 
                 iconAnchor:[15,15] 
             });
-            const marker = L.marker([b.lat, b.lng], { icon: benchIcon }).addTo(map);
+            const marker = L.marker([b.latitude, b.longitude], { icon: benchIcon }).addTo(map);
             const popupContent = `
                 <div class="popup-content">
                     <h3>${escapeHtml(b.name)}</h3>
@@ -1129,7 +1129,7 @@
                     </button>
                 </div>`;
             marker.bindPopup(popupContent);
-            marker.on('popupopen', () => updateAddressForBench(b.id, b.lat, b.lng));
+            marker.on('popupopen', () => updateAddressForBench(b.id, b.latitude, b.longitude));
             benchMarkers.push({ marker, bench: b });
         }
         
