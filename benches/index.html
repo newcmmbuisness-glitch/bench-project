@@ -1008,21 +1008,48 @@ document.getElementById('layerToggleBtn').onclick = function() {
             if (previewId === 'viewImagePreview') viewImageFile = null;
         }
         
-        function submitBench(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('benchName').value.trim();
-            const description = document.getElementById('benchDescription').value.trim();
-            
-            if (!name || !description) {
-                showNotification('❌ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
-                return;
-            }
-            
-            if (!benchImageFile || !viewImageFile) {
-                showNotification('❌ Bitte laden Sie beide Bilder hoch (Bank und Aussicht)!', 'error');
-                return;
-            }
+       function submitBench(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('benchName').value.trim();
+    const description = document.getElementById('benchDescription').value.trim();
+
+    if (!name || !description) {
+        showNotification('❌ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
+        return;
+    }
+
+    if (!benchImageFile || !viewImageFile) {
+        showNotification('❌ Bitte laden Sie beide Bilder hoch (Bank und Aussicht)!', 'error');
+        return;
+    }
+
+    const lat = parseFloat(pendingBenchLat);
+    const lng = parseFloat(pendingBenchLng);
+
+    // Sende die Bankdaten an die Netlify-Function
+    fetch('/.netlify/functions/add_bench', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name, description, lat, lng
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.message) {
+            cancelAddBench();
+            showNotification('✅ Bank erfolgreich eingereicht!', 'success');
+        } else if (data && data.error) {
+            showNotification('❌ Fehler beim Speichern: ' + data.error, 'error');
+        } else {
+            showNotification('❌ Unbekannter Fehler beim Speichern!', 'error');
+        }
+    })
+    .catch(err => {
+        showNotification('❌ Netzwerkfehler: ' + err.message, 'error');
+    });
+}
             
             // Convert images to base64 for storage
             const reader1 = new FileReader();
