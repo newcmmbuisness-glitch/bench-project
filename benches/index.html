@@ -452,8 +452,9 @@
             <span class="close" onclick="closeLogin()">&times;</span>
             <h2>Anmelden / Registrieren</h2>
             <div class="auth-tabs">
-                <button class="tab-btn active" onclick="showTab('login')">Anmelden</button>
-                <button class="tab-btn" onclick="showTab('register')">Registrieren</button>
+                <button class="tab-btn active" onclick="showTab('login', event)">Anmelden</button>
+                <button class="tab-btn" onclick="showTab('register', event)">Registrieren</button>
+
             </div>
             
             <div id="loginTab" class="tab-content active">
@@ -750,12 +751,14 @@
             document.getElementById('loginModal').style.display = 'none';
         }
         
-        function showTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-            
-            document.getElementById(tab + 'Tab').classList.add('active');
-            event.target.classList.add('active');
+      function showTab(tab, event) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+
+    document.getElementById(tab + 'Tab').classList.add('active');
+    event.target.classList.add('active');
+}
+
         }
         
         function generateCaptchas() {
