@@ -836,85 +836,85 @@
             });
         }
             
-        function login(event) {
-            event.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
+       function login(event) {
+    event.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
 
-            if (captchaAnswer !== loginCaptcha.answer) {
-                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
-                generateCaptchas();
-                document.getElementById('loginCaptchaAnswer').value = '';
-                return;
-            }
+    if (captchaAnswer !== loginCaptcha.answer) {
+        showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+        generateCaptchas();
+        document.getElementById('loginCaptchaAnswer').value = '';
+        return;
+    }
 
-            fetch('/.netlify/functions/auth', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'login', email, password })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    currentUser = { email: data.email, isAdmin: data.isAdmin };
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    closeLogin();
-                    updateAuthButtons();
-                    showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
-                    
-                    // Clear form
-                    document.getElementById('loginEmail').value = '';
-                    document.getElementById('loginPassword').value = '';
-                    document.getElementById('loginCaptchaAnswer').value = '';
-                } else {
-                    showNotification(data.error || '❌ Ungültige Anmeldedaten!', 'error');
-                }
-            })
-            .catch(error => {
-                showNotification('❌ Netzwerkfehler beim Login!', 'error');
-                console.error('Login error:', error);
-            });
+    fetch('/.netlify/functions/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            currentUser = { email: data.email, isAdmin: data.isAdmin };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            closeLogin();
+            updateAuthButtons();
+            showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
+            
+            // Form leeren
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginCaptchaAnswer').value = '';
+        } else {
+            showNotification(data.error || '❌ Ungültige Anmeldedaten!', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('❌ Netzwerkfehler beim Login!', 'error');
+        console.error('Login error:', error);
+    });
+}
 
+// 🔹 Diese drei Funktionen außerhalb von login()
 function showPasswordResetForm(event) {
-  event.preventDefault();
-  document.getElementById('loginForm').style.display = 'none';
-  document.getElementById('passwordResetDiv').style.display = 'block';
+    event.preventDefault();
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('passwordResetDiv').style.display = 'block';
 }
 
 function hidePasswordResetForm() {
-  document.getElementById('passwordResetDiv').style.display = 'none';
-  document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('passwordResetDiv').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
 }
 
 function requestPasswordReset() {
-  const email = document.getElementById('resetEmail').value;
-  if (!email) {
-    showNotification('Bitte gib deine E-Mail-Adresse ein.', 'error');
-    return;
-  }
-
-  fetch('/.netlify/functions/request_password_reset', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      showNotification('Anweisungen zum Zurücksetzen wurden an deine E-Mail gesendet.', 'success');
-      hidePasswordResetForm();
-    } else {
-      showNotification(data.error || 'Fehler beim Anfordern des Passwort-Resets.', 'error');
+    const email = document.getElementById('resetEmail').value;
+    if (!email) {
+        showNotification('Bitte gib deine E-Mail-Adresse ein.', 'error');
+        return;
     }
-  })
-  .catch(() => {
-    showNotification('Netzwerkfehler beim Anfordern des Passwort-Resets.', 'error');
-  });
+
+    fetch('/.netlify/functions/request_password_reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Anweisungen zum Zurücksetzen wurden an deine E-Mail gesendet.', 'success');
+            hidePasswordResetForm();
+        } else {
+            showNotification(data.error || 'Fehler beim Anfordern des Passwort-Resets.', 'error');
+        }
+    })
+    .catch(() => {
+        showNotification('Netzwerkfehler beim Anfordern des Passwort-Resets.', 'error');
+    });
 }
 
-			
-        }
         
         function logout() {
             currentUser = null;
