@@ -33,24 +33,22 @@ exports.handler = async (event) => {
       VALUES (${userId}, ${token}, ${expiresAt})
     `;
 
-    // Outlook SMTP Setup
+    // --- Mailjet SMTP Setup ---
     const transporter = nodemailer.createTransport({
-      host: 'smtp.office365.com',
+      host: 'in-v3.mailjet.com',
       port: 587,
-      secure: false,
+      secure: false, 
       auth: {
-        user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASSWORD,
-      },
-      tls: {
-        ciphers: 'SSLv3'
+        user: process.env.MAILJET_API_KEY,    // <-- Hier wird der API-Schlüssel verwendet
+        pass: process.env.MAILJET_SECRET_KEY  // <-- Hier wird der geheime Schlüssel verwendet
       }
     });
 
-    const resetUrl = `https://deine-domain.com/reset-password?token=${token}`;
+    // WICHTIG: Ersetzen Sie "deine-domain.com" durch Ihre tatsächliche Netlify-URL
+    const resetUrl = `https://grand-licorice-c45308.netlify.app/reset-password?token=${token}`;
 
     const mailOptions = {
-      from: `"Dein App Name" <${process.env.SMTP_EMAIL}>`,
+      from: `"Benches App" <${process.env.MAILJET_FROM_EMAIL}>`, // Absenderadresse (muss verifiziert sein)
       to: email,
       subject: 'Passwort zurücksetzen',
       text: `Hallo,\n\nBitte klicke auf den Link, um dein Passwort zurückzusetzen:\n${resetUrl}\n\nDer Link ist 1 Stunde gültig.\n\nFalls du kein Passwort zurücksetzen wolltest, ignoriere diese Nachricht.`,
