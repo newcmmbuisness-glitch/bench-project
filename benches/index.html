@@ -407,33 +407,33 @@
             background: #45a049;
             transform: scale(1.05);
         }
-    </style>
+  </style>
 </head>
 <body>
     <div id="map"></div>
-	<button id="layerToggleBtn" title="Kartenansicht wechseln" style="
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1100;
-  background: #fff;
-  color: #222;
-  border: 2px solid #4caf50;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  font-size: 22px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.14);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-">
-  🗺️
-</button>
+    <button id="layerToggleBtn" title="Kartenansicht wechseln" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1100;
+        background: #fff;
+        color: #222;
+        border: 2px solid #4caf50;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        font-size: 22px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    ">
+    🗺️
+    </button>
 		
-	<button id="adminBtn" class="admin-btn" onclick="openAdmin()">🛠️ Admin</button>
+    <button id="adminBtn" class="admin-btn" onclick="openAdmin()">🛠️ Admin</button>
     <div class="app-title"><h1>🪑 Benches</h1></div>
     
     <div id="authButtons" class="auth-buttons">
@@ -454,42 +454,32 @@
             <div class="auth-tabs">
                 <button class="tab-btn active" onclick="showTab('login', event)">Anmelden</button>
                 <button class="tab-btn" onclick="showTab('register', event)">Registrieren</button>
-
-
             </div>
             
             <div id="loginTab" class="tab-content active">
-  <form onsubmit="login(event)">
-    <input type="email" id="loginEmail" placeholder="E-Mail" required>
-    <input type="password" id="loginPassword" placeholder="Passwort" required>
-    <div class="captcha-box">
-      <p id="loginCaptcha"></p>
-      <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
+                <form onsubmit="login(event)">
+                    <input type="email" id="loginEmail" placeholder="E-Mail" required>
+                    <input type="password" id="loginPassword" placeholder="Passwort" required>
+                    <div class="captcha-box">
+                        <p id="loginCaptcha"></p>
+                        <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
+                    </div>
+                    <button type="submit">Anmelden</button>
+                    <p style="margin-top:10px;">
+                        <a href="#" onclick="showPasswordResetForm(event)">Passwort vergessen?</a>
+                    </p>
+                </form>
+            </div>
+
+            <div id="passwordResetDiv" style="display:none;">
+                <form onsubmit="event.preventDefault(); requestPasswordReset();">
+                    <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required>
+                    <button type="submit">Passwort zurücksetzen</button>
+                    <button type="button" onclick="hidePasswordResetForm()">Abbrechen</button>
+                </form>
+            </div>
+        </div>
     </div>
-    <button type="submit">Anmelden</button>
-    <p style="margin-top:10px;">
-      <a href="#" onclick="showPasswordResetForm(event)">Passwort vergessen?</a>
-    </p>
-  </form>
-</div>
-
-<!-- Dein verstecktes Passwort-Zurücksetzen-Formular -->
-<div id="passwordResetDiv" style="display:none;">
-  <form onsubmit="event.preventDefault(); requestPasswordReset();">
-    <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required>
-    <button type="submit">Passwort zurücksetzen</button>
-    <button type="button" onclick="hidePasswordResetForm()">Abbrechen</button>
-  </form>
-</div>
-
-
-    <div class="map-instruction" id="mapInstruction">
-        📍 Klicken Sie auf die Karte, um die neue Bank zu platzieren
-        <br><small style="font-weight: normal; margin-top: 10px; display: block;">
-            Oder klicken Sie auf ❌ zum Abbrechen
-        </small>
-    </div>
-    
     <div id="plzModal" class="plz-modal">
         <h2>🗺️ Willkommen bei Benches!</h2>
         <p>Wählen Sie Ihren Startbereich für die Karte:</p>
@@ -498,9 +488,13 @@
         <button onclick="goToLocation()" style="background: #4caf50;">🗺️ Zur Karte</button>
         <button onclick="useCurrentLocation()" style="background: #2196F3;">📍 Mein Standort</button>
         <button onclick="useDefaultLocation()" style="background: #666;">Stuttgart nutzen</button>
-
     </div>
-    
+    <div class="map-instruction" id="mapInstruction">
+        📍 Klicken Sie auf die Karte, um die neue Bank zu platzieren
+        <br><small style="font-weight: normal; margin-top: 10px; display: block;">
+            Oder klicken Sie auf ❌ zum Abbrechen
+        </small>
+    </div>
     <div id="addBenchForm" class="add-bench-form">
         <h2>🪑 Neue Bank hinzufügen</h2>
         <form onsubmit="submitBench(event)">
@@ -541,9 +535,6 @@
     </div>
     
     <div id="notification" class="notification"></div>
-
-
-
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script>
