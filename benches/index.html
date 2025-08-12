@@ -459,30 +459,29 @@
             </div>
             
             <div id="loginTab" class="tab-content active">
-                <form onsubmit="login(event)">
-                    <input type="email" id="loginEmail" placeholder="E-Mail" required>
-                    <input type="password" id="loginPassword" placeholder="Passwort" required>
-                    <div class="captcha-box">
-                        <p id="loginCaptcha"></p>
-                        <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
-                    </div>
-                    <button type="submit">Anmelden</button>
-                </form>
-            </div>
-            
-            <div id="registerTab" class="tab-content">
-                <form onsubmit="register(event)">
-                    <input type="email" id="registerEmail" placeholder="E-Mail" required>
-                    <input type="password" id="registerPassword" placeholder="Passwort (min. 6 Zeichen)" required>
-                    <div class="captcha-box">
-                        <p id="registerCaptcha"></p>
-                        <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" required>
-                    </div>
-                    <button type="submit">Registrieren</button>
-                </form>
-            </div>
-        </div>
+  <form onsubmit="login(event)">
+    <input type="email" id="loginEmail" placeholder="E-Mail" required>
+    <input type="password" id="loginPassword" placeholder="Passwort" required>
+    <div class="captcha-box">
+      <p id="loginCaptcha"></p>
+      <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
     </div>
+    <button type="submit">Anmelden</button>
+    <p style="margin-top:10px;">
+      <a href="#" onclick="showPasswordResetForm(event)">Passwort vergessen?</a>
+    </p>
+  </form>
+</div>
+
+<!-- Dein verstecktes Passwort-Zurücksetzen-Formular -->
+<div id="passwordResetDiv" style="display:none;">
+  <form onsubmit="event.preventDefault(); requestPasswordReset();">
+    <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required>
+    <button type="submit">Passwort zurücksetzen</button>
+    <button type="button" onclick="hidePasswordResetForm()">Abbrechen</button>
+  </form>
+</div>
+
 
     <div class="map-instruction" id="mapInstruction">
         📍 Klicken Sie auf die Karte, um die neue Bank zu platzieren
