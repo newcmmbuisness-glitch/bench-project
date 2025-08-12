@@ -880,15 +880,15 @@
 // 🔹 Diese drei Funktionen außerhalb von login()
 function showPasswordResetForm(event) {
     event.preventDefault();
-    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('loginTab').style.display = 'none';
     document.getElementById('passwordResetDiv').style.display = 'block';
 }
 
 function hidePasswordResetForm() {
     document.getElementById('passwordResetDiv').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('loginTab').style.display = 'block';
 }
-
+		
 function requestPasswordReset() {
     const email = document.getElementById('resetEmail').value;
     if (!email) {
