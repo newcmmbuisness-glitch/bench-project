@@ -711,6 +711,14 @@
                 initMap();
             }
         }
+
+		// Hier das PLZ-Modal beim Laden anzeigen:
+window.addEventListener('DOMContentLoaded', () => {
+    showLocationModal();
+});
+
+
+		
         
         function updateAuthButtons() {
             const authDiv = document.getElementById('authButtons');
