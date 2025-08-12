@@ -1,6 +1,6 @@
 // netlify/functions/auth.js
 const { neon } = require('@neondatabase/serverless');
-const { encrypt } = require('./crypto_utils');
+const { encrypt, decrypt } = require('./crypto_utils');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -10,11 +10,7 @@ exports.handler = async (event, context) => {
   };
 
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: '',
-    };
+    return { statusCode: 200, headers, body: '' };
   }
 
   if (event.httpMethod !== 'POST') {
@@ -28,9 +24,6 @@ exports.handler = async (event, context) => {
   try {
     const { action, email, password } = JSON.parse(event.body);
 
-    // Verbindung zur Neon-Datenbank
-    const sql = neon(process.env.NETLIFY_DATABASE_URL);
-
     if (!email || !password) {
       return {
         statusCode: 400,
@@ -39,8 +32,9 @@ exports.handler = async (event, context) => {
       };
     }
 
+    const sql = neon(process.env.NETLIFY_DATABASE_URL);
+
     if (action === 'register') {
-      // Prüfen ob User bereits existiert
       const existingUser = await sql`
         SELECT id FROM users WHERE email = ${email}
       `;
@@ -53,10 +47,8 @@ exports.handler = async (event, context) => {
         };
       }
 
-      // Passwort verschlüsseln mit AES
       const encryptedPassword = encrypt(password, process.env.AES_SECRET_KEY);
 
-      // Neuen User erstellen
       await sql`
         INSERT INTO users (email, password_hex, is_admin, created_at)
         VALUES (${email}, ${encryptedPassword}, false, NOW())
@@ -69,16 +61,22 @@ exports.handler = async (event, context) => {
       };
 
     } else if (action === 'login') {
-      // Passwort verschlüsseln, um Vergleich zu ermöglichen
-      const encryptedPassword = encrypt(password, process.env.AES_SECRET_KEY);
-
-      const user = await sql`
-        SELECT id, email, is_admin 
-        FROM users 
-        WHERE email = ${email} AND password_hex = ${encryptedPassword}
+      const users = await sql`
+        SELECT id, email, is_admin, password_hex FROM users WHERE email = ${email}
       `;
 
-      if (user.length === 0) {
+      if (users.length === 0) {
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ success: false, error: 'Ungültige Anmeldedaten!' }),
+        };
+      }
+
+      const user = users[0];
+      const decryptedPassword = decrypt(user.password_hex, process.env.AES_SECRET_KEY);
+
+      if (decryptedPassword !== password) {
         return {
           statusCode: 401,
           headers,
@@ -91,8 +89,8 @@ exports.handler = async (event, context) => {
         headers,
         body: JSON.stringify({
           success: true,
-          email: user[0].email,
-          isAdmin: user[0].is_admin,
+          email: user.email,
+          isAdmin: user.is_admin,
         }),
       };
     }
@@ -104,7 +102,6 @@ exports.handler = async (event, context) => {
     };
   } catch (error) {
     console.error('Auth error:', error);
-
     return {
       statusCode: 500,
       headers,
