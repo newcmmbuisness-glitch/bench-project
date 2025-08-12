@@ -17,7 +17,7 @@ exports.handler = async (event) => {
     // User finden
     const users = await sql`SELECT id FROM users WHERE email = ${email}`;
     if (users.length === 0) {
-      // Nicht verraten, ob User existiert (Sicherheit)
+      // Sicherheitsmaßnahme: nicht verraten, ob User existiert
       return { statusCode: 200, body: JSON.stringify({ success: true }) };
     }
 
@@ -33,22 +33,28 @@ exports.handler = async (event) => {
       VALUES (${userId}, ${token}, ${expiresAt})
     `;
 
-    // Mailer Setup (Beispiel Gmail, bitte deine SMTP-Daten einsetzen)
+    // Outlook SMTP Setup
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.office365.com',
+      port: 587,
+      secure: false,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD,
       },
+      tls: {
+        ciphers: 'SSLv3'
+      }
     });
 
     const resetUrl = `https://deine-domain.com/reset-password?token=${token}`;
 
     const mailOptions = {
-      from: '"Dein App Name" <no-reply@deinedomain.com>',
+      from: `"Dein App Name" <${process.env.SMTP_EMAIL}>`,
       to: email,
       subject: 'Passwort zurücksetzen',
       text: `Hallo,\n\nBitte klicke auf den Link, um dein Passwort zurückzusetzen:\n${resetUrl}\n\nDer Link ist 1 Stunde gültig.\n\nFalls du kein Passwort zurücksetzen wolltest, ignoriere diese Nachricht.`,
+      html: `<p>Hallo,</p><p>Bitte klicke <a href="${resetUrl}">hier</a>, um dein Passwort zurückzusetzen.</p><p>Der Link ist 1 Stunde gültig.</p><p>Falls du kein Passwort zurücksetzen wolltest, ignoriere diese Nachricht.</p>`,
     };
 
     await transporter.sendMail(mailOptions);
