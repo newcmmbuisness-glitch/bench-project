@@ -542,30 +542,7 @@
     
     <div id="notification" class="notification"></div>
 
-    <div class="image-viewer" id="imageViewer">
-        <button class="close-btn" onclick="closeImageViewer()">✕</button>
-        <div class="image-container" id="imageContainer"></div>
-    </div>
 
-	<form id="loginForm" onsubmit="login(event)">
-  <input id="loginEmail" type="email" placeholder="E-Mail" required />
-  <input id="loginPassword" type="password" placeholder="Passwort" required />
-  <input id="loginCaptchaAnswer" type="number" placeholder="Captcha-Antwort" required />
-  
-  <button type="submit">Anmelden</button>
-  
-  <p>
-    <a href="#" id="forgotPasswordLink" onclick="showPasswordResetForm(event)">Passwort vergessen?</a>
-  </p>
-</form>
-
-<!-- Verstecktes Formular für Passwort zurücksetzen -->
-<div id="passwordResetDiv" style="display:none;">
-  <h3>Passwort zurücksetzen</h3>
-  <input id="resetEmail" type="email" placeholder="Deine E-Mail" required />
-  <button onclick="requestPasswordReset()">Reset anfordern</button>
-  <button onclick="hidePasswordResetForm()">Abbrechen</button>
-</div>
 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
