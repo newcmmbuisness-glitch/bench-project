@@ -29,7 +29,7 @@ exports.handler = async (event, context) => {
     const { action, email, password } = JSON.parse(event.body);
     
     // Verbindung zur Neon-Datenbank
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
     if (action === 'register') {
       // Prüfen ob User bereits existiert
