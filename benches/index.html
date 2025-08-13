@@ -4,8 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Benches - Interaktive Karte</title>
-	<!-- Neue Links für Font und Tailwind CSS -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
@@ -231,14 +230,18 @@
         .app-title {
             position: fixed;
             top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 20px;
+            transform: none; /* Anpassung für die Positionierung links oben */
             z-index: 1001;
-            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             background: rgba(255,255,255,0.9);
             padding: 10px 20px;
             border-radius: 25px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-family: 'Inter', sans-serif;
+            cursor: pointer; /* macht das Logo klickbar */
         }
         .app-title h1 {
             margin: 0;
@@ -365,7 +368,7 @@
         .plz-control {
             position: fixed;
             top: 20px;
-            left: 20px;
+            left: 100px; /* Positioniert neben dem Logo */
             z-index: 1001;
             display: flex;
             gap: 5px;
@@ -415,8 +418,8 @@
 		.app-title {
             position: fixed;
             top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 20px; /* Anpassung für die Positionierung links oben */
+            transform: none; /* Anpassung für die Positionierung links oben */
             z-index: 1001;
             display: flex; /* Flexbox für die Ausrichtung des Logos */
             flex-direction: column;
@@ -426,6 +429,7 @@
             border-radius: 25px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             font-family: 'Inter', sans-serif;
+            cursor: pointer; /* macht das Logo klickbar */
         }
       
 		.bench-icon {
@@ -442,12 +446,63 @@
                 transform: scale(1);
             }
         }
+        
+        .leaflet-control-zoom {
+            display: none; /* Versteckt die Zoom-Buttons */
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px; /* Versteckt die Seitenleiste standardmäßig */
+            width: 250px;
+            height: 100%;
+            background-color: #f1f1f1;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+            z-index: 2000;
+            transition: left 0.3s ease;
+            padding-top: 80px; /* Platz für das Logo oben */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sidebar.open {
+            left: 0; /* Zeigt die Seitenleiste an */
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 15px;
+            width: 100%;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            transition: background 0.3s ease;
+        }
+        
+        .sidebar a:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+            display: none;
+        }
+        .overlay.active {
+            display: block;
+        }
 
   </style>
 </head>
 <body>
     <div id="map"></div>
-    <button id="layerToggleBtn" title="Kartenansicht wechseln" style="
+    <div class="overlay" onclick="toggleSidebar()"></div> <button id="layerToggleBtn" title="Kartenansicht wechseln" style="
         position: fixed;
         top: 20px;
         right: 20px;
@@ -470,25 +525,23 @@
     </button>
 		
     <button id="adminBtn" class="admin-btn" onclick="openAdmin()">🛠️ Admin</button>
-    <div class="app-title">
-    <!-- SVG-Icon für die Bank mit Animation -->
-    <svg class="bench-icon" width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <!-- Bank-Form in schlichtem Schwarz -->
+    
+    <div class="app-title" onclick="toggleSidebar()"> <svg class="bench-icon" width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <g fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Beine -->
             <line x1="20" y1="80" x2="20" y2="50" />
             <line x1="80" y1="80" x2="80" y2="50" />
-            <!-- Sitzfläche -->
             <path d="M15 50 H85" />
-            <!-- Rückenlehne -->
             <path d="M15 35 H85" />
         </g>
-        <!-- Text "ONE" auf der Rückenlehne -->
         <text x="50" y="45" font-family="'Inter', sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#000000">
             ONE
         </text>
     </svg>
-</div>
+    </div>
+    
+    <div id="sidebar" class="sidebar">
+        <a href="contact.html">Contact</a>
+    </div>
     
     <div id="authButtons" class="auth-buttons">
         <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
@@ -524,7 +577,6 @@
     </form>
 </div>
 
-<!-- 🔹 HIER kommt der neue Registrieren-Tab -->
 <div id="registerTab" class="tab-content">
     <form onsubmit="register(event)">
         <input type="email" id="registerEmail" placeholder="E-Mail" required>
@@ -537,8 +589,6 @@
         <button type="submit">Registrieren</button>
     </form>
 </div>
-<!-- 🔹 Ende Register-Tab -->
-
 <div id="passwordResetDiv" style="display:none;">
     <form onsubmit="event.preventDefault(); requestPasswordReset();">
         <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required>
@@ -616,6 +666,14 @@
         // Fallback für localStorage während Entwicklung
         let approvedBenches = JSON.parse(localStorage.getItem('approvedBenches') || '[]');
         
+        // Funktion zum Umschalten der Seitenleiste
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
         function initMap(){
             currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
             
@@ -1344,7 +1402,7 @@ function requestPasswordReset() {
                         latitude: 48.1668,
                         longitude: 9.8333,
                         benchImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2E4ZDVhOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM0Y2FmNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn6qRPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CYW5rIGFtIEpvcmRhbmJhZDwvdGV4dD48L3N2Zz4=",
-                        viewImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2FkZGZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiMyMTk2RjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn4yEPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5QYW5vcmFtYS1BdXNzaWNodDwvdGV4dD48L3N2Zz4=",
+                        viewImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2FkZGZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiMyMTk2RjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn4yEPC90ZXh0Pjx0ZXh0IHg9IjUwJSI yeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5QYW5vcmFtYS1BdXNzaWNodDwvdGV4dD48L3N2Zz4=",
                         user: "system@benchmap.com",
                         approved: true,
                         created: new Date().toISOString()
