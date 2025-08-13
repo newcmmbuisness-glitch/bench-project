@@ -4,9 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Benches - Interaktive Karte</title>
+	<!-- Neue Links für Font und Tailwind CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
         body { margin:0; font-family: Arial, sans-serif; }
+		body { margin:0; font-family: 'Inter', Arial, sans-serif; }
         #map { height:100vh; }
         .custom-bench-icon { 
             background:#4caf50; 
@@ -407,6 +411,38 @@
             background: #45a049;
             transform: scale(1.05);
         }
+		
+		.app-title {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            display: flex; /* Flexbox für die Ausrichtung des Logos */
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-family: 'Inter', sans-serif;
+        }
+      
+		.bench-icon {
+            animation: pulse 2s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
   </style>
 </head>
 <body>
@@ -434,7 +470,29 @@
     </button>
 		
     <button id="adminBtn" class="admin-btn" onclick="openAdmin()">🛠️ Admin</button>
-    <div class="app-title"><h1>🪑 Benches</h1></div>
+    <div class="app-title">
+    <!-- SVG-Icon für die Bank mit Animation -->
+    <svg class="bench-icon" width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Bank-Form in schlichtem Schwarz -->
+        <g fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Beine -->
+            <line x1="20" y1="80" x2="20" y2="50" />
+            <line x1="80" y1="80" x2="80" y2="50" />
+            <!-- Sitzfläche -->
+            <path d="M15 50 H85" />
+            <!-- Rückenlehne -->
+            <path d="M15 35 H85" />
+        </g>
+        <!-- Text "ONE" auf der Rückenlehne -->
+        <text x="50" y="45" font-family="'Inter', sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#000000">
+            ONE
+        </text>
+    </svg>
+    <!-- Titel in modernem, klarem Stil -->
+    <h1 class="text-5xl font-extrabold text-gray-800 mt-4">
+        Benches
+    </h1>
+</div>
     
     <div id="authButtons" class="auth-buttons">
         <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
