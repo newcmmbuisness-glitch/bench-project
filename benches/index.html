@@ -231,7 +231,7 @@
             position: fixed;
             top: 20px;
             left: 20px;
-            transform: none; /* Anpassung für die Positionierung links oben */
+            transform: none;
             z-index: 1001;
             display: flex;
             flex-direction: column;
@@ -241,7 +241,7 @@
             border-radius: 25px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             font-family: 'Inter', sans-serif;
-            cursor: pointer; /* macht das Logo klickbar */
+            cursor: pointer;
         }
         .app-title h1 {
             margin: 0;
@@ -252,47 +252,162 @@
         }
         .popup-content h3 { margin: 0 0 5px 0; color: #333; }
         .popup-content p { margin: 4px 0; color: #666; }
+
+        /* Neue verbesserte Bildanzeige */
         .image-viewer { 
             position: fixed; 
             inset:0; 
-            background: rgba(0,0,0,0.8); 
+            background: rgba(0,0,0,0.9); 
             display:none; 
-            z-index:2000; 
-            align-items:center; 
+            z-index:2500; 
+            align-items:flex-start; 
             justify-content:center; 
             padding: 20px;
+            overflow-y: auto;
         }
-        .image-container { 
-            display:flex; 
-            gap:18px; 
-            justify-content: center; 
-            align-items:flex-start;
-            max-width:100%;
-            max-height:80%;
-            flex-wrap: nowrap;
+        
+        .image-gallery {
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            width: 100%;
+            gap: 20px;
+            margin-top: 20px;
         }
+        
+        .main-images {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
         .image-box { 
-            background:white; 
-            border-radius:12px; 
-            padding:12px; 
-            min-width:320px; 
+            background: white; 
+            border-radius: 12px; 
+            padding: 0;
+            flex: 1;
+            max-width: 350px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .image-box h4 { 
+            margin: 0; 
+            padding: 15px;
+            text-align: center; 
+            color: #333; 
+            font-size: 18px;
+            font-weight: bold;
+            background: #f8f9fa;
+        }
+        
+        .image-box img { 
+            width: 100%; 
+            height: 250px; 
+            object-fit: cover; 
+            display: block;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .image-box img:hover {
+            transform: scale(1.02);
+        }
+        
+        .additional-images {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
             box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
-        .image-box h4 { margin: 0 0 10px 0; text-align: center; color: #333; }
-        .image-box img { width:100%; height:300px; object-fit:cover; border-radius:8px; display:block; }
-        .close-btn { 
-            position:absolute; 
-            top:18px; 
-            right:26px; 
-            background:white; 
-            border-radius:50%; 
-            width:40px; 
-            height:40px; 
-            border:none; 
-            font-size:18px; 
-            cursor:pointer; 
-            z-index: 2100;
+        
+        .additional-images h4 {
+            margin: 0 0 15px 0;
+            text-align: center;
+            color: #333;
+            font-size: 16px;
         }
+        
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .grid-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .grid-image:hover {
+            transform: scale(1.05);
+        }
+        
+        .add-image-btn {
+            width: 100%;
+            height: 120px;
+            border: 2px dashed #4caf50;
+            border-radius: 8px;
+            background: #f0f8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #4caf50;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .add-image-btn:hover {
+            background: #e8f5e8;
+            border-color: #45a049;
+        }
+        
+        .close-btn { 
+            position: fixed; 
+            top: 30px; 
+            right: 30px; 
+            background: white; 
+            border-radius: 50%; 
+            width: 50px; 
+            height: 50px; 
+            border: none; 
+            font-size: 24px; 
+            cursor: pointer; 
+            z-index: 2600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        
+        .close-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Fullscreen Image Modal */
+        .fullscreen-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            padding: 20px;
+        }
+        
+        .fullscreen-image {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
         .add-bench-form {
             position: fixed;
             top: 50%;
@@ -368,7 +483,7 @@
         .plz-control {
             position: fixed;
             top: 35px;
-            left: 140px; /* Positioniert neben dem Logo */
+            left: 140px;
             z-index: 1001;
             display: flex;
             gap: 5px;
@@ -415,23 +530,6 @@
             transform: scale(1.05);
         }
 		
-		.app-title {
-            position: fixed;
-            top: 20px;
-            left: 20px; /* Anpassung für die Positionierung links oben */
-            transform: none; /* Anpassung für die Positionierung links oben */
-            z-index: 1001;
-            display: flex; /* Flexbox für die Ausrichtung des Logos */
-            flex-direction: column;
-            align-items: center;
-            background: rgba(255,255,255,0.9);
-            padding: 10px 20px;
-            border-radius: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            font-family: 'Inter', sans-serif;
-            cursor: pointer; /* macht das Logo klickbar */
-        }
-      
 		.bench-icon {
             animation: pulse 2s infinite ease-in-out;
         }
@@ -448,27 +546,27 @@
         }
         
         .leaflet-control-zoom {
-            display: none; /* Versteckt die Zoom-Buttons */
+            display: none;
         }
         
         .sidebar {
             position: fixed;
             top: 0;
-            left: -300px; /* Versteckt die Seitenleiste standardmäßig */
+            left: -300px;
             width: 250px;
             height: 100%;
             background-color: #f1f1f1;
             box-shadow: 2px 0 5px rgba(0,0,0,0.5);
             z-index: 2000;
             transition: left 0.3s ease;
-            padding-top: 80px; /* Platz für das Logo oben */
+            padding-top: 80px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
         .sidebar.open {
-            left: 0; /* Zeigt die Seitenleiste an */
+            left: 0;
         }
 
         .sidebar a {
@@ -498,11 +596,38 @@
             display: block;
         }
 
+        /* Add Image Modal Styles */
+        .add-image-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2100;
+        }
+        
+        .add-image-form {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            min-width: 400px;
+            max-width: 500px;
+        }
+        
+        .add-image-form h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
   </style>
 </head>
 <body>
     <div id="map"></div>
-    <div class="overlay" onclick="toggleSidebar()"></div> <button id="layerToggleBtn" title="Kartenansicht wechseln" style="
+    <div class="overlay" onclick="toggleSidebar()"></div> 
+    <button id="layerToggleBtn" title="Kartenansicht wechseln" style="
         position: fixed;
         top: 20px;
         right: 20px;
@@ -526,17 +651,18 @@
 		
     <button id="adminBtn" class="admin-btn" onclick="openAdmin()">🛠️ Admin</button>
     
-    <div class="app-title" onclick="toggleSidebar()"> <svg class="bench-icon" width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <g fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="20" y1="80" x2="20" y2="50" />
-            <line x1="80" y1="80" x2="80" y2="50" />
-            <path d="M15 50 H85" />
-            <path d="M15 35 H85" />
-        </g>
-        <text x="50" y="45" font-family="'Inter', sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#000000">
-            ONE
-        </text>
-    </svg>
+    <div class="app-title" onclick="toggleSidebar()"> 
+        <svg class="bench-icon" width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="20" y1="80" x2="20" y2="50" />
+                <line x1="80" y1="80" x2="80" y2="50" />
+                <path d="M15 50 H85" />
+                <path d="M15 35 H85" />
+            </g>
+            <text x="50" y="45" font-family="'Inter', sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#000000">
+                ONE
+            </text>
+        </svg>
     </div>
     
     <div id="sidebar" class="sidebar">
@@ -544,12 +670,12 @@
     </div>
     
     <div id="authButtons" class="auth-buttons">
-        <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
+        <button class="login-btn" onclick="showLogin()">🔓 Anmelden</button>
     </div>
     
     <div class="plz-control">
         <input type="text" id="plzChangeInput" placeholder="PLZ eingeben" maxlength="5" pattern="[0-9]{5}">
-        <button onclick="changePlzLocation()" title="Zu PLZ navigieren">🔍</button>
+        <button onclick="changePlzLocation()" title="Zu PLZ navigieren">📍</button>
     </div>
     
     <button class="add-bench-btn" id="addBenchBtn" onclick="checkLoginAndAdd()" title="Bank hinzufügen">➕</button>
@@ -563,42 +689,42 @@
                 <button class="tab-btn" onclick="showTab('register', event)">Registrieren</button>
             </div>
             <div id="loginTab" class="tab-content active">
-    <form onsubmit="login(event)">
-        <input type="email" id="loginEmail" placeholder="E-Mail" required>
-        <input type="password" id="loginPassword" placeholder="Passwort" required>
-        <div class="captcha-box">
-            <p id="loginCaptcha"></p>
-            <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
-        </div>
-        <button type="submit">Anmelden</button>
-        <p style="margin-top:10px;">
-            <a href="#" onclick="showPasswordResetForm(event)">Passwort vergessen?</a>
-        </p>
-    </form>
-</div>
+                <form onsubmit="login(event)">
+                    <input type="email" id="loginEmail" placeholder="E-Mail" required>
+                    <input type="password" id="loginPassword" placeholder="Passwort" required>
+                    <div class="captcha-box">
+                        <p id="loginCaptcha"></p>
+                        <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
+                    </div>
+                    <button type="submit">Anmelden</button>
+                    <p style="margin-top:10px;">
+                        <a href="#" onclick="showPasswordResetForm(event)">Passwort vergessen?</a>
+                    </p>
+                </form>
+            </div>
 
-<div id="registerTab" class="tab-content">
-    <form onsubmit="register(event)">
-        <input type="email" id="registerEmail" placeholder="E-Mail" required>
-        <input type="password" id="registerPassword" placeholder="Passwort" required>
-        <input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" required>
-        <div class="captcha-box">
-            <p id="registerCaptcha"></p>
-            <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" required>
-        </div>
-        <button type="submit">Registrieren</button>
-    </form>
-</div>
-<div id="passwordResetDiv" style="display:none;">
-    <form onsubmit="event.preventDefault(); requestPasswordReset();">
-        <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required>
-        <button type="submit">Passwort zurücksetzen</button>
-        <button type="button" onclick="hidePasswordResetForm()">Abbrechen</button>
-    </form>
-</div>
-
+            <div id="registerTab" class="tab-content">
+                <form onsubmit="register(event)">
+                    <input type="email" id="registerEmail" placeholder="E-Mail" required>
+                    <input type="password" id="registerPassword" placeholder="Passwort" required>
+                    <input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" required>
+                    <div class="captcha-box">
+                        <p id="registerCaptcha"></p>
+                        <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" required>
+                    </div>
+                    <button type="submit">Registrieren</button>
+                </form>
+            </div>
+            <div id="passwordResetDiv" style="display:none;">
+                <form onsubmit="event.preventDefault(); requestPasswordReset();">
+                    <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required>
+                    <button type="submit">Passwort zurücksetzen</button>
+                    <button type="button" onclick="hidePasswordResetForm()">Abbrechen</button>
+                </form>
+            </div>
         </div>
     </div>
+    
     <div id="plzModal" class="plz-modal">
         <h2>🗺️ Willkommen bei Benches!</h2>
         <p>Wählen Sie Ihren Startbereich für die Karte:</p>
@@ -608,12 +734,14 @@
         <button onclick="useCurrentLocation()" style="background: #2196F3;">📍 Mein Standort</button>
         <button onclick="useDefaultLocation()" style="background: #666;">Stuttgart nutzen</button>
     </div>
+    
     <div class="map-instruction" id="mapInstruction">
         📍 Klicken Sie auf die Karte, um die neue Bank zu platzieren
         <br><small style="font-weight: normal; margin-top: 10px; display: block;">
             Oder klicken Sie auf ❌ zum Abbrechen
         </small>
     </div>
+    
     <div id="addBenchForm" class="add-bench-form">
         <h2>🪑 Neue Bank hinzufügen</h2>
         <form onsubmit="submitBench(event)">
@@ -653,6 +781,45 @@
         </form>
     </div>
     
+    <!-- Neue verbesserte Bildanzeige -->
+    <div id="imageViewer" class="image-viewer">
+        <button class="close-btn" onclick="closeImageViewer()">✕</button>
+        <div id="imageGallery" class="image-gallery">
+            <!-- Content wird dynamisch eingefügt -->
+        </div>
+    </div>
+    
+    <!-- Fullscreen Image Modal -->
+    <div id="fullscreenModal" class="fullscreen-modal" onclick="closeFullscreen()">
+        <img id="fullscreenImage" class="fullscreen-image" src="" alt="">
+    </div>
+    
+    <!-- Add Image Modal -->
+    <div id="addImageModal" class="add-image-modal">
+        <div class="add-image-form">
+            <h2>📸 Neues Bild hinzufügen</h2>
+            <form onsubmit="submitAdditionalImage(event)">
+                <div class="form-group">
+                    <label>Beschreibung des Bildes:</label>
+                    <input type="text" id="additionalImageDescription" placeholder="z.B. Aussicht im Winter" required>
+                </div>
+                <div class="form-group">
+                    <label>Bild auswählen:</label>
+                    <div class="image-upload" id="additionalImageUpload">
+                        <p>Bild hochladen oder hierher ziehen</p>
+                        <input type="file" id="additionalImageInput" accept="image/*" style="display:none">
+                        <button type="button" onclick="document.getElementById('additionalImageInput').click()">Datei wählen</button>
+                    </div>
+                    <div class="image-preview" id="additionalImagePreview"></div>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-submit">📤 Bild einreichen</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddImageModal()">❌ Abbrechen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <div id="notification" class="notification"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -662,6 +829,8 @@
         let loginCaptcha = null, registerCaptcha = null;
         let pendingBenchLat = null, pendingBenchLng = null;
         let benchImageFile = null, viewImageFile = null;
+        let additionalImageFile = null;
+        let currentBenchId = null;
         
         // Fallback für localStorage während Entwicklung
         let approvedBenches = JSON.parse(localStorage.getItem('approvedBenches') || '[]');
@@ -713,6 +882,7 @@
                 
                 setupMapClick();
                 setupImageUpload();
+                setupAdditionalImageUpload();
             } else {
                 const coords = JSON.parse(localStorage.getItem('mapCenter') || '[48.7758, 9.1829]');
                 map.setView(coords, 12);
@@ -830,11 +1000,6 @@
                 initMap();
             }
         }
-
-
-
-
-		
         
         function updateAuthButtons() {
             const authDiv = document.getElementById('authButtons');
@@ -854,7 +1019,7 @@
                     adminBtn.style.display = 'block';
                 }
             } else {
-                authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
+                authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔓 Anmelden</button>';
                 addBtn.style.display = 'none';
                 if (adminBtn) adminBtn.style.display = 'none';
             }
@@ -874,7 +1039,6 @@
         }
         
         function showTab(tab, event) {
-            // Handle cases where event might be undefined
             const targetButton = event ? event.target : document.querySelector('.tab-btn.active');
             
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -882,11 +1046,9 @@
 
             document.getElementById(tab + 'Tab').classList.add('active');
             
-            // If we have an event, use the clicked button, otherwise find the tab button for the specified tab
             if (event && event.target) {
                 event.target.classList.add('active');
             } else {
-                // Find the correct tab button based on the tab parameter
                 const tabButtons = document.querySelectorAll('.tab-btn');
                 tabButtons.forEach(btn => {
                     if ((tab === 'login' && btn.textContent.includes('Anmelden')) ||
@@ -952,7 +1114,7 @@
             .then(data => {
                 if (data.success) {
                     showNotification('✅ Registrierung erfolgreich! Sie können sich jetzt anmelden.', 'success');
-                    showTab('login'); // Fixed: Call without event parameter
+                    showTab('login');
                 } else {
                     showNotification(data.error || 'Registrierung fehlgeschlagen', 'error');
                 }
@@ -963,85 +1125,82 @@
             });
         }
             
-       function login(event) {
-    event.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
+        function login(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
 
-    if (captchaAnswer !== loginCaptcha.answer) {
-        showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
-        generateCaptchas();
-        document.getElementById('loginCaptchaAnswer').value = '';
-        return;
-    }
+            if (captchaAnswer !== loginCaptcha.answer) {
+                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+                generateCaptchas();
+                document.getElementById('loginCaptchaAnswer').value = '';
+                return;
+            }
 
-    fetch('/.netlify/functions/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', email, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            currentUser = { email: data.email, isAdmin: data.isAdmin };
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            closeLogin();
-            updateAuthButtons();
-            showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
+            fetch('/.netlify/functions/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', email, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    currentUser = { email: data.email, isAdmin: data.isAdmin };
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    closeLogin();
+                    updateAuthButtons();
+                    showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
+                    
+                    document.getElementById('loginEmail').value = '';
+                    document.getElementById('loginPassword').value = '';
+                    document.getElementById('loginCaptchaAnswer').value = '';
+                } else {
+                    showNotification(data.error || '❌ Ungültige Anmeldedaten!', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('❌ Netzwerkfehler beim Login!', 'error');
+                console.error('Login error:', error);
+            });
+        }
+
+        function showPasswordResetForm(event) {
+            event.preventDefault();
+            document.getElementById('loginTab').style.display = 'none';
+            document.getElementById('passwordResetDiv').style.display = 'block';
+        }
+
+        function hidePasswordResetForm() {
+            document.getElementById('passwordResetDiv').style.display = 'none';
+            document.getElementById('loginTab').style.display = 'block';
+        }
             
-            // Form leeren
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('loginCaptchaAnswer').value = '';
-        } else {
-            showNotification(data.error || '❌ Ungültige Anmeldedaten!', 'error');
+        function requestPasswordReset() {
+            const email = document.getElementById('resetEmail').value;
+            if (!email) {
+                showNotification('Bitte gib deine E-Mail-Adresse ein.', 'error');
+                return;
+            }
+
+            fetch('/.netlify/functions/request_password_reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Anweisungen zum Zurücksetzen wurden an deine E-Mail gesendet.', 'success');
+                    hidePasswordResetForm();
+                } else {
+                    showNotification(data.error || 'Fehler beim Anfordern des Passwort-Resets.', 'error');
+                }
+            })
+            .catch(() => {
+                showNotification('Netzwerkfehler beim Anfordern des Passwort-Resets.', 'error');
+            });
         }
-    })
-    .catch(error => {
-        showNotification('❌ Netzwerkfehler beim Login!', 'error');
-        console.error('Login error:', error);
-    });
-}
-
-// 🔹 Diese drei Funktionen außerhalb von login()
-function showPasswordResetForm(event) {
-    event.preventDefault();
-    document.getElementById('loginTab').style.display = 'none';
-    document.getElementById('passwordResetDiv').style.display = 'block';
-}
-
-function hidePasswordResetForm() {
-    document.getElementById('passwordResetDiv').style.display = 'none';
-    document.getElementById('loginTab').style.display = 'block';
-}
-		
-function requestPasswordReset() {
-    const email = document.getElementById('resetEmail').value;
-    if (!email) {
-        showNotification('Bitte gib deine E-Mail-Adresse ein.', 'error');
-        return;
-    }
-
-    fetch('/.netlify/functions/request_password_reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('Anweisungen zum Zurücksetzen wurden an deine E-Mail gesendet.', 'success');
-            hidePasswordResetForm();
-        } else {
-            showNotification(data.error || 'Fehler beim Anfordern des Passwort-Resets.', 'error');
-        }
-    })
-    .catch(() => {
-        showNotification('Netzwerkfehler beim Anfordern des Passwort-Resets.', 'error');
-    });
-}
-
         
         function logout() {
             currentUser = null;
@@ -1109,6 +1268,12 @@ function requestPasswordReset() {
             });
         }
         
+        function setupAdditionalImageUpload() {
+            setupSingleImageUpload('additionalImageUpload', 'additionalImageInput', 'additionalImagePreview', (file) => {
+                additionalImageFile = file;
+            });
+        }
+        
         function setupSingleImageUpload(uploadId, inputId, previewId, callback) {
             const uploadArea = document.getElementById(uploadId);
             const fileInput = document.getElementById(inputId);
@@ -1168,6 +1333,7 @@ function requestPasswordReset() {
             document.getElementById(previewId).innerHTML = '';
             if (previewId === 'benchImagePreview') benchImageFile = null;
             if (previewId === 'viewImagePreview') viewImageFile = null;
+            if (previewId === 'additionalImagePreview') additionalImageFile = null;
         }
         
         function submitBench(event) {
@@ -1189,7 +1355,6 @@ function requestPasswordReset() {
             const lat = parseFloat(pendingBenchLat);
             const lng = parseFloat(pendingBenchLng);
 
-            // Convert images to base64 for database storage
             const reader1 = new FileReader();
             reader1.onload = function(e) {
                 const benchImageData = e.target.result;
@@ -1198,7 +1363,6 @@ function requestPasswordReset() {
                 reader2.onload = function(e) {
                     const viewImageData = e.target.result;
                     
-                    // Send to Netlify function
                     fetch('/.netlify/functions/add_bench', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1250,23 +1414,19 @@ function requestPasswordReset() {
         }
         
         function loadBenches() {
-            // Load benches from database
             fetch('/.netlify/functions/get_benches', {
                 method: 'GET'
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.benches) {
-                    // Clear existing markers
                     benchMarkers.forEach(item => {
                         map.removeLayer(item.marker);
                     });
                     benchMarkers = [];
                     
-                    // Add approved benches to map
                     data.benches.forEach(addSingleBenchToMap);
                 } else {
-                    // Fallback to localStorage if database not available
                     benchMarkers.forEach(item => {
                         map.removeLayer(item.marker);
                     });
@@ -1276,7 +1436,6 @@ function requestPasswordReset() {
             })
             .catch(error => {
                 console.error('Error loading benches:', error);
-                // Fallback to localStorage
                 benchMarkers.forEach(item => {
                     map.removeLayer(item.marker);
                 });
@@ -1341,31 +1500,180 @@ function requestPasswordReset() {
             }
         }
         
-        function showBenchImages(id){
-            // Find bench in current markers
+        // Neue verbesserte Bildanzeige-Funktion
+        function showBenchImages(id) {
             const benchData = benchMarkers.find(item => item.bench.id === id);
             const bench = benchData ? benchData.bench : null;
             
-            if (!bench) return;
+            if (!bench) {
+                console.error('Bench not found for id:', id);
+                return;
+            }
             
-            const cont = document.getElementById('imageContainer');
+            currentBenchId = id;
             const fallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CaWxkIG5pY2h0IGxhZGJhcjwvdGV4dD48L3N2Zz4=';
             
-            cont.innerHTML = `
-                <div class="image-box">
-                    <h4>🪑 Die Bank</h4>
-                    <img src="${bench.benchImage || bench.bench_image || fallback}" alt="Bank" onerror="this.src='${fallback}'">
-                </div>
-                <div class="image-box">
-                    <h4>🌄 Die Aussicht</h4>
-                    <img src="${bench.viewImage || bench.view_image || fallback}" alt="Aussicht" onerror="this.src='${fallback}'">
-                </div>
-            `;
-            document.getElementById('imageViewer').style.display = 'flex';
+            // Lade zusätzliche Bilder
+            loadAdditionalImages(id).then(additionalImages => {
+                const gallery = document.getElementById('imageGallery');
+                
+                let additionalImagesHtml = '';
+                let addButtonHtml = '';
+                
+                if (currentUser) {
+                    addButtonHtml = `
+                        <div class="add-image-btn" onclick="openAddImageModal()">
+                            ➕
+                        </div>
+                    `;
+                }
+                
+                if (additionalImages && additionalImages.length > 0) {
+                    const additionalImagesGrid = additionalImages.map(img => `
+                        <img src="${img.imageData || fallback}" 
+                             alt="${escapeHtml(img.description || 'Zusätzliches Bild')}" 
+                             class="grid-image" 
+                             onclick="showFullscreen('${img.imageData || fallback}')"
+                             onerror="this.src='${fallback}'">
+                    `).join('');
+                    
+                    additionalImagesHtml = `
+                        <div class="additional-images">
+                            <h4>📷 Weitere Bilder</h4>
+                            <div class="image-grid">
+                                ${additionalImagesGrid}
+                                ${addButtonHtml}
+                            </div>
+                        </div>
+                    `;
+                } else if (currentUser) {
+                    additionalImagesHtml = `
+                        <div class="additional-images">
+                            <h4>📷 Weitere Bilder</h4>
+                            <div class="image-grid">
+                                ${addButtonHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                gallery.innerHTML = `
+                    <div class="main-images">
+                        <div class="image-box">
+                            <h4>🪑 Die Bank</h4>
+                            <img src="${bench.benchImage || bench.bench_image || fallback}" 
+                                 alt="Bank" 
+                                 onclick="showFullscreen('${bench.benchImage || bench.bench_image || fallback}')"
+                                 onerror="this.src='${fallback}'">
+                        </div>
+                        <div class="image-box">
+                            <h4>🌄 Die Aussicht</h4>
+                            <img src="${bench.viewImage || bench.view_image || fallback}" 
+                                 alt="Aussicht" 
+                                 onclick="showFullscreen('${bench.viewImage || bench.view_image || fallback}')"
+                                 onerror="this.src='${fallback}'">
+                        </div>
+                    </div>
+                    ${additionalImagesHtml}
+                `;
+                
+                document.getElementById('imageViewer').style.display = 'flex';
+            });
         }
         
-        function closeImageViewer(){ 
-            document.getElementById('imageViewer').style.display = 'none'; 
+        async function loadAdditionalImages(benchId) {
+            try {
+                const response = await fetch(`/.netlify/functions/get_additional_images?benchId=${benchId}`);
+                const data = await response.json();
+                return data.success ? data.images : [];
+            } catch (error) {
+                console.error('Error loading additional images:', error);
+                return [];
+            }
+        }
+        
+        function showFullscreen(imageSrc) {
+            if (imageSrc && imageSrc !== 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CaWxkIG5pY2h0IGxhZGJhcjwvdGV4dD48L3N2Zz4=') {
+                document.getElementById('fullscreenImage').src = imageSrc;
+                document.getElementById('fullscreenModal').style.display = 'flex';
+            }
+        }
+        
+        function closeFullscreen() {
+            document.getElementById('fullscreenModal').style.display = 'none';
+        }
+        
+        function openAddImageModal() {
+            if (!currentUser) {
+                showNotification('🔐 Sie müssen sich anmelden, um Bilder hinzuzufügen!', 'error');
+                showLogin();
+                return;
+            }
+            document.getElementById('addImageModal').style.display = 'flex';
+        }
+        
+        function closeAddImageModal() {
+            document.getElementById('addImageModal').style.display = 'none';
+            document.getElementById('additionalImageDescription').value = '';
+            document.getElementById('additionalImagePreview').innerHTML = '';
+            additionalImageFile = null;
+        }
+        
+        function submitAdditionalImage(event) {
+            event.preventDefault();
+            
+            const description = document.getElementById('additionalImageDescription').value.trim();
+            
+            if (!description) {
+                showNotification('❌ Bitte geben Sie eine Beschreibung ein!', 'error');
+                return;
+            }
+            
+            if (!additionalImageFile) {
+                showNotification('❌ Bitte wählen Sie ein Bild aus!', 'error');
+                return;
+            }
+            
+            if (!currentBenchId) {
+                showNotification('❌ Keine Bank ausgewählt!', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+                
+                fetch('/.netlify/functions/add_additional_image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        benchId: currentBenchId,
+                        description: description,
+                        imageData: imageData,
+                        userEmail: currentUser.email
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        closeAddImageModal();
+                        showNotification('✅ Bild erfolgreich eingereicht! Es wird nach Admin-Prüfung freigeschaltet.', 'success');
+                        // Refresh the image gallery
+                        showBenchImages(currentBenchId);
+                    } else {
+                        showNotification('❌ Fehler beim Speichern: ' + (data.error || 'Unbekannter Fehler'), 'error');
+                    }
+                })
+                .catch(err => {
+                    showNotification('❌ Netzwerkfehler: ' + err.message, 'error');
+                });
+            };
+            reader.readAsDataURL(additionalImageFile);
+        }
+        
+        function closeImageViewer() { 
+            document.getElementById('imageViewer').style.display = 'none';
+            currentBenchId = null;
         }
         
         function escapeHtml(text){
@@ -1382,6 +1690,8 @@ function requestPasswordReset() {
         document.addEventListener('keydown', e => { 
             if (e.key === 'Escape') { 
                 closeImageViewer(); 
+                closeFullscreen();
+                closeAddImageModal();
                 if (addMode) toggleAddMode(); 
                 closeLogin();
                 if (document.getElementById('addBenchForm').style.display === 'block') {
@@ -1402,7 +1712,7 @@ function requestPasswordReset() {
                         latitude: 48.1668,
                         longitude: 9.8333,
                         benchImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2E4ZDVhOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM0Y2FmNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn6qRPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CYW5rIGFtIEpvcmRhbmJhZDwvdGV4dD48L3N2Zz4=",
-                        viewImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2FkZGZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiMyMTk2RjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn4yEPC90ZXh0Pjx0ZXh0IHg9IjUwJSI yeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5QYW5vcmFtYS1BdXNzaWNodDwvdGV4dD48L3N2Zz4=",
+                        viewImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2FkZGZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiMyMTk2RjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn4yEPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5QYW5vcmFtYS1BdXNzaWNodDwvdGV4dD48L3N2Zz4=",
                         user: "system@benchmap.com",
                         approved: true,
                         created: new Date().toISOString()
