@@ -1,5 +1,11 @@
+// netlify/functions/reset_password.js
+
+// crypto_utils.js importieren, um die gleiche Verschlüsselung zu verwenden
+const { encrypt } = require('./crypto_utils');
+
 const { neon } = require('@neondatabase/serverless');
-const bcrypt = require('bcryptjs');
+// bcrypt wird nicht mehr benötigt, da wir encrypt() verwenden
+// const bcrypt = require('bcryptjs'); 
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 exports.handler = async (event) => {
@@ -26,12 +32,14 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Token abgelaufen' }) };
     }
 
-    // Passwort hashen
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // ⭐ WICHTIGE ÄNDERUNG:
+    // Passwort mit der gleichen Funktion wie bei der Registrierung verschlüsseln,
+    // um das Format-Problem zu beheben.
+    const encryptedPassword = encrypt(newPassword, process.env.AES_SECRET_KEY);
 
     // Passwort aktualisieren
     await sql`
-      UPDATE users SET password_hex = ${hashedPassword} WHERE id = ${reset.user_id}
+      UPDATE users SET password_hex = ${encryptedPassword} WHERE id = ${reset.user_id}
     `;
 
     // Token löschen
