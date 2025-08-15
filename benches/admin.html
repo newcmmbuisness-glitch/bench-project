@@ -309,7 +309,7 @@
             displayBenches();
         }
 
-  function displayBenches() {
+        function displayBenches() {
             const container = document.getElementById('benchesListDisplay');
             if (!container) return;
             let benchesToShow = [];
@@ -328,41 +328,13 @@
                     }));
                     break;
                 case 'approved':
-                    benchesToShow = approvedBenches.map(b => ({
-                        ...b,
-                        approved: true,
-                        lat: b.latitude,
-                        lng: b.longitude,
-                        benchImage: b.bench_image,
-                        viewImage: b.view_image,
-                        user: b.user_email,
-                        created: b.created_at
-                    }));
+                    benchesToShow = approvedBenches.map(b => ({...b, approved: true}));
                     break;
                 case 'all':
-                    const allBenches = [
-                        ...pendingBenches.map(b => ({
-                            ...b,
-                            approved: false,
-                            lat: b.latitude,
-                            lng: b.longitude,
-                            benchImage: b.bench_image,
-                            viewImage: b.view_image,
-                            user: b.user_email,
-                            created: b.created_at
-                        })),
-                        ...approvedBenches.map(b => ({
-                            ...b,
-                            approved: true,
-                            lat: b.latitude,
-                            lng: b.longitude,
-                            benchImage: b.bench_image,
-                            viewImage: b.view_image,
-                            user: b.user_email,
-                            created: b.created_at
-                        }))
-                    ];
-                    benchesToShow = allBenches.sort((a, b) => new Date(b.created) - new Date(a.created));
+                    benchesToShow = [
+                        ...pendingBenches.map(b => ({...b, approved: false})),
+                        ...approvedBenches.map(b => ({...b, approved: true}))
+                    ].sort((a, b) => new Date(b.created) - new Date(a.created));
                     break;
             }
 
