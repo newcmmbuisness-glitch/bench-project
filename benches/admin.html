@@ -4,11 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin Panel - Bench Map</title>
+    <!-- Use Inter font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
             background: #f5f5f5;
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', Arial, sans-serif;
         }
         .header {
             background: #222;
@@ -58,6 +60,7 @@
             display: flex;
             justify-content: space-around;
             margin: 20px 0;
+            flex-wrap: wrap;
         }
         .stat-card {
             background: #fafafa;
@@ -65,7 +68,9 @@
             border-radius: 6px;
             padding: 15px 25px;
             width: 22%;
+            min-width: 150px; /* Ensure cards don't get too small */
             text-align: center;
+            margin-bottom: 10px;
         }
         .stat-number {
             font-size: 2.2em;
@@ -80,6 +85,7 @@
             display: flex;
             border-bottom: 2px solid #ddd;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         .tab {
             padding: 12px 20px;
@@ -139,9 +145,11 @@
             color: #444;
             display: flex;
             gap: 20px;
+            flex-wrap: wrap;
         }
         .bench-info > div, .image-info > div {
             flex: 1;
+            min-width: 250px;
         }
         .bench-actions, .image-actions {
             margin-top: 15px;
@@ -204,6 +212,48 @@
             margin: 0 0 5px 0;
             color: #4caf50;
         }
+        /* Custom Modal for Confirmations */
+        .confirmation-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+        }
+        .confirmation-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 300px;
+        }
+        .confirmation-box p {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #333;
+        }
+        .confirmation-box button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .confirmation-box .btn-confirm {
+            background: #4CAF50;
+            color: white;
+            margin-right: 10px;
+        }
+        .confirmation-box .btn-cancel {
+            background: #f44336;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -213,6 +263,7 @@
     
     <div class="container">
         <div class="actions">
+            <!-- Back to the map. The index.html URL is a placeholder. -->
             <a href="index.html" class="btn btn-back">← Zurück zur Karte</a>
             <button onclick="refreshData()" class="btn" style="background: #2196F3; color: white;">🔄 Aktualisieren</button>
         </div>
@@ -252,45 +303,127 @@
         <img id="fullscreenImage" class="fullscreen-image" src="" alt="">
     </div>
 
-    <script>
-        let pendingBenches = [];
-        let approvedBenches = [];
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmationModal" class="confirmation-modal">
+        <div class="confirmation-box">
+            <p id="confirmationMessage"></p>
+            <button class="btn btn-confirm" id="confirmAction">Ja</button>
+            <button class="btn btn-cancel" id="cancelAction">Abbrechen</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import necessary Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            query, 
+            where, 
+            onSnapshot, 
+            doc, 
+            updateDoc, 
+            deleteDoc,
+            getDocs
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- GLOBAL VARIABLES & FIREBASE SETUP ---
+        // These are automatically provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // Firebase app and services
+        let app, db, auth;
+
+        // Data arrays to hold Firestore documents
+        let allBenches = [];
         let pendingImages = [];
-        let users = [];
+        let totalUsers = 0;
         let currentFilter = 'pending';
 
-        async function loadData() {
+        // Confirmation modal state
+        let currentConfirmationAction = null;
+
+        /**
+         * Initializes Firebase and sets up real-time data listeners.
+         * This function handles authentication and Firestore data fetching.
+         */
+        async function setupFirebase() {
             try {
-                // Lade wartende Bänke
-                const pendingRes = await fetch('/.netlify/functions/get_pending_benches');
-                const pendingData = await pendingRes.json();
-                pendingBenches = pendingData.success ? pendingData.benches : [];
+                // Initialize Firebase App
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-                // Lade genehmigte Bänke
-                const approvedRes = await fetch('/.netlify/functions/get_benches');
-                const approvedData = await approvedRes.json();
-                approvedBenches = approvedData.success ? approvedData.benches : [];
+                // Authenticate using the provided custom token
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
 
-                // Lade wartende zusätzliche Bilder
-                const pendingImagesRes = await fetch('/.netlify/functions/get_pending_images');
-                const pendingImagesData = await pendingImagesRes.json();
-                pendingImages = pendingImagesData.success ? pendingImagesData.images : [];
+                // Set up real-time listeners after authentication
+                setupListeners();
 
-                updateStats();
-                displayContent();
-            } catch (e) {
-                console.error('Fehler beim Laden der Daten:', e);
-                showError('Fehler beim Laden der Daten.');
+            } catch (error) {
+                console.error("Error setting up Firebase:", error);
+                showError("Fehler beim Verbinden mit der Datenbank.");
             }
         }
 
-        function updateStats() {
-            document.getElementById('pendingCount').textContent = pendingBenches.length;
-            document.getElementById('approvedCount').textContent = approvedBenches.length;
-            document.getElementById('pendingImagesCount').textContent = pendingImages.length;
-            document.getElementById('totalUsers').textContent = users.length;
+        /**
+         * Sets up real-time listeners for benches, images, and users.
+         * onSnapshot provides real-time updates without needing to refresh.
+         */
+        function setupListeners() {
+            if (!db) return; // Exit if database is not initialized
+
+            // Listener for all benches (pending and approved)
+            const benchesRef = collection(db, `artifacts/${appId}/public/data/benches`);
+            onSnapshot(benchesRef, (snapshot) => {
+                allBenches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateStats();
+                displayContent();
+                showSuccess("Bänke-Daten aktualisiert.");
+            });
+
+            // Listener for new images
+            const imagesRef = collection(db, `artifacts/${appId}/public/data/images`);
+            const pendingImagesQuery = query(imagesRef, where("status", "==", "pending"));
+            onSnapshot(pendingImagesQuery, (snapshot) => {
+                pendingImages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateStats();
+                displayContent();
+                showSuccess("Neue Bilder-Daten aktualisiert.");
+            });
+
+            // Listener for users count
+            const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+            onSnapshot(usersRef, (snapshot) => {
+                totalUsers = snapshot.size;
+                updateStats();
+            });
         }
 
+        /**
+         * Updates the statistic cards with the latest data counts.
+         */
+        function updateStats() {
+            const pendingCount = allBenches.filter(b => b.status === 'pending').length;
+            const approvedCount = allBenches.filter(b => b.status === 'approved').length;
+            document.getElementById('pendingCount').textContent = pendingCount;
+            document.getElementById('approvedCount').textContent = approvedCount;
+            document.getElementById('pendingImagesCount').textContent = pendingImages.length;
+            document.getElementById('totalUsers').textContent = totalUsers;
+        }
+
+        /**
+         * Changes the displayed content based on the selected tab.
+         * @param {string} filter - The filter type ('pending', 'approved', 'pending-images', 'all').
+         * @param {Event} event - The click event.
+         */
         function showTab(filter, event) {
             currentFilter = filter;
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
@@ -298,105 +431,112 @@
             displayContent();
         }
 
+        /**
+         * Renders the content area based on the current filter.
+         */
         function displayContent() {
             const container = document.getElementById('contentArea');
-            
+            container.innerHTML = ''; // Clear previous content
+
+            let itemsToDisplay;
+            let noItemsMessage = '';
+
             switch(currentFilter) {
                 case 'pending':
-                    displayBenches(pendingBenches.map(b => ({...b, approved: false})));
+                    itemsToDisplay = allBenches.filter(b => b.status === 'pending');
+                    noItemsMessage = 'Keine Bänke wartend';
+                    displayBenches(itemsToDisplay);
                     break;
                 case 'approved':
-                    displayBenches(approvedBenches.map(b => ({...b, approved: true})));
+                    itemsToDisplay = allBenches.filter(b => b.status === 'approved');
+                    noItemsMessage = 'Keine Bänke genehmigt';
+                    displayBenches(itemsToDisplay);
                     break;
                 case 'pending-images':
-                    displayPendingImages();
+                    itemsToDisplay = pendingImages;
+                    noItemsMessage = 'Keine neuen Bilder wartend';
+                    displayPendingImages(itemsToDisplay);
                     break;
                 case 'all':
-                    const allBenches = [
-                        ...pendingBenches.map(b => ({...b, approved: false})),
-                        ...approvedBenches.map(b => ({...b, approved: true}))
-                    ].sort((a, b) => new Date(b.created) - new Date(a.created));
-                    displayBenches(allBenches);
+                    itemsToDisplay = allBenches.sort((a, b) => new Date(b.created_at || b.created) - new Date(a.created_at || a.created));
+                    noItemsMessage = 'Keine Bänke vorhanden';
+                    displayBenches(itemsToDisplay);
                     break;
             }
+
+            if (itemsToDisplay.length === 0) {
+                container.innerHTML = `
+                    <div class="no-items">
+                        <h3>${noItemsMessage}</h3>
+                        <p>Es gibt derzeit keine Einträge in dieser Kategorie.</p>
+                    </div>
+                `;
+            }
         }
 
+        /**
+         * Renders the list of benches.
+         * @param {Array<Object>} benches - An array of bench objects.
+         */
         function displayBenches(benches) {
             const container = document.getElementById('contentArea');
-
-            if (benches.length === 0) {
-                container.innerHTML = `
-                    <div class="no-items">
-                        <h3>Keine Bänke ${currentFilter === 'pending' ? 'wartend' : currentFilter === 'approved' ? 'genehmigt' : 'vorhanden'}</h3>
-                        <p>Es gibt derzeit keine Bänke in dieser Kategorie.</p>
+            container.innerHTML = benches.map(bench => {
+                const isApproved = bench.status === 'approved';
+                const hasImages = (bench.bench_image || bench.benchImage) || (bench.view_image || bench.viewImage);
+                return `
+                    <div class="bench-card">
+                        <div class="bench-header">
+                            <div class="bench-title">${escapeHtml(bench.name)}</div>
+                            <div class="bench-status ${isApproved ? 'status-approved' : 'status-pending'}">
+                                ${isApproved ? '✅ Genehmigt' : '⏳ Wartend'}
+                            </div>
+                        </div>
+                        <div class="bench-info">
+                            <div>
+                                <strong>Beschreibung:</strong><br>
+                                ${escapeHtml(bench.description)}
+                            </div>
+                            <div>
+                                <strong>Position:</strong> ${bench.latitude || bench.lat}, ${bench.longitude || bench.lng}<br>
+                                <strong>Eingereicht von:</strong> ${escapeHtml(bench.user_email || bench.user || 'Unbekannt')}<br>
+                                <strong>Erstellt am:</strong> ${new Date(bench.created_at || bench.created).toLocaleString()}
+                            </div>
+                        </div>
+                        ${hasImages ? `
+                        <div class="image-preview-container">
+                            ${(bench.bench_image || bench.benchImage) ? `
+                                <img src="${bench.bench_image || bench.benchImage}" 
+                                    alt="Bank Bild" 
+                                    class="preview-image" 
+                                    onclick="showFullscreen('${bench.bench_image || bench.benchImage}')">
+                            ` : ''}
+                            ${(bench.view_image || bench.viewImage) ? `
+                                <img src="${bench.view_image || bench.viewImage}" 
+                                    alt="Ansicht Bild" 
+                                    class="preview-image" 
+                                    onclick="showFullscreen('${bench.view_image || bench.viewImage}')">
+                            ` : ''}
+                        </div>
+                        ` : ''}
+                        <div class="bench-actions">
+                            ${!isApproved ? `
+                                <button onclick="handleBenchApproval('${bench.id}', 'approve')" class="btn btn-approve">✅ Genehmigen</button>
+                                <button onclick="handleBenchApproval('${bench.id}', 'reject')" class="btn btn-reject">❌ Ablehnen</button>
+                            ` : ''}
+                        </div>
                     </div>
                 `;
-                return;
-            }
-
-            container.innerHTML = benches.map(bench => `
-                <div class="bench-card ${bench.approved ? 'approved' : ''}">
-                    <div class="bench-header">
-                        <div class="bench-title">${escapeHtml(bench.name)}</div>
-                        <div class="bench-status ${bench.approved ? 'status-approved' : 'status-pending'}">
-                            ${bench.approved ? '✅ Genehmigt' : '⏳ Wartend'}
-                        </div>
-                    </div>
-                    
-                    <div class="bench-info">
-                        <div>
-                            <strong>Beschreibung:</strong><br>
-                            ${escapeHtml(bench.description)}
-                        </div>
-                        <div>
-                            <strong>Position:</strong> ${bench.latitude || bench.lat}, ${bench.longitude || bench.lng}<br>
-                            <strong>Eingereicht von:</strong> ${escapeHtml(bench.user_email || bench.user || 'Unbekannt')}<br>
-                            <strong>Erstellt am:</strong> ${new Date(bench.created_at || bench.created).toLocaleString()}
-                        </div>
-                    </div>
-                    
-                    <div class="image-preview-container">
-                        ${bench.bench_image || bench.benchImage ? `
-                            <img src="${bench.bench_image || bench.benchImage}" 
-                                 alt="Bank Bild" 
-                                 class="preview-image" 
-                                 onclick="showFullscreen('${bench.bench_image || bench.benchImage}')">
-                        ` : ''}
-                        ${bench.view_image || bench.viewImage ? `
-                            <img src="${bench.view_image || bench.viewImage}" 
-                                 alt="Ansicht Bild" 
-                                 class="preview-image" 
-                                 onclick="showFullscreen('${bench.view_image || bench.viewImage}')">
-                        ` : ''}
-                    </div>
-
-                    <div class="bench-actions">
-                        ${!bench.approved ? `
-                            <button onclick="approveBench(${bench.id})" class="btn btn-approve">✅ Genehmigen</button>
-                            <button onclick="rejectBench(${bench.id})" class="btn btn-reject">❌ Ablehnen</button>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
+            }).join('');
         }
 
-        function displayPendingImages() {
+        /**
+         * Renders the list of pending images.
+         * @param {Array<Object>} images - An array of pending image objects.
+         */
+        function displayPendingImages(images) {
             const container = document.getElementById('contentArea');
-
-            if (pendingImages.length === 0) {
-                container.innerHTML = `
-                    <div class="no-items">
-                        <h3>Keine neuen Bilder wartend</h3>
-                        <p>Es gibt derzeit keine neuen Bilder, die auf Genehmigung warten.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = pendingImages.map(image => {
-                // Finde die zugehörige Bank
-                const relatedBench = approvedBenches.find(b => b.id === image.bench_id);
-                
+            container.innerHTML = images.map(image => {
+                const relatedBench = allBenches.find(b => b.id === image.bench_id);
                 return `
                     <div class="image-card">
                         <div class="image-header">
@@ -408,10 +548,10 @@
                             <div>
                                 <strong>Neues Bild:</strong><br>
                                 <img src="${image.image_data}" 
-                                     alt="Neues Bild" 
-                                     class="preview-image" 
-                                     onclick="showFullscreen('${image.image_data}')"
-                                     style="max-width: 200px; max-height: 150px;">
+                                    alt="Neues Bild" 
+                                    class="preview-image" 
+                                    onclick="showFullscreen('${image.image_data}')"
+                                    style="max-width: 200px; max-height: 150px;">
                                 <br><br>
                                 <strong>Beschreibung:</strong> ${escapeHtml(image.description)}<br>
                                 <strong>Eingereicht von:</strong> ${escapeHtml(image.user_email || 'Unbekannt')}<br>
@@ -425,18 +565,18 @@
                                         <div>
                                             <strong>Original Bank-Bild:</strong><br>
                                             <img src="${relatedBench.bench_image || relatedBench.benchImage}" 
-                                                 alt="Original Bank" 
-                                                 class="preview-image" 
-                                                 onclick="showFullscreen('${relatedBench.bench_image || relatedBench.benchImage}')"
-                                                 style="max-width: 120px; max-height: 80px;">
+                                                alt="Original Bank" 
+                                                class="preview-image" 
+                                                onclick="showFullscreen('${relatedBench.bench_image || relatedBench.benchImage}')"
+                                                style="max-width: 120px; max-height: 80px;">
                                         </div>
                                         <div>
                                             <strong>Original Aussicht:</strong><br>
                                             <img src="${relatedBench.view_image || relatedBench.viewImage}" 
-                                                 alt="Original Aussicht" 
-                                                 class="preview-image" 
-                                                 onclick="showFullscreen('${relatedBench.view_image || relatedBench.viewImage}')"
-                                                 style="max-width: 120px; max-height: 80px;">
+                                                alt="Original Aussicht" 
+                                                class="preview-image" 
+                                                onclick="showFullscreen('${relatedBench.view_image || relatedBench.viewImage}')"
+                                                style="max-width: 120px; max-height: 80px;">
                                         </div>
                                     </div>
                                     <p><strong>Beschreibung:</strong> ${escapeHtml(relatedBench.description)}</p>
@@ -446,85 +586,136 @@
                         </div>
 
                         <div class="image-actions">
-                            <button onclick="approveImage(${image.id})" class="btn btn-approve">✅ Bild genehmigen</button>
-                            <button onclick="rejectImage(${image.id})" class="btn btn-reject">❌ Bild ablehnen</button>
+                            <button onclick="handleImageApproval('${image.id}', 'approve')" class="btn btn-approve">✅ Bild genehmigen</button>
+                            <button onclick="handleImageApproval('${image.id}', 'reject')" class="btn btn-reject">❌ Bild ablehnen</button>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
+        /**
+         * Handles the confirmation before approving or rejecting a bench.
+         * @param {string} id - The ID of the bench document.
+         * @param {string} action - 'approve' or 'reject'.
+         */
+        function handleBenchApproval(id, action) {
+            const message = action === 'approve' ? 'Diese Bank genehmigen?' : 'Diese Bank ablehnen und löschen?';
+            showConfirmationModal(message, () => {
+                if (action === 'approve') {
+                    approveBench(id);
+                } else {
+                    rejectBench(id);
+                }
+            });
+        }
+
+        /**
+         * Approves a bench by updating its status in Firestore.
+         * @param {string} id - The ID of the bench document.
+         */
         async function approveBench(id) {
-            if (!confirm('Diese Bank genehmigen?')) return;
             try {
-                const res = await fetch('/.netlify/functions/approve_bench', {
-                    method: 'POST',
-                    body: JSON.stringify({ id }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.error || 'Fehler beim Genehmigen');
+                const benchRef = doc(db, `artifacts/${appId}/public/data/benches`, id);
+                await updateDoc(benchRef, { status: 'approved' });
                 showSuccess('Bank erfolgreich genehmigt!');
-                await loadData();
             } catch (e) {
                 showError('Fehler beim Genehmigen der Bank: ' + e.message);
                 console.error(e);
             }
         }
 
+        /**
+         * Rejects and deletes a bench document from Firestore.
+         * @param {string} id - The ID of the bench document.
+         */
         async function rejectBench(id) {
-            if (!confirm('Diese Bank ablehnen und löschen?')) return;
             try {
-                const res = await fetch('/.netlify/functions/reject_bench', {
-                    method: 'POST',
-                    body: JSON.stringify({ id }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.error || 'Fehler beim Ablehnen');
+                const benchRef = doc(db, `artifacts/${appId}/public/data/benches`, id);
+                await deleteDoc(benchRef);
                 showSuccess('Bank erfolgreich abgelehnt!');
-                await loadData();
             } catch (e) {
                 showError('Fehler beim Ablehnen der Bank: ' + e.message);
                 console.error(e);
             }
         }
 
+        /**
+         * Handles the confirmation before approving or rejecting an image.
+         * @param {string} id - The ID of the image document.
+         * @param {string} action - 'approve' or 'reject'.
+         */
+        function handleImageApproval(id, action) {
+            const message = action === 'approve' ? 'Dieses Bild genehmigen?' : 'Dieses Bild ablehnen und löschen?';
+            showConfirmationModal(message, () => {
+                if (action === 'approve') {
+                    approveImage(id);
+                } else {
+                    rejectImage(id);
+                }
+            });
+        }
+
+        /**
+         * Approves an image by updating its status in Firestore.
+         * @param {string} id - The ID of the image document.
+         */
         async function approveImage(id) {
-            if (!confirm('Dieses Bild genehmigen?')) return;
             try {
-                const res = await fetch('/.netlify/functions/approve_image', {
-                    method: 'POST',
-                    body: JSON.stringify({ id }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.error || 'Fehler beim Genehmigen');
+                const imageRef = doc(db, `artifacts/${appId}/public/data/images`, id);
+                await updateDoc(imageRef, { status: 'approved' });
                 showSuccess('Bild erfolgreich genehmigt!');
-                await loadData();
             } catch (e) {
                 showError('Fehler beim Genehmigen des Bildes: ' + e.message);
                 console.error(e);
             }
         }
 
+        /**
+         * Rejects and deletes an image document from Firestore.
+         * @param {string} id - The ID of the image document.
+         */
         async function rejectImage(id) {
-            if (!confirm('Dieses Bild ablehnen und löschen?')) return;
             try {
-                const res = await fetch('/.netlify/functions/reject_image', {
-                    method: 'POST',
-                    body: JSON.stringify({ id }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.error || 'Fehler beim Ablehnen');
+                const imageRef = doc(db, `artifacts/${appId}/public/data/images`, id);
+                await deleteDoc(imageRef);
                 showSuccess('Bild erfolgreich abgelehnt!');
-                await loadData();
             } catch (e) {
                 showError('Fehler beim Ablehnen des Bildes: ' + e.message);
                 console.error(e);
             }
         }
+
+        // --- UI UTILITY FUNCTIONS ---
+        /**
+         * Shows the custom confirmation modal.
+         * @param {string} message - The message to display.
+         * @param {Function} onConfirm - The function to call on confirmation.
+         */
+        function showConfirmationModal(message, onConfirm) {
+            document.getElementById('confirmationMessage').textContent = message;
+            document.getElementById('confirmationModal').style.display = 'flex';
+            currentConfirmationAction = onConfirm;
+        }
+
+        /**
+         * Hides the custom confirmation modal.
+         */
+        function hideConfirmationModal() {
+            document.getElementById('confirmationModal').style.display = 'none';
+            currentConfirmationAction = null;
+        }
+
+        // Event listeners for the confirmation modal buttons
+        document.getElementById('confirmAction').addEventListener('click', () => {
+            if (currentConfirmationAction) {
+                currentConfirmationAction();
+            }
+            hideConfirmationModal();
+        });
+        document.getElementById('cancelAction').addEventListener('click', () => {
+            hideConfirmationModal();
+        });
 
         function showFullscreen(imageSrc) {
             document.getElementById('fullscreenImage').src = imageSrc;
@@ -537,11 +728,10 @@
 
         function refreshData() {
             showSuccess('Daten werden aktualisiert...');
-            loadData();
+            // The onSnapshot listeners will handle the update automatically.
         }
 
         function showSuccess(message) {
-            // Einfache Benachrichtigung - könnte durch Toast-System ersetzt werden
             const notification = createNotification(message, 'success');
             document.body.appendChild(notification);
             setTimeout(() => {
@@ -550,7 +740,6 @@
         }
 
         function showError(message) {
-            // Einfache Benachrichtigung - könnte durch Toast-System ersetzt werden
             const notification = createNotification(message, 'error');
             document.body.appendChild(notification);
             setTimeout(() => {
@@ -591,12 +780,13 @@
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 closeFullscreen();
+                hideConfirmationModal();
             }
         });
 
-        // Initial laden
+        // Initial load
         document.addEventListener('DOMContentLoaded', function() {
-            loadData();
+            setupFirebase();
         });
     </script>
 </body>
