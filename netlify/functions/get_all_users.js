@@ -9,7 +9,6 @@ exports.handler = async (event) => {
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
   };
 
-  // CORS Preflight
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
   }
@@ -19,9 +18,8 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Alle Nutzer abrufen – falls sensible Felder existieren, nur notwendige Spalten auswählen
     const users = await sql`
-      SELECT id, name, email, created_at
+      SELECT id, email, created_at
       FROM users
       ORDER BY created_at DESC
     `;
@@ -36,7 +34,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Server error' }),
+      body: JSON.stringify({ error: err.message }), // Fehlertext direkt zurückgeben
     };
   }
 };
