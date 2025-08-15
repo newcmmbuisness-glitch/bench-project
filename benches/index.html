@@ -1286,65 +1286,83 @@ function requestPasswordReset() {
             if (previewId === 'viewImagePreview') viewImageFile = null;
         }
         
-        function submitBench(event) {
-            event.preventDefault();
+		async function submitBench(event) {
+			event.preventDefault();
 
-            const name = document.getElementById('benchName').value.trim();
-            const description = document.getElementById('benchDescription').value.trim();
+			const name = document.getElementById('benchName').value.trim();
+			const description = document.getElementById('benchDescription').value.trim();
+			const benchImageFile = document.getElementById('benchImageFile').files[0];
+			const viewImageFile = document.getElementById('viewImageFile').files[0];
 
-            if (!name || !description) {
-                showNotification('❌ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
-                return;
-            }
+			if (!name || !description) {
+				showNotification('❌ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
+				return;
+			}
 
-            if (!benchImageFile || !viewImageFile) {
-                showNotification('❌ Bitte laden Sie beide Bilder hoch (Bank und Aussicht)!', 'error');
-                return;
-            }
+			if (!benchImageFile || !viewImageFile) {
+				showNotification('❌ Bitte laden Sie beide Bilder hoch (Bank und Aussicht)!', 'error');
+				return;
+			}
 
-            const lat = parseFloat(pendingBenchLat);
-            const lng = parseFloat(pendingBenchLng);
+			const lat = parseFloat(pendingBenchLat);
+			const lng = parseFloat(pendingBenchLng);
 
-            // Convert images to base64 for database storage
-            const reader1 = new FileReader();
-            reader1.onload = function(e) {
-                const benchImageData = e.target.result;
-                
-                const reader2 = new FileReader();
-                reader2.onload = function(e) {
-                    const viewImageData = e.target.result;
-                    
-                    // Send to Netlify function
-                    fetch('/.netlify/functions/add_bench', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name, 
-                            description, 
-                            lat, 
-                            lng,
-                            benchImage: benchImageData,
-                            viewImage: viewImageData,
-                            userEmail: currentUser.email
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            cancelAddBench();
-                            showNotification('✅ Bank erfolgreich eingereicht! Sie wird nach Admin-Prüfung freigeschaltet.', 'success');
-                        } else {
-                            showNotification('❌ Fehler beim Speichern: ' + (data.error || 'Unbekannter Fehler'), 'error');
-                        }
-                    })
-                    .catch(err => {
-                        showNotification('❌ Netzwerkfehler: ' + err.message, 'error');
-                    });
-                };
-                reader2.readAsDataURL(viewImageFile);
-            };
-            reader1.readAsDataURL(benchImageFile);
-        }
+			try {
+				showNotification('⏳ Bilder werden hochgeladen...', 'info');
+
+				// Bilder zu Cloudinary hochladen
+				const benchImageUrl = await uploadImageToCloudinary(benchImageFile);
+				const viewImageUrl = await uploadImageToCloudinary(viewImageFile);
+
+				showNotification('⏳ Bank wird gespeichert...', 'info');
+
+				// URLs an die Netlify-Funktion senden
+				const response = await fetch('/.netlify/functions/add_bench', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						name,
+						description,
+						lat,
+						lng,
+						benchImage: benchImageUrl,
+						viewImage: viewImageUrl,
+						userEmail: currentUser.email
+					})
+				});
+
+				const data = await response.json();
+
+				if (data.success) {
+					cancelAddBench();
+					showNotification('✅ Bank erfolgreich eingereicht! Sie wird nach Admin-Prüfung freigeschaltet.', 'success');
+				} else {
+					showNotification('❌ Fehler beim Speichern: ' + (data.error || 'Unbekannter Fehler'), 'error');
+				}
+
+			} catch (error) {
+				showNotification('❌ Fehler beim Hochladen der Bilder oder Speichern der Bank.', 'error');
+				console.error('Fehler:', error);
+			}
+		}
+
+		async function uploadImageToCloudinary(file) {
+			const formData = new FormData();
+			formData.append('file', file);
+			formData.append('upload_preset', 'benches_upload'); // Name Ihres Upload-Presets
+
+			const res = await fetch('https://api.cloudinary.com/v1_1/DEIN_CLOUD_NAME/image/upload', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!res.ok) {
+				throw new Error('Cloudinary-Upload fehlgeschlagen');
+			}
+
+			const data = await res.json();
+			return data.secure_url;
+		}
             
         function toggleAddMode(){
             addMode = !addMode;
@@ -1536,9 +1554,10 @@ function requestPasswordReset() {
 
 			const formData = new FormData();
 			formData.append('file', imageFile);
+			formData.append('upload_preset', 'benches_upload'); // Diese Zeile wurde hinzugefügt
 
 			// Bild zu Cloudinary hochladen
-			const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/DEIN_CLOUD_NAME/image/upload', {
+			const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dp3t4ctxz/image/upload', {
 				method: 'POST',
 				body: formData
 			});
