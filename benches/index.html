@@ -1291,8 +1291,8 @@ function requestPasswordReset() {
 
 			const name = document.getElementById('benchName').value.trim();
 			const description = document.getElementById('benchDescription').value.trim();
-			const benchImageFile = document.getElementById('benchImageFile').files[0];
-			const viewImageFile = document.getElementById('viewImageFile').files[0];
+			const benchImageFile = document.getElementById('benchImageInput').files[0];
+			const viewImageFile = document.getElementById('viewImageInput').files[0];
 
 			if (!name || !description) {
 				showNotification('❌ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
