@@ -203,6 +203,27 @@
             display: flex;
             gap: 10px;
         }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #f5c6cb;
+            margin: 15px 0;
+        }
+        .loading-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #c3e6cb;
+            margin: 15px 0;
+        }
+        .no-benches {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -214,6 +235,7 @@
         <div class="actions" style="margin-bottom: 20px;">
             <a href="bench_map.html" class="btn btn-back">← Zurück zur Karte</a>
             <button onclick="refreshData()" class="btn" style="background: #2196F3; color: white;">🔄 Aktualisieren</button>
+            <button onclick="testFunctions()" class="btn" style="background: #9C27B0; color: white;">🔧 API Test</button>
         </div>
         
         <div class="stats">
@@ -278,22 +300,124 @@
         }
 
         async function loadData() {
+            const container = document.getElementById('benchesListDisplay');
+            container.innerHTML = '<div class="loading-message">Lade Daten...</div>';
+            
+            const results = {
+                pending: { success: false, error: null, data: [] },
+                approved: { success: false, error: null, data: [] },
+                users: { success: false, error: null, data: [] }
+            };
+            
+            // Load pending benches
             try {
+                console.log('Fetching pending benches...');
                 const pendingRes = await fetch('/.netlify/functions/get_pending_benches');
-                pendingBenches = await pendingRes.json();
-
-                const approvedRes = await fetch('/.netlify/functions/get_approved_benches');
-                approvedBenches = await approvedRes.json();
+                console.log('Pending benches response status:', pendingRes.status);
                 
-                const usersRes = await fetch('/.netlify/functions/get_all_users');
-                users = await usersRes.json();
-
-                updateStats();
-                displayBenches();
-            } catch (e) {
-                alert('Fehler beim Laden der Bänke.');
-                console.error(e);
+                if (pendingRes.ok) {
+                    const text = await pendingRes.text();
+                    console.log('Pending benches raw response:', text.substring(0, 200) + '...');
+                    
+                    try {
+                        pendingBenches = JSON.parse(text);
+                        results.pending.success = true;
+                        results.pending.data = pendingBenches;
+                        console.log('Pending benches parsed successfully:', pendingBenches.length, 'items');
+                    } catch (parseError) {
+                        console.error('Parse error for pending benches:', parseError);
+                        results.pending.error = 'JSON Parse Error: ' + parseError.message;
+                        pendingBenches = [];
+                    }
+                } else {
+                    const errorText = await pendingRes.text();
+                    console.error('Failed to fetch pending benches:', pendingRes.status, errorText);
+                    results.pending.error = `HTTP ${pendingRes.status}: ${pendingRes.statusText}`;
+                    pendingBenches = [];
+                }
+            } catch (fetchError) {
+                console.error('Network error fetching pending benches:', fetchError);
+                results.pending.error = 'Network Error: ' + fetchError.message;
+                pendingBenches = [];
             }
+
+            // Load approved benches
+            try {
+                console.log('Fetching approved benches...');
+                const approvedRes = await fetch('/.netlify/functions/get_approved_benches');
+                console.log('Approved benches response status:', approvedRes.status);
+                
+                if (approvedRes.ok) {
+                    const text = await approvedRes.text();
+                    console.log('Approved benches raw response:', text.substring(0, 200) + '...');
+                    
+                    try {
+                        approvedBenches = JSON.parse(text);
+                        results.approved.success = true;
+                        results.approved.data = approvedBenches;
+                        console.log('Approved benches parsed successfully:', approvedBenches.length, 'items');
+                    } catch (parseError) {
+                        console.error('Parse error for approved benches:', parseError);
+                        results.approved.error = 'JSON Parse Error: ' + parseError.message;
+                        approvedBenches = [];
+                    }
+                } else {
+                    const errorText = await approvedRes.text();
+                    console.error('Failed to fetch approved benches:', approvedRes.status, errorText);
+                    results.approved.error = `HTTP ${approvedRes.status}: ${approvedRes.statusText}`;
+                    approvedBenches = [];
+                }
+            } catch (fetchError) {
+                console.error('Network error fetching approved benches:', fetchError);
+                results.approved.error = 'Network Error: ' + fetchError.message;
+                approvedBenches = [];
+            }
+            
+            // Load users
+            try {
+                console.log('Fetching users...');
+                const usersRes = await fetch('/.netlify/functions/get_all_users');
+                console.log('Users response status:', usersRes.status);
+                
+                if (usersRes.ok) {
+                    const text = await usersRes.text();
+                    console.log('Users raw response:', text.substring(0, 200) + '...');
+                    
+                    try {
+                        users = JSON.parse(text);
+                        results.users.success = true;
+                        results.users.data = users;
+                        console.log('Users parsed successfully:', users.length, 'items');
+                    } catch (parseError) {
+                        console.error('Parse error for users:', parseError);
+                        results.users.error = 'JSON Parse Error: ' + parseError.message;
+                        users = [];
+                    }
+                } else {
+                    const errorText = await usersRes.text();
+                    console.error('Failed to fetch users:', usersRes.status, errorText);
+                    results.users.error = `HTTP ${usersRes.status}: ${usersRes.statusText}`;
+                    users = [];
+                }
+            } catch (fetchError) {
+                console.error('Network error fetching users:', fetchError);
+                results.users.error = 'Network Error: ' + fetchError.message;
+                users = [];
+            }
+
+            // Show diagnostic information if there are errors
+            const errors = [];
+            if (!results.pending.success) errors.push(`Pending Benches: ${results.pending.error}`);
+            if (!results.approved.success) errors.push(`Approved Benches: ${results.approved.error}`);
+            if (!results.users.success) errors.push(`Users: ${results.users.error}`);
+            
+            if (errors.length > 0) {
+                console.warn('Some API calls failed:', errors);
+                // Still continue to display what we have
+            }
+
+            updateStats();
+            displayBenches();
         }
 
         function updateStats() {
@@ -312,36 +436,78 @@
         function displayBenches() {
             const container = document.getElementById('benchesListDisplay');
             if (!container) return;
+            
             let benchesToShow = [];
 
             switch(currentFilter) {
                 case 'pending':
+                    // Fix the mapping for pending benches
                     benchesToShow = pendingBenches.map(b => ({
-                        ...b,
+                        id: b.id,
+                        name: b.name,
+                        description: b.description,
                         approved: false,
-                        lat: b.latitude,
-                        lng: b.longitude,
-                        benchImage: b.bench_image,
-                        viewImage: b.view_image,
-                        user: b.user_email,
-                        created: b.created_at
+                        lat: b.latitude || b.lat,
+                        lng: b.longitude || b.lng,
+                        benchImage: b.bench_image || b.benchImage,
+                        viewImage: b.view_image || b.viewImage,
+                        user: b.user_email || b.user,
+                        created: b.created_at || b.created
                     }));
                     break;
                 case 'approved':
-                    benchesToShow = approvedBenches.map(b => ({...b, approved: true}));
+                    benchesToShow = approvedBenches.map(b => ({
+                        id: b.id,
+                        name: b.name,
+                        description: b.description,
+                        approved: true,
+                        lat: b.latitude || b.lat,
+                        lng: b.longitude || b.lng,
+                        benchImage: b.bench_image || b.benchImage,
+                        viewImage: b.view_image || b.viewImage,
+                        user: b.user_email || b.user,
+                        created: b.created_at || b.created
+                    }));
                     break;
                 case 'all':
-                    benchesToShow = [
-                        ...pendingBenches.map(b => ({...b, approved: false})),
-                        ...approvedBenches.map(b => ({...b, approved: true}))
-                    ].sort((a, b) => new Date(b.created) - new Date(a.created));
+                    const pendingMapped = pendingBenches.map(b => ({
+                        id: b.id,
+                        name: b.name,
+                        description: b.description,
+                        approved: false,
+                        lat: b.latitude || b.lat,
+                        lng: b.longitude || b.lng,
+                        benchImage: b.bench_image || b.benchImage,
+                        viewImage: b.view_image || b.viewImage,
+                        user: b.user_email || b.user,
+                        created: b.created_at || b.created
+                    }));
+                    const approvedMapped = approvedBenches.map(b => ({
+                        id: b.id,
+                        name: b.name,
+                        description: b.description,
+                        approved: true,
+                        lat: b.latitude || b.lat,
+                        lng: b.longitude || b.lng,
+                        benchImage: b.bench_image || b.benchImage,
+                        viewImage: b.view_image || b.viewImage,
+                        user: b.user_email || b.user,
+                        created: b.created_at || b.created
+                    }));
+                    benchesToShow = [...pendingMapped, ...approvedMapped].sort((a, b) => {
+                        const dateA = new Date(a.created || 0);
+                        const dateB = new Date(b.created || 0);
+                        return dateB - dateA;
+                    });
                     break;
             }
 
             if (benchesToShow.length === 0) {
+                const filterName = currentFilter === 'pending' ? 'wartend' : 
+                                 currentFilter === 'approved' ? 'genehmigt' : 'vorhanden';
                 container.innerHTML = `
                     <div class="no-benches">
-                        <h3>Keine Bänke ${currentFilter === 'pending' ? 'wartend' : currentFilter === 'approved' ? 'genehmigt' : 'vorhanden'}</h3>
+                        <h3>Keine Bänke ${filterName}</h3>
                         <p>Es gibt derzeit keine Bänke in dieser Kategorie.</p>
                     </div>
                 `;
@@ -351,7 +517,7 @@
             container.innerHTML = benchesToShow.map(bench => `
                 <div class="bench-card ${bench.approved ? 'approved' : ''}">
                     <div class="bench-header">
-                        <div class="bench-title">${escapeHtml(bench.name)}</div>
+                        <div class="bench-title">${escapeHtml(bench.name || 'Unbenannte Bank')}</div>
                         <div class="bench-status ${bench.approved ? 'status-approved' : 'status-pending'}">
                             ${bench.approved ? '✅ Genehmigt' : '⏳ Wartend'}
                         </div>
@@ -360,16 +526,16 @@
                     <div class="bench-info">
                         <div>
                             <strong>Beschreibung:</strong><br>
-                            ${escapeHtml(bench.description)}
+                            ${escapeHtml(bench.description || 'Keine Beschreibung')}
                         </div>
                         <div>
-                            <strong>Position:</strong> ${bench.lat}, ${bench.lng}<br>
+                            <strong>Position:</strong> ${bench.lat || 'N/A'}, ${bench.lng || 'N/A'}<br>
                             <strong>Eingereicht von:</strong> ${escapeHtml(bench.user || 'Unbekannt')}<br>
-                            <strong>Erstellt am:</strong> ${new Date(bench.created).toLocaleString()}
+                            <strong>Erstellt am:</strong> ${bench.created ? new Date(bench.created).toLocaleString('de-DE') : 'Unbekannt'}
                         </div>
                         <div style="margin-top: 10px;">
-                            <img src="${bench.benchImage || ''}" alt="Bank Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px;">
-                            <img src="${bench.viewImage || ''}" alt="Ansicht Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px; margin-left: 10px;">
+                            ${bench.benchImage ? `<img src="${bench.benchImage}" alt="Bank Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'">` : '<span style="color: #666;">Kein Bankbild</span>'}
+                            ${bench.viewImage ? `<img src="${bench.viewImage}" alt="Ansicht Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px; margin-left: 10px;" onerror="this.style.display='none'">` : '<span style="color: #666; margin-left: 10px;">Kein Ansichtsbild</span>'}
                         </div>
                     </div>
 
@@ -391,10 +557,14 @@
                     body: JSON.stringify({ id }),
                     headers: { 'Content-Type': 'application/json' }
                 });
-                if (!res.ok) throw new Error('Fehler beim Genehmigen');
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`Fehler beim Genehmigen: ${res.status} - ${errorText}`);
+                }
+                alert('Bank erfolgreich genehmigt!');
                 await loadData();
             } catch (e) {
-                alert('Fehler beim Genehmigen der Bank.');
+                alert('Fehler beim Genehmigen der Bank: ' + e.message);
                 console.error(e);
             }
         }
@@ -407,10 +577,14 @@
                     body: JSON.stringify({ id }),
                     headers: { 'Content-Type': 'application/json' }
                 });
-                if (!res.ok) throw new Error('Fehler beim Ablehnen');
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`Fehler beim Ablehnen: ${res.status} - ${errorText}`);
+                }
+                alert('Bank erfolgreich abgelehnt!');
                 await loadData();
             } catch (e) {
-                alert('Fehler beim Ablehnen der Bank.');
+                alert('Fehler beim Ablehnen der Bank: ' + e.message);
                 console.error(e);
             }
         }
@@ -420,25 +594,34 @@
         }
 
         function escapeHtml(text) {
-            return text
-                ? text.replace(/&/g, "&amp;")
-                        .replace(/</g, "&lt;")
-                        .replace(/>/g, "&gt;")
-                        .replace(/"/g, "&quot;")
-                        .replace(/'/g, "&#039;")
-                : '';
+            if (!text) return '';
+            return text.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
         
         async function loadPendingImages() {
             const list = document.getElementById('imagesListDisplay');
-            list.innerHTML = 'Lade wartende Bilder...';
+            list.innerHTML = '<div class="loading-message">Lade wartende Bilder...</div>';
             try {
                 const response = await fetch('/.netlify/functions/get_pending_images');
-                const images = await response.json();
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const text = await response.text();
+                let images;
+                try {
+                    images = JSON.parse(text);
+                } catch (parseError) {
+                    throw new Error('Invalid JSON response from server');
+                }
                 
                 list.innerHTML = '';
                 if (images.length === 0) {
-                    list.innerHTML = '<p>Keine wartenden Bilder gefunden.</p>';
+                    list.innerHTML = '<div class="no-benches"><h3>Keine wartenden Bilder</h3><p>Alle Bilder sind bearbeitet.</p></div>';
                     return;
                 }
 
@@ -447,24 +630,24 @@
                     card.className = 'image-review-card';
                     card.innerHTML = `
                         <div class="image-header">
-                            <h4>Neues Bild für: ${img.benchName}</h4>
-                            <p>Eingereicht am: ${new Date(img.createdAt).toLocaleDateString()}</p>
+                            <h4>Neues Bild für: ${escapeHtml(img.benchName || 'Unbekannte Bank')}</h4>
+                            <p>Eingereicht am: ${img.createdAt ? new Date(img.createdAt).toLocaleDateString('de-DE') : 'Unbekannt'}</p>
                         </div>
                         <div class="image-comparison">
                             <div class="image-box">
                                 <h5>Neues Bild</h5>
-                                <img src="${img.imageUrl}" alt="Neues Bild" onclick="openFullscreen('${img.imageUrl}')">
-                                <p>Beschreibung: ${img.description || 'Keine Angabe'}</p>
+                                <img src="${img.imageUrl || ''}" alt="Neues Bild" onclick="openFullscreen('${img.imageUrl || ''}')" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22>Bild nicht verfügbar</text></svg>'">
+                                <p><strong>Beschreibung:</strong> ${escapeHtml(img.description || 'Keine Angabe')}</p>
                             </div>
                             <div class="image-box">
                                 <h5>Aktuelle Bank-Bilder</h5>
-                                <img src="${img.benchImage}" alt="Bankbild" onclick="openFullscreen('${img.benchImage}')">
-                                <img src="${img.viewImage}" alt="Aussichtsbild" onclick="openFullscreen('${img.viewImage}')">
+                                <img src="${img.benchImage || ''}" alt="Bankbild" onclick="openFullscreen('${img.benchImage || ''}')" onerror="this.style.display='none'">
+                                <img src="${img.viewImage || ''}" alt="Aussichtsbild" onclick="openFullscreen('${img.viewImage || ''}')" onerror="this.style.display='none'">
                             </div>
                         </div>
                         <div class="image-actions">
-                            <button class="btn btn-approve" onclick="approveImage('${img.id}')">✔️ Genehmigen</button>
-                            <button class="btn btn-reject" onclick="rejectImage('${img.id}')">❌ Ablehnen</button>
+                            <button class="btn btn-approve" onclick="approveImage('${img.id || ''}')">✔️ Genehmigen</button>
+                            <button class="btn btn-reject" onclick="rejectImage('${img.id || ''}')">❌ Ablehnen</button>
                         </div>
                     `;
                     list.appendChild(card);
@@ -472,47 +655,109 @@
 
             } catch (error) {
                 console.error('Fehler beim Laden der Bilder:', error);
-                list.innerHTML = '<p>Fehler beim Laden der wartenden Bilder.</p>';
+                list.innerHTML = '<div class="error-message">Fehler beim Laden der wartenden Bilder: ' + error.message + '</div>';
             }
         }
 
         async function approveImage(id) {
+            if (!id) {
+                alert('Ungültige Bild-ID');
+                return;
+            }
             if (!confirm('Möchten Sie dieses Bild wirklich genehmigen?')) return;
-            const response = await fetch('/.netlify/functions/approve_image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
-            });
-            if (response.ok) {
-                alert('Bild erfolgreich genehmigt.');
-                loadPendingImages();
-            } else {
-                alert('Fehler beim Genehmigen des Bildes.');
+            
+            try {
+                const response = await fetch('/.netlify/functions/approve_image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                if (response.ok) {
+                    alert('Bild erfolgreich genehmigt.');
+                    loadPendingImages();
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+            } catch (error) {
+                alert('Fehler beim Genehmigen des Bildes: ' + error.message);
+                console.error(error);
             }
         }
 
         async function rejectImage(id) {
+            if (!id) {
+                alert('Ungültige Bild-ID');
+                return;
+            }
             if (!confirm('Möchten Sie dieses Bild wirklich ablehnen?')) return;
-            const response = await fetch('/.netlify/functions/reject_image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
-            });
-            if (response.ok) {
-                alert('Bild erfolgreich abgelehnt.');
-                loadPendingImages();
-            } else {
-                alert('Fehler beim Ablehnen des Bildes.');
+            
+            try {
+                const response = await fetch('/.netlify/functions/reject_image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                if (response.ok) {
+                    alert('Bild erfolgreich abgelehnt.');
+                    loadPendingImages();
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+            } catch (error) {
+                alert('Fehler beim Ablehnen des Bildes: ' + error.message);
+                console.error(error);
             }
         }
         
         function openFullscreen(imageSrc) {
-            window.open(imageSrc, '_blank');
+            if (imageSrc && imageSrc !== '') {
+                window.open(imageSrc, '_blank');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             showAdminTab('benches');
         });
+
+        // Test function to diagnose API issues
+        async function testFunctions() {
+            const functions = [
+                'get_pending_benches',
+                'get_approved_benches', 
+                'get_all_users',
+                'get_pending_images'
+            ];
+            
+            console.log('=== API Function Test ===');
+            
+            for (const func of functions) {
+                try {
+                    console.log(`Testing ${func}...`);
+                    const response = await fetch(`/.netlify/functions/${func}`);
+                    console.log(`${func}: Status ${response.status} (${response.statusText})`);
+                    
+                    const text = await response.text();
+                    console.log(`${func}: Response length: ${text.length} chars`);
+                    console.log(`${func}: First 100 chars:`, text.substring(0, 100));
+                    
+                    if (response.ok) {
+                        try {
+                            const json = JSON.parse(text);
+                            console.log(`${func}: ✅ Valid JSON, ${Array.isArray(json) ? json.length : 'object'} items`);
+                        } catch (e) {
+                            console.log(`${func}: ❌ Invalid JSON:`, e.message);
+                        }
+                    }
+                } catch (error) {
+                    console.log(`${func}: ❌ Network Error:`, error.message);
+                }
+                console.log('---');
+            }
+            
+            alert('API test completed. Check the browser console (F12) for detailed results.');
+        }
     </script>
 </body>
 </html>
