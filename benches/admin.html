@@ -5,197 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin Panel - Bench Map</title>
     <style>
-        /* ... (Deine bisherigen Styles unverändert übernehmen) ... */
-        body { margin:0; font-family: Arial, sans-serif; background: #f5f5f5; }
-        /* (der Rest bleibt wie bisher) */
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🛠️ Admin Panel - Bench Map</h1>
-    </div>
-    
-    <div class="container">
-        <div class="actions" style="margin-bottom: 20px;">
-            <a href="bench_map.html" class="btn btn-back">← Zurück zur Karte</a>
-            <button onclick="refreshData()" class="btn" style="background: #2196F3; color: white;">🔄 Aktualisieren</button>
-        </div>
-        
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="pendingCount">0</div>
-                <div class="stat-label">Wartende Bänke</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="approvedCount">0</div>
-                <div class="stat-label">Genehmigte Bänke</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalUsers">0</div>
-                <div class="stat-label">Registrierte Nutzer</div>
-            </div>
-        </div>
-        
-        <div class="filter-tabs">
-            <div class="tab active" onclick="showTab('pending', event)">⏳ Wartende Bänke</div>
-            <div class="tab" onclick="showTab('approved', event)">✅ Genehmigte Bänke</div>
-            <div class="tab" onclick="showTab('all', event)">📋 Alle Bänke</div>
-        </div>
-        
-        <div id="benchesList"></div>
-    </div>
-
-    <script>
-        let pendingBenches = [];
-        let approvedBenches = [];
-        let users = []; // Noch nicht verbunden mit DB
-        let currentFilter = 'pending';
-
-        async function loadData() {
-            try {
-                const pendingRes = await fetch('/.netlify/functions/get_pending_benches');
-                pendingBenches = await pendingRes.json();
-
-                const approvedRes = await fetch('/.netlify/functions/get_approved_benches');
-                approvedBenches = await approvedRes.json();
-
-                updateStats();
-                displayBenches();
-            } catch (e) {
-                alert('Fehler beim Laden der Bänke.');
-                console.error(e);
-            }
-        }
-
-        function updateStats() {
-            document.getElementById('pendingCount').textContent = pendingBenches.length;
-            document.getElementById('approvedCount').textContent = approvedBenches.length;
-            document.getElementById('totalUsers').textContent = users.length; // noch leer
-        }
-
-        function showTab(filter, event) {
-            currentFilter = filter;
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
-            displayBenches();
-        }
-
-        function displayBenches() {
-            const container = document.getElementById('benchesList');
-            let benchesToShow = [];
-
-            switch(currentFilter) {
-                case 'pending':
-                    benchesToShow = pendingBenches.map(b => ({...b, approved: false}));
-                    break;
-                case 'approved':
-                    benchesToShow = approvedBenches.map(b => ({...b, approved: true}));
-                    break;
-                case 'all':
-                    benchesToShow = [
-                        ...pendingBenches.map(b => ({...b, approved: false})),
-                        ...approvedBenches.map(b => ({...b, approved: true}))
-                    ].sort((a, b) => new Date(b.created) - new Date(a.created));
-                    break;
-            }
-
-            if (benchesToShow.length === 0) {
-                container.innerHTML = `
-                    <div class="no-benches">
-                        <h3>Keine Bänke ${currentFilter === 'pending' ? 'wartend' : currentFilter === 'approved' ? 'genehmigt' : 'vorhanden'}</h3>
-                        <p>Es gibt derzeit keine Bänke in dieser Kategorie.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = benchesToShow.map(bench => `
-                <div class="bench-card ${bench.approved ? 'approved' : ''}">
-                    <div class="bench-header">
-                        <div class="bench-title">${escapeHtml(bench.name)}</div>
-                        <div class="bench-status ${bench.approved ? 'status-approved' : 'status-pending'}">
-                            ${bench.approved ? '✅ Genehmigt' : '⏳ Wartend'}
-                        </div>
-                    </div>
-                    
-                    <div class="bench-info">
-                        <div>
-                            <strong>Beschreibung:</strong><br>
-                            ${escapeHtml(bench.description)}
-                        </div>
-                        <div>
-                            <strong>Position:</strong> ${bench.lat}, ${bench.lng}<br>
-                            <strong>Eingereicht von:</strong> ${escapeHtml(bench.user || 'Unbekannt')}<br>
-                            <strong>Erstellt am:</strong> ${new Date(bench.created).toLocaleString()}
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <img src="${bench.benchImage || ''}" alt="Bank Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px;">
-                            <img src="${bench.viewImage || ''}" alt="Ansicht Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px; margin-left: 10px;">
-                        </div>
-                    </div>
-
-                    <div class="bench-actions">
-                        ${!bench.approved ? `
-                            <button onclick="approveBench(${bench.id})" class="btn btn-approve">Genehmigen</button>
-                            <button onclick="rejectBench(${bench.id})" class="btn btn-reject">Ablehnen</button>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function approveBench(id) {
-            if (!confirm('Diese Bank genehmigen?')) return;
-            try {
-                const res = await fetch('/.netlify/functions/approve_bench', {
-                    method: 'POST',
-                    body: JSON.stringify({ id }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (!res.ok) throw new Error('Fehler beim Genehmigen');
-                await loadData();
-            } catch (e) {
-                alert('Fehler beim Genehmigen der Bank.');
-                console.error(e);
-            }
-        }
-
-        async function rejectBench(id) {
-            if (!confirm('Diese Bank ablehnen und löschen?')) return;
-            try {
-                const res = await fetch('/.netlify/functions/reject_bench', {
-                    method: 'POST',
-                    body: JSON.stringify({ id }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (!res.ok) throw new Error('Fehler beim Ablehnen');
-                await loadData();
-            } catch (e) {
-                alert('Fehler beim Ablehnen der Bank.');
-                console.error(e);
-            }
-        }
-
-        function refreshData() {
-            loadData();
-        }
-
-        function escapeHtml(text) {
-            return text
-                ? text.replace(/&/g, "&amp;")
-                      .replace(/</g, "&lt;")
-                      .replace(/>/g, "&gt;")
-                      .replace(/"/g, "&quot;")
-                      .replace(/'/g, "&#039;")
-                : '';
-        }
-
-        // Initial laden
-        loadData();
-    </script>
-
-    <style>
-        /* Styles für das Admin Panel */
         body {
             background: #f5f5f5;
             margin: 0;
@@ -207,7 +16,7 @@
             padding: 10px 20px;
         }
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 20px auto;
             background: white;
             padding: 20px;
@@ -217,6 +26,7 @@
         .actions {
             display: flex;
             gap: 10px;
+            margin-bottom: 20px;
         }
         .btn {
             padding: 8px 16px;
@@ -254,7 +64,7 @@
             border: 1px solid #ddd;
             border-radius: 6px;
             padding: 15px 25px;
-            width: 30%;
+            width: 22%;
             text-align: center;
         }
         .stat-number {
@@ -288,28 +98,28 @@
             border-bottom: 2px solid white;
             font-weight: bold;
         }
-        #benchesList {
+        #contentArea {
             max-height: 600px;
             overflow-y: auto;
         }
-        .bench-card {
+        .bench-card, .image-card {
             border: 1px solid #ddd;
             border-radius: 6px;
             padding: 15px;
             margin-bottom: 15px;
             background: white;
         }
-        .bench-header {
+        .bench-header, .image-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
-        .bench-title {
+        .bench-title, .image-title {
             font-weight: bold;
             font-size: 1.2em;
         }
-        .bench-status {
+        .bench-status, .image-status {
             font-weight: bold;
             padding: 4px 10px;
             border-radius: 12px;
@@ -324,19 +134,470 @@
             background: #4caf50;
             color: white;
         }
-        .bench-info {
+        .bench-info, .image-info {
             font-size: 0.9em;
             color: #444;
             display: flex;
             gap: 20px;
         }
-        .bench-info > div {
+        .bench-info > div, .image-info > div {
             flex: 1;
         }
-        .bench-actions {
+        .bench-actions, .image-actions {
             margin-top: 15px;
             text-align: right;
         }
+        .image-preview-container {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .preview-image {
+            max-width: 120px;
+            max-height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .fullscreen-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .fullscreen-image {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        .close-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        .no-items {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .original-bench-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #4caf50;
+        }
+        .original-bench-info h5 {
+            margin: 0 0 5px 0;
+            color: #4caf50;
+        }
     </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛠️ Admin Panel - Bench Map</h1>
+    </div>
+    
+    <div class="container">
+        <div class="actions">
+            <a href="index.html" class="btn btn-back">← Zurück zur Karte</a>
+            <button onclick="refreshData()" class="btn" style="background: #2196F3; color: white;">🔄 Aktualisieren</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">Wartende Bänke</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="approvedCount">0</div>
+                <div class="stat-label">Genehmigte Bänke</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingImagesCount">0</div>
+                <div class="stat-label">Wartende Bilder</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Registrierte Nutzer</div>
+            </div>
+        </div>
+        
+        <div class="filter-tabs">
+            <div class="tab active" onclick="showTab('pending', event)">⏳ Wartende Bänke</div>
+            <div class="tab" onclick="showTab('approved', event)">✅ Genehmigte Bänke</div>
+            <div class="tab" onclick="showTab('pending-images', event)">🖼️ Neue Bank-Bilder</div>
+            <div class="tab" onclick="showTab('all', event)">📋 Alle Bänke</div>
+        </div>
+        
+        <div id="contentArea"></div>
+    </div>
+
+    <!-- Fullscreen Image Modal -->
+    <div id="fullscreenModal" class="fullscreen-modal" onclick="closeFullscreen()">
+        <button class="close-btn" onclick="closeFullscreen()">✕</button>
+        <img id="fullscreenImage" class="fullscreen-image" src="" alt="">
+    </div>
+
+    <script>
+        let pendingBenches = [];
+        let approvedBenches = [];
+        let pendingImages = [];
+        let users = [];
+        let currentFilter = 'pending';
+
+        async function loadData() {
+            try {
+                // Lade wartende Bänke
+                const pendingRes = await fetch('/.netlify/functions/get_pending_benches');
+                const pendingData = await pendingRes.json();
+                pendingBenches = pendingData.success ? pendingData.benches : [];
+
+                // Lade genehmigte Bänke
+                const approvedRes = await fetch('/.netlify/functions/get_benches');
+                const approvedData = await approvedRes.json();
+                approvedBenches = approvedData.success ? approvedData.benches : [];
+
+                // Lade wartende zusätzliche Bilder
+                const pendingImagesRes = await fetch('/.netlify/functions/get_pending_images');
+                const pendingImagesData = await pendingImagesRes.json();
+                pendingImages = pendingImagesData.success ? pendingImagesData.images : [];
+
+                updateStats();
+                displayContent();
+            } catch (e) {
+                console.error('Fehler beim Laden der Daten:', e);
+                showError('Fehler beim Laden der Daten.');
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('pendingCount').textContent = pendingBenches.length;
+            document.getElementById('approvedCount').textContent = approvedBenches.length;
+            document.getElementById('pendingImagesCount').textContent = pendingImages.length;
+            document.getElementById('totalUsers').textContent = users.length;
+        }
+
+        function showTab(filter, event) {
+            currentFilter = filter;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            displayContent();
+        }
+
+        function displayContent() {
+            const container = document.getElementById('contentArea');
+            
+            switch(currentFilter) {
+                case 'pending':
+                    displayBenches(pendingBenches.map(b => ({...b, approved: false})));
+                    break;
+                case 'approved':
+                    displayBenches(approvedBenches.map(b => ({...b, approved: true})));
+                    break;
+                case 'pending-images':
+                    displayPendingImages();
+                    break;
+                case 'all':
+                    const allBenches = [
+                        ...pendingBenches.map(b => ({...b, approved: false})),
+                        ...approvedBenches.map(b => ({...b, approved: true}))
+                    ].sort((a, b) => new Date(b.created) - new Date(a.created));
+                    displayBenches(allBenches);
+                    break;
+            }
+        }
+
+        function displayBenches(benches) {
+            const container = document.getElementById('contentArea');
+
+            if (benches.length === 0) {
+                container.innerHTML = `
+                    <div class="no-items">
+                        <h3>Keine Bänke ${currentFilter === 'pending' ? 'wartend' : currentFilter === 'approved' ? 'genehmigt' : 'vorhanden'}</h3>
+                        <p>Es gibt derzeit keine Bänke in dieser Kategorie.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = benches.map(bench => `
+                <div class="bench-card ${bench.approved ? 'approved' : ''}">
+                    <div class="bench-header">
+                        <div class="bench-title">${escapeHtml(bench.name)}</div>
+                        <div class="bench-status ${bench.approved ? 'status-approved' : 'status-pending'}">
+                            ${bench.approved ? '✅ Genehmigt' : '⏳ Wartend'}
+                        </div>
+                    </div>
+                    
+                    <div class="bench-info">
+                        <div>
+                            <strong>Beschreibung:</strong><br>
+                            ${escapeHtml(bench.description)}
+                        </div>
+                        <div>
+                            <strong>Position:</strong> ${bench.latitude || bench.lat}, ${bench.longitude || bench.lng}<br>
+                            <strong>Eingereicht von:</strong> ${escapeHtml(bench.user_email || bench.user || 'Unbekannt')}<br>
+                            <strong>Erstellt am:</strong> ${new Date(bench.created_at || bench.created).toLocaleString()}
+                        </div>
+                    </div>
+                    
+                    <div class="image-preview-container">
+                        ${bench.bench_image || bench.benchImage ? `
+                            <img src="${bench.bench_image || bench.benchImage}" 
+                                 alt="Bank Bild" 
+                                 class="preview-image" 
+                                 onclick="showFullscreen('${bench.bench_image || bench.benchImage}')">
+                        ` : ''}
+                        ${bench.view_image || bench.viewImage ? `
+                            <img src="${bench.view_image || bench.viewImage}" 
+                                 alt="Ansicht Bild" 
+                                 class="preview-image" 
+                                 onclick="showFullscreen('${bench.view_image || bench.viewImage}')">
+                        ` : ''}
+                    </div>
+
+                    <div class="bench-actions">
+                        ${!bench.approved ? `
+                            <button onclick="approveBench(${bench.id})" class="btn btn-approve">✅ Genehmigen</button>
+                            <button onclick="rejectBench(${bench.id})" class="btn btn-reject">❌ Ablehnen</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayPendingImages() {
+            const container = document.getElementById('contentArea');
+
+            if (pendingImages.length === 0) {
+                container.innerHTML = `
+                    <div class="no-items">
+                        <h3>Keine neuen Bilder wartend</h3>
+                        <p>Es gibt derzeit keine neuen Bilder, die auf Genehmigung warten.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pendingImages.map(image => {
+                // Finde die zugehörige Bank
+                const relatedBench = approvedBenches.find(b => b.id === image.bench_id);
+                
+                return `
+                    <div class="image-card">
+                        <div class="image-header">
+                            <div class="image-title">📸 ${escapeHtml(image.description)}</div>
+                            <div class="image-status status-pending">⏳ Wartend</div>
+                        </div>
+                        
+                        <div class="image-info">
+                            <div>
+                                <strong>Neues Bild:</strong><br>
+                                <img src="${image.image_data}" 
+                                     alt="Neues Bild" 
+                                     class="preview-image" 
+                                     onclick="showFullscreen('${image.image_data}')"
+                                     style="max-width: 200px; max-height: 150px;">
+                                <br><br>
+                                <strong>Beschreibung:</strong> ${escapeHtml(image.description)}<br>
+                                <strong>Eingereicht von:</strong> ${escapeHtml(image.user_email || 'Unbekannt')}<br>
+                                <strong>Eingereicht am:</strong> ${new Date(image.created_at).toLocaleString()}
+                            </div>
+                            
+                            ${relatedBench ? `
+                                <div class="original-bench-info">
+                                    <h5>🪑 Zugehörige Bank: ${escapeHtml(relatedBench.name)}</h5>
+                                    <div style="display: flex; gap: 10px; margin: 10px 0;">
+                                        <div>
+                                            <strong>Original Bank-Bild:</strong><br>
+                                            <img src="${relatedBench.bench_image || relatedBench.benchImage}" 
+                                                 alt="Original Bank" 
+                                                 class="preview-image" 
+                                                 onclick="showFullscreen('${relatedBench.bench_image || relatedBench.benchImage}')"
+                                                 style="max-width: 120px; max-height: 80px;">
+                                        </div>
+                                        <div>
+                                            <strong>Original Aussicht:</strong><br>
+                                            <img src="${relatedBench.view_image || relatedBench.viewImage}" 
+                                                 alt="Original Aussicht" 
+                                                 class="preview-image" 
+                                                 onclick="showFullscreen('${relatedBench.view_image || relatedBench.viewImage}')"
+                                                 style="max-width: 120px; max-height: 80px;">
+                                        </div>
+                                    </div>
+                                    <p><strong>Beschreibung:</strong> ${escapeHtml(relatedBench.description)}</p>
+                                    <p><strong>Position:</strong> ${relatedBench.latitude}, ${relatedBench.longitude}</p>
+                                </div>
+                            ` : '<p style="color: #f44336;">⚠️ Zugehörige Bank nicht gefunden</p>'}
+                        </div>
+
+                        <div class="image-actions">
+                            <button onclick="approveImage(${image.id})" class="btn btn-approve">✅ Bild genehmigen</button>
+                            <button onclick="rejectImage(${image.id})" class="btn btn-reject">❌ Bild ablehnen</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function approveBench(id) {
+            if (!confirm('Diese Bank genehmigen?')) return;
+            try {
+                const res = await fetch('/.netlify/functions/approve_bench', {
+                    method: 'POST',
+                    body: JSON.stringify({ id }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Fehler beim Genehmigen');
+                showSuccess('Bank erfolgreich genehmigt!');
+                await loadData();
+            } catch (e) {
+                showError('Fehler beim Genehmigen der Bank: ' + e.message);
+                console.error(e);
+            }
+        }
+
+        async function rejectBench(id) {
+            if (!confirm('Diese Bank ablehnen und löschen?')) return;
+            try {
+                const res = await fetch('/.netlify/functions/reject_bench', {
+                    method: 'POST',
+                    body: JSON.stringify({ id }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Fehler beim Ablehnen');
+                showSuccess('Bank erfolgreich abgelehnt!');
+                await loadData();
+            } catch (e) {
+                showError('Fehler beim Ablehnen der Bank: ' + e.message);
+                console.error(e);
+            }
+        }
+
+        async function approveImage(id) {
+            if (!confirm('Dieses Bild genehmigen?')) return;
+            try {
+                const res = await fetch('/.netlify/functions/approve_image', {
+                    method: 'POST',
+                    body: JSON.stringify({ id }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Fehler beim Genehmigen');
+                showSuccess('Bild erfolgreich genehmigt!');
+                await loadData();
+            } catch (e) {
+                showError('Fehler beim Genehmigen des Bildes: ' + e.message);
+                console.error(e);
+            }
+        }
+
+        async function rejectImage(id) {
+            if (!confirm('Dieses Bild ablehnen und löschen?')) return;
+            try {
+                const res = await fetch('/.netlify/functions/reject_image', {
+                    method: 'POST',
+                    body: JSON.stringify({ id }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Fehler beim Ablehnen');
+                showSuccess('Bild erfolgreich abgelehnt!');
+                await loadData();
+            } catch (e) {
+                showError('Fehler beim Ablehnen des Bildes: ' + e.message);
+                console.error(e);
+            }
+        }
+
+        function showFullscreen(imageSrc) {
+            document.getElementById('fullscreenImage').src = imageSrc;
+            document.getElementById('fullscreenModal').style.display = 'flex';
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenModal').style.display = 'none';
+        }
+
+        function refreshData() {
+            showSuccess('Daten werden aktualisiert...');
+            loadData();
+        }
+
+        function showSuccess(message) {
+            // Einfache Benachrichtigung - könnte durch Toast-System ersetzt werden
+            const notification = createNotification(message, 'success');
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function showError(message) {
+            // Einfache Benachrichtigung - könnte durch Toast-System ersetzt werden
+            const notification = createNotification(message, 'error');
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        function createNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 5px;
+                z-index: 2000;
+                font-weight: bold;
+                ${type === 'success' 
+                    ? 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;' 
+                    : 'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;'
+                }
+            `;
+            notification.textContent = message;
+            return notification;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeFullscreen();
+            }
+        });
+
+        // Initial laden
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+    </script>
 </body>
 </html>
