@@ -1457,113 +1457,115 @@ function requestPasswordReset() {
             }
         }
         
-		async function showBenchImages(id) {
-			const benchData = benchMarkers.find(item => item.bench.id === id);
-			const bench = benchData ? benchData.bench : null;
+async function showBenchImages(id) {
+    const benchData = benchMarkers.find(item => item.bench.id === id);
+    const bench = benchData ? benchData.bench : null;
 
-			if (!bench) return;
+    if (!bench) return;
 
-			const cont = document.getElementById('imageContainer');
-			const fallback = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CaWxkIG5pY2h0IGxhZGJhcjwvdGV4dD48L3N2Zz4=';
-			let imagesHtml = '';
+    const cont = document.getElementById('imageContainer');
+    const fallback = 'data:image/svg+xml;base64,...';
+    let imagesHtml = '';
 
-			// Standardbilder
-			imagesHtml += `
-				<div class="image-box" onclick="openFullscreen('${bench.benchImage || bench.bench_image || fallback}')">
-					<h4>🪑 Die Bank</h4>
-					<img src="${bench.benchImage || bench.bench_image || fallback}" alt="Bank" onerror="this.src='${fallback}'">
-				</div>
-				<div class="image-box" onclick="openFullscreen('${bench.viewImage || bench.view_image || fallback}')">
-					<h4>🌄 Die Aussicht</h4>
-					<img src="${bench.viewImage || bench.view_image || fallback}" alt="Aussicht" onerror="this.src='${fallback}'">
-				</div>
-			`;
+    // Standardbilder
+    imagesHtml += `
+        <div class="image-box" onclick="openFullscreen('${bench.benchImage || bench.bench_image || fallback}')">
+            <h4>🪑 Die Bank</h4>
+            <img src="${bench.benchImage || bench.bench_image || fallback}" alt="Bank" onerror="this.src='${fallback}'">
+        </div>
+        <div class="image-box" onclick="openFullscreen('${bench.viewImage || bench.view_image || fallback}')">
+            <h4>🌄 Die Aussicht</h4>
+            <img src="${bench.viewImage || bench.view_image || fallback}" alt="Aussicht" onerror="this.src='${fallback}'">
+        </div>
+    `;
 
-			// Zusätzliche Bilder von der API holen
-			try {
-				const response = await fetch(`/.netlify/functions/get-approved-images-for-bench?bench_id=${id}`);
-				if (response.ok) {
-					const additionalImages = await response.json();
-					additionalImages.forEach(img => {
-						imagesHtml += `
-							<div class="image-box" onclick="openFullscreen('${img.imageUrl || fallback}')">
-								<h4>${img.description || 'Zusätzliches Bild'}</h4>
-								<img src="${img.imageUrl || fallback}" alt="${img.description || 'Zusätzliches Bild'}" onerror="this.src='${fallback}'">
-							</div>
-						`;
-					});
-				}
-			} catch (error) {
-				console.error('Fehler beim Laden zusätzlicher Bilder:', error);
-			}
-            
-			
-		// Funktionen für die Modals
-		function openAddImageModal() {
-			document.getElementById('addImageModal').style.display = 'flex';
-		}
+    // Zusätzliche Bilder laden
+    try {
+        const response = await fetch(`/.netlify/functions/get-approved-images-for-bench?bench_id=${id}`);
+        if (response.ok) {
+            const additionalImages = await response.json();
+            additionalImages.forEach(img => {
+                imagesHtml += `
+                    <div class="image-box" onclick="openFullscreen('${img.imageUrl || fallback}')">
+                        <h4>${img.description || 'Zusätzliches Bild'}</h4>
+                        <img src="${img.imageUrl || fallback}" alt="${img.description || 'Zusätzliches Bild'}" onerror="this.src='${fallback}'">
+                    </div>
+                `;
+            });
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden zusätzlicher Bilder:', error);
+    }
 
-		function closeAddImageModal() {
-			document.getElementById('addImageModal').style.display = 'none';
-		}
+    cont.innerHTML = imagesHtml;
+    document.getElementById('imageViewer').style.display = 'flex';
+    document.getElementById('addImageModal').dataset.benchId = id;
+}
 
-		function openFullscreen(src) {
-			const modal = document.getElementById('fullscreenModal');
-			const modalImg = document.getElementById('fullscreenImage');
-			modal.style.display = 'flex';
-			modalImg.src = src;
-		}
+// Diese Funktionen jetzt global:
+function openAddImageModal() {
+    document.getElementById('addImageModal').style.display = 'flex';
+}
 
-		function closeFullscreenModal(event) {
-			if (event && event.target !== event.currentTarget) return;
-			document.getElementById('fullscreenModal').style.display = 'none';
-		}
+function closeAddImageModal() {
+    document.getElementById('addImageModal').style.display = 'none';
+}
 
-		// Funktion zum Abschicken eines neuen Bildes
-		async function submitNewImage(event) {
-			event.preventDefault();
-			const benchId = document.getElementById('addImageModal').dataset.benchId;
-			const imageFile = document.getElementById('newImageFile').files[0];
-			const description = document.getElementById('newImageDescription').value;
+function openFullscreen(src) {
+    const modal = document.getElementById('fullscreenModal');
+    const modalImg = document.getElementById('fullscreenImage');
+    modal.style.display = 'flex';
+    modalImg.src = src;
+}
 
-			if (!benchId || !imageFile) {
-				alert('Bank-ID oder Bild fehlt.');
-				return;
-			}
+function closeFullscreenModal(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('fullscreenModal').style.display = 'none';
+}
 
-			const formData = new FormData();
-			formData.append('file', imageFile);
+async function submitNewImage(event) {
+    event.preventDefault();
+    const benchId = document.getElementById('addImageModal').dataset.benchId;
+    const imageFile = document.getElementById('newImageFile').files[0];
+    const description = document.getElementById('newImageDescription').value;
 
-			// Bild zu Cloudinary hochladen
-			const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/DEIN_CLOUD_NAME/image/upload', {
-				method: 'POST',
-				body: formData
-			});
-			const imageData = await cloudinaryResponse.json();
+    if (!benchId || !imageFile) {
+        alert('Bank-ID oder Bild fehlt.');
+        return;
+    }
 
-			if (!imageData.secure_url) {
-				alert('Fehler beim Hochladen des Bildes.');
-				return;
-			}
+    const formData = new FormData();
+    formData.append('file', imageFile);
 
-			// Bild an Netlify Funktion senden
-			const response = await fetch('/.netlify/functions/add-additional-image', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					bench_id: benchId,
-					image_url: imageData.secure_url,
-					description: description
-				})
-			});
+    const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/DEIN_CLOUD_NAME/image/upload', {
+        method: 'POST',
+        body: formData
+    });
+    const imageData = await cloudinaryResponse.json();
 
-			if (response.ok) {
-				alert('Bild erfolgreich zur Prüfung eingereicht!');
-				closeAddImageModal();
-			} else {
-				alert('Fehler beim Absenden des Bildes.');
-			}
-		}
+    if (!imageData.secure_url) {
+        alert('Fehler beim Hochladen des Bildes.');
+        return;
+    }
+
+    const response = await fetch('/.netlify/functions/add-additional-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            bench_id: benchId,
+            image_url: imageData.secure_url,
+            description: description
+        })
+    });
+
+    if (response.ok) {
+        alert('Bild erfolgreich zur Prüfung eingereicht!');
+        closeAddImageModal();
+    } else {
+        alert('Fehler beim Absenden des Bildes.');
+    }
+}
+
 			
 			cont.innerHTML = imagesHtml;
 			document.getElementById('imageViewer').style.display = 'flex';
