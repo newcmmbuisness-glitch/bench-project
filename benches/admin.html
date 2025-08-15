@@ -231,15 +231,15 @@
                 <div class="stat-label">Wartende Bilder</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="totalUsers">0</div>
-                <div class="stat-label">Registrierte Nutzer</div>
+                <div class="stat-number" id="totalUsers">-</div>
+                <div class="stat-label">Benutzer</div>
             </div>
         </div>
         
         <div class="filter-tabs">
             <div class="tab active" onclick="showTab('pending', event)">⏳ Wartende Bänke</div>
             <div class="tab" onclick="showTab('approved', event)">✅ Genehmigte Bänke</div>
-            <div class="tab" onclick="showTab('pending-images', event)">🖼️ Neue Bank-Bilder</div>
+            <div class="tab" onclick="showTab('pending-images', event)">🖼️ Wartende Bilder</div>
             <div class="tab" onclick="showTab('all', event)">📋 Alle Bänke</div>
         </div>
         
@@ -256,31 +256,45 @@
         let pendingBenches = [];
         let approvedBenches = [];
         let pendingImages = [];
-        let users = [];
         let currentFilter = 'pending';
 
         async function loadData() {
             try {
                 // Lade wartende Bänke
-                const pendingRes = await fetch('/.netlify/functions/get_pending_benches');
-                const pendingData = await pendingRes.json();
-                pendingBenches = pendingData.success ? pendingData.benches : [];
+                const pendingRes = await fetch('/.netlify/functions/get-pending-benches');
+                if (pendingRes.ok) {
+                    const pendingData = await pendingRes.json();
+                    pendingBenches = Array.isArray(pendingData) ? pendingData : [];
+                } else {
+                    console.warn('Error loading pending benches:', pendingRes.status);
+                    pendingBenches = [];
+                }
 
                 // Lade genehmigte Bänke
-                const approvedRes = await fetch('/.netlify/functions/get_benches');
-                const approvedData = await approvedRes.json();
-                approvedBenches = approvedData.success ? approvedData.benches : [];
+                const approvedRes = await fetch('/.netlify/functions/get-approved-benches');
+                if (approvedRes.ok) {
+                    const approvedData = await approvedRes.json();
+                    approvedBenches = Array.isArray(approvedData) ? approvedData : [];
+                } else {
+                    console.warn('Error loading approved benches:', approvedRes.status);
+                    approvedBenches = [];
+                }
 
                 // Lade wartende zusätzliche Bilder
-                const pendingImagesRes = await fetch('/.netlify/functions/get_pending_images');
-                const pendingImagesData = await pendingImagesRes.json();
-                pendingImages = pendingImagesData.success ? pendingImagesData.images : [];
+                const pendingImagesRes = await fetch('/.netlify/functions/get-pending-images');
+                if (pendingImagesRes.ok) {
+                    const pendingImagesData = await pendingImagesRes.json();
+                    pendingImages = Array.isArray(pendingImagesData) ? pendingImagesData : [];
+                } else {
+                    console.warn('Error loading pending images:', pendingImagesRes.status);
+                    pendingImages = [];
+                }
 
                 updateStats();
                 displayContent();
             } catch (e) {
                 console.error('Fehler beim Laden der Daten:', e);
-                showError('Fehler beim Laden der Daten.');
+                showError('Fehler beim Laden der Daten: ' + e.message);
             }
         }
 
@@ -288,7 +302,6 @@
             document.getElementById('pendingCount').textContent = pendingBenches.length;
             document.getElementById('approvedCount').textContent = approvedBenches.length;
             document.getElementById('pendingImagesCount').textContent = pendingImages.length;
-            document.getElementById('totalUsers').textContent = users.length;
         }
 
         function showTab(filter, event) {
@@ -315,7 +328,7 @@
                     const allBenches = [
                         ...pendingBenches.map(b => ({...b, approved: false})),
                         ...approvedBenches.map(b => ({...b, approved: true}))
-                    ].sort((a, b) => new Date(b.created) - new Date(a.created));
+                    ].sort((a, b) => new Date(b.created_at || b.created) - new Date(a.created_at || a.created));
                     displayBenches(allBenches);
                     break;
             }
@@ -351,7 +364,7 @@
                         <div>
                             <strong>Position:</strong> ${bench.latitude || bench.lat}, ${bench.longitude || bench.lng}<br>
                             <strong>Eingereicht von:</strong> ${escapeHtml(bench.user_email || bench.user || 'Unbekannt')}<br>
-                            <strong>Erstellt am:</strong> ${new Date(bench.created_at || bench.created).toLocaleString()}
+                            <strong>Erstellt am:</strong> ${new Date(bench.created_at || bench.created).toLocaleString('de-DE')}
                         </div>
                     </div>
                     
@@ -373,7 +386,7 @@
                     <div class="bench-actions">
                         ${!bench.approved ? `
                             <button onclick="approveBench(${bench.id})" class="btn btn-approve">✅ Genehmigen</button>
-                            <button onclick="rejectBench(${bench.id})" class="btn btn-reject">❌ Ablehnen</button>
+                            <button onclick="rejectBench(${bench.id})" class="btn btn-reject">⌘ Ablehnen</button>
                         ` : ''}
                     </div>
                 </div>
@@ -400,22 +413,21 @@
                 return `
                     <div class="image-card">
                         <div class="image-header">
-                            <div class="image-title">📸 ${escapeHtml(image.description)}</div>
+                            <div class="image-title">📸 ${escapeHtml(image.description || 'Neues Bild')}</div>
                             <div class="image-status status-pending">⏳ Wartend</div>
                         </div>
                         
                         <div class="image-info">
                             <div>
                                 <strong>Neues Bild:</strong><br>
-                                <img src="${image.image_data}" 
+                                <img src="${image.imageUrl || image.image_url}" 
                                      alt="Neues Bild" 
                                      class="preview-image" 
-                                     onclick="showFullscreen('${image.image_data}')"
+                                     onclick="showFullscreen('${image.imageUrl || image.image_url}')"
                                      style="max-width: 200px; max-height: 150px;">
                                 <br><br>
-                                <strong>Beschreibung:</strong> ${escapeHtml(image.description)}<br>
-                                <strong>Eingereicht von:</strong> ${escapeHtml(image.user_email || 'Unbekannt')}<br>
-                                <strong>Eingereicht am:</strong> ${new Date(image.created_at).toLocaleString()}
+                                <strong>Beschreibung:</strong> ${escapeHtml(image.description || 'Keine Beschreibung')}<br>
+                                <strong>Eingereicht am:</strong> ${new Date(image.createdAt || image.created_at).toLocaleString('de-DE')}
                             </div>
                             
                             ${relatedBench ? `
@@ -440,14 +452,14 @@
                                         </div>
                                     </div>
                                     <p><strong>Beschreibung:</strong> ${escapeHtml(relatedBench.description)}</p>
-                                    <p><strong>Position:</strong> ${relatedBench.latitude}, ${relatedBench.longitude}</p>
+                                    <p><strong>Position:</strong> ${relatedBench.lat || relatedBench.latitude}, ${relatedBench.lng || relatedBench.longitude}</p>
                                 </div>
                             ` : '<p style="color: #f44336;">⚠️ Zugehörige Bank nicht gefunden</p>'}
                         </div>
 
                         <div class="image-actions">
                             <button onclick="approveImage(${image.id})" class="btn btn-approve">✅ Bild genehmigen</button>
-                            <button onclick="rejectImage(${image.id})" class="btn btn-reject">❌ Bild ablehnen</button>
+                            <button onclick="rejectImage(${image.id})" class="btn btn-reject">⌘ Bild ablehnen</button>
                         </div>
                     </div>
                 `;
@@ -457,15 +469,24 @@
         async function approveBench(id) {
             if (!confirm('Diese Bank genehmigen?')) return;
             try {
-                const res = await fetch('/.netlify/functions/approve_bench', {
+                const res = await fetch('/.netlify/functions/approve-bench', {
                     method: 'POST',
                     body: JSON.stringify({ id }),
                     headers: { 'Content-Type': 'application/json' }
                 });
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
                 const data = await res.json();
-                if (!data.success) throw new Error(data.error || 'Fehler beim Genehmigen');
-                showSuccess('Bank erfolgreich genehmigt!');
-                await loadData();
+                
+                if (data.success) {
+                    showSuccess('Bank erfolgreich genehmigt!');
+                    await loadData();
+                } else {
+                    throw new Error(data.error || 'Unbekannter Fehler');
+                }
             } catch (e) {
                 showError('Fehler beim Genehmigen der Bank: ' + e.message);
                 console.error(e);
@@ -475,15 +496,24 @@
         async function rejectBench(id) {
             if (!confirm('Diese Bank ablehnen und löschen?')) return;
             try {
-                const res = await fetch('/.netlify/functions/reject_bench', {
+                const res = await fetch('/.netlify/functions/reject-bench', {
                     method: 'POST',
                     body: JSON.stringify({ id }),
                     headers: { 'Content-Type': 'application/json' }
                 });
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
                 const data = await res.json();
-                if (!data.success) throw new Error(data.error || 'Fehler beim Ablehnen');
-                showSuccess('Bank erfolgreich abgelehnt!');
-                await loadData();
+                
+                if (data.success) {
+                    showSuccess('Bank erfolgreich abgelehnt!');
+                    await loadData();
+                } else {
+                    throw new Error(data.error || 'Unbekannter Fehler');
+                }
             } catch (e) {
                 showError('Fehler beim Ablehnen der Bank: ' + e.message);
                 console.error(e);
@@ -493,15 +523,24 @@
         async function approveImage(id) {
             if (!confirm('Dieses Bild genehmigen?')) return;
             try {
-                const res = await fetch('/.netlify/functions/approve_image', {
+                const res = await fetch('/.netlify/functions/approve-image', {
                     method: 'POST',
                     body: JSON.stringify({ id }),
                     headers: { 'Content-Type': 'application/json' }
                 });
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
                 const data = await res.json();
-                if (!data.success) throw new Error(data.error || 'Fehler beim Genehmigen');
-                showSuccess('Bild erfolgreich genehmigt!');
-                await loadData();
+                
+                if (res.ok && res.status === 200) {
+                    showSuccess('Bild erfolgreich genehmigt!');
+                    await loadData();
+                } else {
+                    throw new Error('Fehler beim Genehmigen des Bildes');
+                }
             } catch (e) {
                 showError('Fehler beim Genehmigen des Bildes: ' + e.message);
                 console.error(e);
@@ -511,15 +550,22 @@
         async function rejectImage(id) {
             if (!confirm('Dieses Bild ablehnen und löschen?')) return;
             try {
-                const res = await fetch('/.netlify/functions/reject_image', {
+                const res = await fetch('/.netlify/functions/reject-image', {
                     method: 'POST',
                     body: JSON.stringify({ id }),
                     headers: { 'Content-Type': 'application/json' }
                 });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.error || 'Fehler beim Ablehnen');
-                showSuccess('Bild erfolgreich abgelehnt!');
-                await loadData();
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
+                if (res.status === 200) {
+                    showSuccess('Bild erfolgreich abgelehnt!');
+                    await loadData();
+                } else {
+                    throw new Error('Fehler beim Ablehnen des Bildes');
+                }
             } catch (e) {
                 showError('Fehler beim Ablehnen des Bildes: ' + e.message);
                 console.error(e);
@@ -541,7 +587,6 @@
         }
 
         function showSuccess(message) {
-            // Einfache Benachrichtigung - könnte durch Toast-System ersetzt werden
             const notification = createNotification(message, 'success');
             document.body.appendChild(notification);
             setTimeout(() => {
@@ -550,7 +595,6 @@
         }
 
         function showError(message) {
-            // Einfache Benachrichtigung - könnte durch Toast-System ersetzt werden
             const notification = createNotification(message, 'error');
             document.body.appendChild(notification);
             setTimeout(() => {
@@ -579,7 +623,7 @@
 
         function escapeHtml(text) {
             if (!text) return '';
-            return text
+            return String(text)
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
