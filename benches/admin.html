@@ -376,9 +376,10 @@
 			try {
 			  const userRes = await fetch('/.netlify/functions/get_all_users');
 			  if (userRes.ok) {
-				users = await userRes.json();
+				const data = await userRes.json();
+				users = new Array(data.count); // nur für .length
 			  } else {
-				console.error('Fehler beim Abrufen der Nutzer:', await userRes.text());
+				console.error('Fehler beim Abrufen der Nutzeranzahl:', await userRes.text());
 				users = [];
 			  }
 			} catch (e) {
