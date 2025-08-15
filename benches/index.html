@@ -1351,7 +1351,7 @@ function requestPasswordReset() {
 			formData.append('file', file);
 			formData.append('upload_preset', 'benches_upload'); // Name Ihres Upload-Presets
 
-			const res = await fetch('https://api.cloudinary.com/v1_1/DEIN_CLOUD_NAME/image/upload', {
+			const res = await fetch('https://api.cloudinary.com/v1_1/dp3t4ctxz/image/upload', {
 				method: 'POST',
 				body: formData
 			});
