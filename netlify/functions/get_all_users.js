@@ -1,0 +1,42 @@
+// netlify/functions/get_all_users.js
+const { neon } = require('@neondatabase/serverless');
+const sql = neon(process.env.NETLIFY_DATABASE_URL);
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  };
+
+  // CORS Preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
+  if (event.httpMethod !== 'GET') {
+    return { statusCode: 405, headers, body: 'Method not allowed' };
+  }
+
+  try {
+    // Alle Nutzer abrufen – falls sensible Felder existieren, nur notwendige Spalten auswählen
+    const users = await sql`
+      SELECT id, name, email, created_at
+      FROM users
+      ORDER BY created_at DESC
+    `;
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(users),
+    };
+  } catch (err) {
+    console.error('get_all_users error', err);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: 'Server error' }),
+    };
+  }
+};
