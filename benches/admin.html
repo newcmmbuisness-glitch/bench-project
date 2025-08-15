@@ -373,7 +373,19 @@
             }
             
             // Set users to empty array since the function doesn't exist
-            users = [];
+			try {
+			  const userRes = await fetch('/.netlify/functions/get_all_users');
+			  if (userRes.ok) {
+				users = await userRes.json();
+			  } else {
+				console.error('Fehler beim Abrufen der Nutzer:', await userRes.text());
+				users = [];
+			  }
+			} catch (e) {
+			  console.error('Netzwerkfehler beim Laden der Nutzer:', e);
+			  users = [];
+			}
+
 
             // Show diagnostic information if there are errors
             const errors = [];
@@ -392,7 +404,7 @@
         function updateStats() {
             document.getElementById('pendingCount').textContent = pendingBenches.length;
             document.getElementById('approvedCount').textContent = approvedBenches.length;
-            document.getElementById('totalUsers').textContent = 0; // Function doesn't exist
+            document.getElementById('totalUsers').textContent = users.length;
         }
 
         function showTab(filter, event) {
