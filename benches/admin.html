@@ -5,360 +5,541 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin Panel - Bench Map</title>
     <style>
-        /* Allgemeine Layout-Styles */
+        /* ... (Deine bisherigen Styles unverändert übernehmen) ... */
         body { margin:0; font-family: Arial, sans-serif; background: #f5f5f5; }
-        .header { background: #222; color: white; padding: 10px 20px; text-align: center; }
-        .container { max-width: 900px; margin: 20px auto; background: white; padding: 20px; border-radius: 6px; box-shadow: 0 0 10px #aaa; }
-        .actions { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background: #eee; transition: background-color 0.3s ease; text-decoration: none; color: #333; }
-        .btn:hover { background: #ddd; }
-        .btn-back { background: #bbb; color: white; }
-        .btn-approve { background: #4CAF50; color: white; margin-right: 8px; }
-        .btn-reject { background: #f44336; color: white; }
-
-        /* Statistik-Cards */
-        .stats { display: flex; justify-content: space-around; margin: 20px 0; }
-        .stat-card { background: #fafafa; border: 1px solid #ddd; border-radius: 6px; padding: 15px 25px; width: 30%; text-align: center; }
-        .stat-number { font-size: 2.2em; font-weight: bold; color: #333; }
-        .stat-label { font-size: 1em; color: #666; }
-
-        /* Tab-Navigation */
-        .tab-container { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
-        .tab { padding: 12px 20px; cursor: pointer; border: 1px solid transparent; border-bottom: none; margin-right: 5px; background: #eee; border-top-left-radius: 6px; border-top-right-radius: 6px; user-select: none; font-weight: bold; }
-        .tab.active { background: white; border-color: #ddd; border-bottom: 2px solid white; }
-
-        /* Inhaltsbereiche */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* Bänke-Liste */
-        .bench-card { border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 15px; background: white; }
-        .bench-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .bench-title { font-weight: bold; font-size: 1.2em; }
-        .bench-status { font-weight: bold; padding: 4px 10px; border-radius: 12px; font-size: 0.9em; user-select: none; }
-        .status-pending { background: #ff9800; color: white; }
-        .status-approved { background: #4caf50; color: white; }
-        .bench-info { font-size: 0.9em; color: #444; display: flex; flex-direction: column; gap: 10px; }
-        .bench-actions { margin-top: 15px; text-align: right; }
-        .image-preview { display: flex; gap: 10px; margin-top: 10px; }
-        .image-preview img { max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; }
-        .no-benches { text-align: center; color: #888; margin-top: 40px; }
-        
-        /* Bilder-Liste */
-        #imagesList {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .image-review-card { border: 1px solid #ddd; border-radius: 6px; padding: 15px; background: white; }
-        .image-header h4 { margin: 0 0 5px 0; }
-        .image-comparison { margin-top: 15px; }
-        .image-comparison img { width: 100%; height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 5px; cursor: pointer; }
-        .image-actions { margin-top: 15px; display: flex; gap: 10px; }
-        
-        /* Benachrichtigungen */
-        #notification { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 15px; border-radius: 8px; z-index: 1000; display: none; }
-        #notification.success { background: #4CAF50; }
-        #notification.error { background: #f44336; }
-        #notification.info { background: #2196F3; }
-        
-        /* Fullscreen Modal */
-        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        .fullscreen-modal img { max-width: 90%; max-height: 90%; object-fit: contain; }
-        .fullscreen-modal .close-btn { position: absolute; top: 20px; right: 30px; font-size: 40px; font-weight: bold; color: white; cursor: pointer; }
+        /* (der Rest bleibt wie bisher) */
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🛠️ Admin Panel - Bench Map</h1>
     </div>
-
-    <div class="container">
-        <div class="actions">
-            <a href="bench_map.html" class="btn btn-back">← Zurück zur Karte</a>
-            <button onclick="refreshData()" class="btn">🔄 Aktualisieren</button>
-        </div>
-
-        <div class="stats">
-            <div class="stat-card"><div class="stat-number" id="pendingBenchesCount">0</div><div class="stat-label">Wartende Bänke</div></div>
-            <div class="stat-card"><div class="stat-number" id="approvedBenchesCount">0</div><div class="stat-label">Genehmigte Bänke</div></div>
-            <div class="stat-card"><div class="stat-number" id="pendingImagesCount">0</div><div class="stat-label">Wartende Bilder</div></div>
-        </div>
-
-        <div class="tab-container">
-            <div class="tab active" data-tab-id="benches" onclick="showAdminTab('benches')">Wartende Bänke</div>
-            <div class="tab" data-tab-id="images" onclick="showAdminTab('images')">Wartende Bilder</div>
-        </div>
-
-        <div id="benchesContent" class="tab-content active">
-            <div id="benchesList"></div>
-        </div>
-        
-        <div id="imagesContent" class="tab-content">
-            <div id="imagesList"></div>
-        </div>
-    </div>
-
-    <div id="notification"></div>
     
-    <div id="fullscreenModal" class="fullscreen-modal" onclick="closeFullscreenModal(event)">
-        <span class="close-btn">&times;</span>
-        <img id="fullscreenImage" src="">
+    <div class="container">
+        <div class="actions" style="margin-bottom: 20px;">
+            <a href="bench_map.html" class="btn btn-back">← Zurück zur Karte</a>
+            <button onclick="refreshData()" class="btn" style="background: #2196F3; color: white;">🔄 Aktualisieren</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">Wartende Bänke</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="approvedCount">0</div>
+                <div class="stat-label">Genehmigte Bänke</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Registrierte Nutzer</div>
+            </div>
+        </div>
+        
+		<div class="tab-container" style="margin-top: 20px;">
+			<button class="tab" id="benchesTab" onclick="showAdminTab('benches')">Wartende Bänke</button>
+			<button class="tab active" id="imagesTab" onclick="showAdminTab('images')">Wartende Bilder</button>
+		</div>
+
+		<div id="imagesList" class="tab-content active" style="margin-top: 15px;">
+			</div>
+
+		<div id="benchesList" class="tab-content">
+			</div>
+		
+        <div class="filter-tabs">
+            <div class="tab active" onclick="showTab('pending', event)">⏳ Wartende Bänke</div>
+            <div class="tab" onclick="showTab('approved', event)">✅ Genehmigte Bänke</div>
+            <div class="tab" onclick="showTab('all', event)">📋 Alle Bänke</div>
+        </div>
+        
+        <div id="benchesList"></div>
     </div>
 
-    <script>
-        let pendingBenchesData = [];
-        let approvedBenchesData = [];
-        let pendingImagesData = [];
+		<script>
+			let pendingBenches = [];
+			let approvedBenches = [];
+			let users = [];
+			let currentFilter = 'pending';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            showAdminTab('benches');
-            loadAllData();
-        });
+			// Funktion zum Umschalten zwischen den Haupt-Tabs (Bänke und Bilder)
+			function showAdminTab(tab) {
+				const benchesTabBtn = document.getElementById('benchesTab');
+				const imagesTabBtn = document.getElementById('imagesTab');
+				const imagesListContainer = document.getElementById('imagesList');
+				// Targets the benches list tab content, which is the first benchesList ID with the tab-content class
+				const benchesTabContent = document.querySelector('#benchesList.tab-content'); 
+				const benchesListContainer = document.querySelector('#benchesList:not(.tab-content)'); // Targets the second benchesList ID without the tab-content class
+				const filterTabs = document.querySelector('.filter-tabs');
 
-        async function loadAllData() {
-            await Promise.all([
-                loadPendingBenches(),
-                loadApprovedBenches(),
-                loadPendingImages()
-            ]);
-            updateStats();
+				if (tab === 'benches') {
+					benchesTabContent.style.display = 'block';
+					imagesListContainer.style.display = 'none';
+					filterTabs.style.display = 'flex';
+					benchesTabBtn.classList.add('active');
+					imagesTabBtn.classList.remove('active');
+					loadData();
+				} else {
+					benchesTabContent.style.display = 'none';
+					imagesListContainer.style.display = 'block';
+					filterTabs.style.display = 'none';
+					benchesTabBtn.classList.remove('active');
+					imagesTabBtn.classList.add('active');
+					loadPendingImages();
+				}
+			}
+
+			async function loadData() {
+				try {
+					const pendingRes = await fetch('/.netlify/functions/get-pending-benches');
+					pendingBenches = await pendingRes.json();
+
+					const approvedRes = await fetch('/.netlify/functions/get-approved-benches');
+					approvedBenches = await approvedRes.json();
+					
+					const usersRes = await fetch('/.netlify/functions/get-all-users');
+					users = await usersRes.json();
+
+					updateStats();
+					displayBenches();
+				} catch (e) {
+					alert('Fehler beim Laden der Bänke.');
+					console.error(e);
+				}
+			}
+
+			function updateStats() {
+				document.getElementById('pendingCount').textContent = pendingBenches.length;
+				document.getElementById('approvedCount').textContent = approvedBenches.length;
+				document.getElementById('totalUsers').textContent = users.length;
+			}
+
+			function showTab(filter, event) {
+				currentFilter = filter;
+				document.querySelectorAll('.filter-tabs .tab').forEach(tab => tab.classList.remove('active'));
+				event.target.classList.add('active');
+				displayBenches();
+			}
+
+			function displayBenches() {
+				// Zielt jetzt auf das zweite benchesList-Element ab, das die eigentliche Liste anzeigt
+				const container = document.querySelector('#benchesList:not(.tab-content)');
+				if (!container) return;
+				let benchesToShow = [];
+
+				switch(currentFilter) {
+					case 'pending':
+						benchesToShow = pendingBenches.map(b => ({
+							...b,
+							approved: false,
+							lat: b.latitude,
+							lng: b.longitude,
+							benchImage: b.bench_image,
+							viewImage: b.view_image,
+							user: b.user_email,
+							created: b.created_at
+						}));
+						break;
+					case 'approved':
+						benchesToShow = approvedBenches.map(b => ({...b, approved: true}));
+						break;
+					case 'all':
+						benchesToShow = [
+							...pendingBenches.map(b => ({...b, approved: false})),
+							...approvedBenches.map(b => ({...b, approved: true}))
+						].sort((a, b) => new Date(b.created) - new Date(a.created));
+						break;
+				}
+
+				if (benchesToShow.length === 0) {
+					container.innerHTML = `
+						<div class="no-benches">
+							<h3>Keine Bänke ${currentFilter === 'pending' ? 'wartend' : currentFilter === 'approved' ? 'genehmigt' : 'vorhanden'}</h3>
+							<p>Es gibt derzeit keine Bänke in dieser Kategorie.</p>
+						</div>
+					`;
+					return;
+				}
+
+				container.innerHTML = benchesToShow.map(bench => `
+					<div class="bench-card ${bench.approved ? 'approved' : ''}">
+						<div class="bench-header">
+							<div class="bench-title">${escapeHtml(bench.name)}</div>
+							<div class="bench-status ${bench.approved ? 'status-approved' : 'status-pending'}">
+								${bench.approved ? '✅ Genehmigt' : '⏳ Wartend'}
+							</div>
+						</div>
+						
+						<div class="bench-info">
+							<div>
+								<strong>Beschreibung:</strong><br>
+								${escapeHtml(bench.description)}
+							</div>
+							<div>
+								<strong>Position:</strong> ${bench.lat}, ${bench.lng}<br>
+								<strong>Eingereicht von:</strong> ${escapeHtml(bench.user || 'Unbekannt')}<br>
+								<strong>Erstellt am:</strong> ${new Date(bench.created).toLocaleString()}
+							</div>
+							<div style="margin-top: 10px;">
+								<img src="${bench.benchImage || ''}" alt="Bank Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px;">
+								<img src="${bench.viewImage || ''}" alt="Ansicht Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px; margin-left: 10px;">
+							</div>
+						</div>
+
+						<div class="bench-actions">
+							${!bench.approved ? `
+								<button onclick="approveBench(${bench.id})" class="btn btn-approve">Genehmigen</button>
+								<button onclick="rejectBench(${bench.id})" class="btn btn-reject">Ablehnen</button>
+							` : ''}
+						</div>
+					</div>
+				`).join('');
+			}
+
+			async function approveBench(id) {
+				if (!confirm('Diese Bank genehmigen?')) return;
+				try {
+					const res = await fetch('/.netlify/functions/approve-bench', {
+						method: 'POST',
+						body: JSON.stringify({ id }),
+						headers: { 'Content-Type': 'application/json' }
+					});
+					if (!res.ok) throw new Error('Fehler beim Genehmigen');
+					await loadData();
+				} catch (e) {
+					alert('Fehler beim Genehmigen der Bank.');
+					console.error(e);
+				}
+			}
+
+			async function rejectBench(id) {
+				if (!confirm('Diese Bank ablehnen und löschen?')) return;
+				try {
+					const res = await fetch('/.netlify/functions/reject-bench', {
+						method: 'POST',
+						body: JSON.stringify({ id }),
+						headers: { 'Content-Type': 'application/json' }
+					});
+					if (!res.ok) throw new Error('Fehler beim Ablehnen');
+					await loadData();
+				} catch (e) {
+					alert('Fehler beim Ablehnen der Bank.');
+					console.error(e);
+				}
+			}
+
+			function refreshData() {
+				loadData();
+			}
+
+			function escapeHtml(text) {
+				return text
+					? text.replace(/&/g, "&amp;")
+							.replace(/</g, "&lt;")
+							.replace(/>/g, "&gt;")
+							.replace(/"/g, "&quot;")
+							.replace(/'/g, "&#039;")
+					: '';
+			}
+			
+			// NEUE Funktionen für die Bildverwaltung
+			async function loadPendingImages() {
+				const list = document.getElementById('imagesList');
+				list.innerHTML = 'Lade wartende Bilder...';
+				try {
+					const response = await fetch('/.netlify/functions/get-pending-images');
+					const images = await response.json();
+					
+					list.innerHTML = '';
+					if (images.length === 0) {
+						list.innerHTML = '<p>Keine wartenden Bilder gefunden.</p>';
+						return;
+					}
+
+					images.forEach(img => {
+						const card = document.createElement('div');
+						card.className = 'image-review-card';
+						card.innerHTML = `
+							<div class="image-header">
+								<h4>Neues Bild für: ${img.benchName}</h4>
+								<p>Eingereicht am: ${new Date(img.createdAt).toLocaleDateString()}</p>
+							</div>
+							<div class="image-comparison">
+								<div class="image-box">
+									<h5>Neues Bild</h5>
+									<img src="${img.imageUrl}" alt="Neues Bild" onclick="openFullscreen('${img.imageUrl}')">
+									<p>Beschreibung: ${img.description || 'Keine Angabe'}</p>
+								</div>
+								<div class="image-box">
+									<h5>Aktuelle Bank-Bilder</h5>
+									<img src="${img.benchImage}" alt="Bankbild" onclick="openFullscreen('${img.benchImage}')">
+									<img src="${img.viewImage}" alt="Aussichtsbild" onclick="openFullscreen('${img.viewImage}')">
+								</div>
+							</div>
+							<div class="image-actions">
+								<button class="btn btn-approve" onclick="approveImage('${img.id}')">✔️ Genehmigen</button>
+								<button class="btn btn-reject" onclick="rejectImage('${img.id}')">❌ Ablehnen</button>
+							</div>
+						`;
+						list.appendChild(card);
+					});
+
+				} catch (error) {
+					console.error('Fehler beim Laden der Bilder:', error);
+					list.innerHTML = '<p>Fehler beim Laden der wartenden Bilder.</p>';
+				}
+			}
+
+			async function approveImage(id) {
+				if (!confirm('Möchten Sie dieses Bild wirklich genehmigen?')) return;
+				const response = await fetch('/.netlify/functions/approve-image', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ id })
+				});
+				if (response.ok) {
+					alert('Bild erfolgreich genehmigt.');
+					loadPendingImages();
+				} else {
+					alert('Fehler beim Genehmigen des Bildes.');
+				}
+			}
+
+			async function rejectImage(id) {
+				if (!confirm('Möchten Sie dieses Bild wirklich ablehnen?')) return;
+				const response = await fetch('/.netlify/functions/reject-image', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ id })
+				});
+				if (response.ok) {
+					alert('Bild erfolgreich abgelehnt.');
+					loadPendingImages();
+				} else {
+					alert('Fehler beim Ablehnen des Bildes.');
+				}
+			}
+			
+			function openFullscreen(imageSrc) {
+				// Dummy-Funktion, die in Ihrem HTML fehlt.
+				// Implementieren Sie diese, um Bilder in einem modalen Fenster anzuzeigen.
+				console.log("Open fullscreen for:", imageSrc);
+				window.open(imageSrc, '_blank');
+			}
+
+			// Initialer Aufruf
+			document.addEventListener('DOMContentLoaded', () => {
+				showAdminTab('benches');
+			});
+		</script>		
+
+    <style>
+        /* Styles für das Admin Panel */
+        body {
+            background: #f5f5f5;
+            margin: 0;
+            font-family: Arial, sans-serif;
         }
-
-        // ---------- BÄNKE-LOGIK ----------
-
-        async function loadPendingBenches() {
-            try {
-                const response = await fetch('/.netlify/functions/get-pending-benches');
-                pendingBenchesData = await response.json();
-                renderPendingBenches();
-            } catch (error) {
-                console.error('Fehler beim Laden der wartenden Bänke:', error);
-            }
+        .header {
+            background: #222;
+            color: white;
+            padding: 10px 20px;
         }
-
-        async function loadApprovedBenches() {
-            try {
-                const response = await fetch('/.netlify/functions/get-approved-benches');
-                approvedBenchesData = await response.json();
-            } catch (error) {
-                console.error('Fehler beim Laden der genehmigten Bänke:', error);
-            }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px #aaa;
         }
-
-        function renderPendingBenches() {
-            const list = document.getElementById('benchesList');
-            list.innerHTML = '';
-            if (pendingBenchesData.length === 0) {
-                list.innerHTML = `<div class="no-benches"><h3>Keine wartenden Bänke</h3><p>Es gibt derzeit keine neuen Bänke zur Überprüfung.</p></div>`;
-                return;
-            }
-
-            pendingBenchesData.forEach(bench => {
-                const benchCard = document.createElement('div');
-                benchCard.className = 'bench-card';
-                benchCard.innerHTML = `
-                    <div class="bench-header">
-                        <span class="bench-title">${escapeHtml(bench.name)}</span>
-                        <span class="bench-status status-pending">⏳ Wartend</span>
-                    </div>
-                    <div class="bench-info">
-                        <div>
-                            <strong>Beschreibung:</strong><br>
-                            ${escapeHtml(bench.description)}
-                        </div>
-                        <div>
-                            <strong>Position:</strong> ${bench.lat}, ${bench.lng}<br>
-                            <strong>Eingereicht von:</strong> ${escapeHtml(bench.user || 'Unbekannt')}<br>
-                            <strong>Erstellt am:</strong> ${new Date(bench.createdAt).toLocaleString('de-DE')}
-                        </div>
-                        <div class="image-preview">
-                            <img src="${escapeHtml(bench.benchImage)}" alt="Bank Bild" onclick="openFullscreen('${escapeHtml(bench.benchImage)}')">
-                            <img src="${escapeHtml(bench.viewImage)}" alt="Aussicht Bild" onclick="openFullscreen('${escapeHtml(bench.viewImage)}')">
-                        </div>
-                    </div>
-                    <div class="bench-actions">
-                        <button onclick="approveBench(${bench.id})" class="btn btn-approve">✅ Genehmigen</button>
-                        <button onclick="rejectBench(${bench.id})" class="btn btn-reject">❌ Ablehnen</button>
-                    </div>
-                `;
-                list.appendChild(benchCard);
-            });
+        .actions {
+            display: flex;
+            gap: 10px;
         }
-
-        async function approveBench(id) {
-            if (!confirm('Möchten Sie diese Bank wirklich genehmigen?')) return;
-            try {
-                const res = await fetch('/.netlify/functions/approve-bench', {
-                    method: 'POST',
-                    body: JSON.stringify({ id }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (!res.ok) throw new Error('Fehler beim Genehmigen');
-                showNotification('Bank genehmigt!', 'success');
-                await loadAllData();
-            } catch (e) {
-                showNotification('Fehler beim Genehmigen der Bank.', 'error');
-                console.error(e);
-            }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #eee;
+            transition: background-color 0.3s ease;
         }
-
-        async function rejectBench(id) {
-            if (!confirm('Möchten Sie diese Bank wirklich ablehnen und löschen?')) return;
-            try {
-                const res = await fetch('/.netlify/functions/reject-bench', {
-                    method: 'POST',
-                    body: JSON.stringify({ id }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (!res.ok) throw new Error('Fehler beim Ablehnen');
-                showNotification('Bank abgelehnt und gelöscht.', 'info');
-                await loadAllData();
-            } catch (e) {
-                showNotification('Fehler beim Ablehnen der Bank.', 'error');
-                console.error(e);
-            }
+        .btn:hover {
+            background: #ddd;
         }
-
-        // ---------- BILDER-LOGIK ----------
-
-        async function loadPendingImages() {
-            try {
-                const response = await fetch('/.netlify/functions/get-pending-images');
-                pendingImagesData = await response.json();
-                renderPendingImages();
-            } catch (error) {
-                console.error('Fehler beim Laden der wartenden Bilder:', error);
-            }
+        .btn-back {
+            background: #bbb;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
         }
-
-        function renderPendingImages() {
-            const list = document.getElementById('imagesList');
-            list.innerHTML = '';
-            if (pendingImagesData.length === 0) {
-                list.innerHTML = `<div class="no-benches"><h3>Keine wartenden Bilder</h3><p>Es gibt derzeit keine neuen Bilder zur Überprüfung.</p></div>`;
-                return;
-            }
-
-            pendingImagesData.forEach(img => {
-                const card = document.createElement('div');
-                card.className = 'image-review-card';
-                card.innerHTML = `
-                    <div class="image-header">
-                        <h4>Neues Bild für: ${escapeHtml(img.benchName)}</h4>
-                        <p>Eingereicht am: ${new Date(img.createdAt).toLocaleDateString('de-DE')}</p>
-                    </div>
-                    <div class="image-comparison">
-                        <div class="image-box">
-                            <h5>Neues Bild</h5>
-                            <img src="${escapeHtml(img.imageUrl)}" alt="Neues Bild" onclick="openFullscreen('${escapeHtml(img.imageUrl)}')">
-                            <p>Beschreibung: ${escapeHtml(img.description || 'Keine Angabe')}</p>
-                        </div>
-                        <div class="image-box">
-                            <h5>Aktuelle Bank-Bilder</h5>
-                            <img src="${escapeHtml(img.benchImage)}" alt="Bankbild" onclick="openFullscreen('${escapeHtml(img.benchImage)}')">
-                            <img src="${escapeHtml(img.viewImage)}" alt="Aussichtsbild" onclick="openFullscreen('${escapeHtml(img.viewImage)}')">
-                        </div>
-                    </div>
-                    <div class="image-actions">
-                        <button class="btn btn-approve" onclick="approveImage('${img.id}')">✔️ Genehmigen</button>
-                        <button class="btn btn-reject" onclick="rejectImage('${img.id}')">❌ Ablehnen</button>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
+        .btn-approve {
+            background: #4CAF50;
+            color: white;
+            margin-right: 8px;
         }
-
-        async function approveImage(id) {
-            if (!confirm('Möchten Sie dieses Bild wirklich genehmigen?')) return;
-            try {
-                const response = await fetch('/.netlify/functions/approve-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id })
-                });
-                if (!response.ok) throw new Error('Fehler beim Genehmigen');
-                showNotification('Bild erfolgreich genehmigt.', 'success');
-                await loadAllData();
-            } catch (error) {
-                showNotification('Fehler beim Genehmigen des Bildes.', 'error');
-                console.error(error);
-            }
+        .btn-reject {
+            background: #f44336;
+            color: white;
         }
-
-        async function rejectImage(id) {
-            if (!confirm('Möchten Sie dieses Bild wirklich ablehnen?')) return;
-            try {
-                const response = await fetch('/.netlify/functions/reject-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id })
-                });
-                if (!response.ok) throw new Error('Fehler beim Ablehnen');
-                showNotification('Bild erfolgreich abgelehnt.', 'info');
-                await loadAllData();
-            } catch (error) {
-                showNotification('Fehler beim Ablehnen des Bildes.', 'error');
-                console.error(error);
-            }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
         }
-
-        // ---------- ALLGEMEINE FUNKTIONEN ----------
-
-        function updateStats() {
-            document.getElementById('pendingBenchesCount').textContent = pendingBenchesData.length;
-            document.getElementById('approvedBenchesCount').textContent = approvedBenchesData.length;
-            document.getElementById('pendingImagesCount').textContent = pendingImagesData.length;
+        .stat-card {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px 25px;
+            width: 30%;
+            text-align: center;
         }
+        .stat-number {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-label {
+            font-size: 1em;
+            color: #666;
+        }
+        .filter-tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            background: #eee;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            user-select: none;
+        }
+        .tab.active {
+            background: white;
+            border-color: #ddd;
+            border-bottom: 2px solid white;
+            font-weight: bold;
+        }
+        #benchesList {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .bench-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: white;
+        }
+        .bench-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .bench-title {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .bench-status {
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            user-select: none;
+        }
+        .status-pending {
+            background: #ff9800;
+            color: white;
+        }
+        .status-approved {
+            background: #4caf50;
+            color: white;
+        }
+        .bench-info {
+            font-size: 0.9em;
+            color: #444;
+            display: flex;
+            gap: 20px;
+        }
+        .bench-info > div {
+            flex: 1;
+        }
+        .bench-actions {
+            margin-top: 15px;
+            text-align: right;
+        }
+				/* admin.html CSS */
+		.tab-container {
+			display: flex;
+			justify-content: center;
+			border-bottom: 2px solid #ddd;
+			margin-bottom: 20px;
+		}
 
-        function showAdminTab(tabId) {
-            document.querySelectorAll('.tab-container .tab').forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.tabId === tabId);
-            });
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.toggle('active', content.id === `${tabId}Content`);
-            });
-            if (tabId === 'benches') {
-                renderPendingBenches();
-            } else if (tabId === 'images') {
-                renderPendingImages();
-            }
-        }
-        
-        function refreshData() {
-            showNotification('Daten werden aktualisiert...', 'info');
-            loadAllData();
-        }
+		.tab {
+			padding: 10px 20px;
+			cursor: pointer;
+			background: #f0f0f0;
+			border: none;
+			border-radius: 6px 6px 0 0;
+			margin-right: 5px;
+			font-weight: bold;
+			color: #555;
+			transition: background 0.2s;
+		}
 
-        function showNotification(message, type) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.style.display = 'block';
-            setTimeout(() => notification.style.display = 'none', 5000);
-        }
+		.tab.active {
+			background: white;
+			border: 1px solid #ddd;
+			border-bottom: 2px solid white;
+			font-weight: bold;
+		}
 
-        function openFullscreen(src) {
-            const modal = document.getElementById('fullscreenModal');
-            const modalImg = document.getElementById('fullscreenImage');
-            modal.style.display = 'flex';
-            modalImg.src = src;
-        }
+		.tab-content {
+			display: none;
+		}
 
-        function closeFullscreenModal(event) {
-            if (event && event.target !== event.currentTarget && event.target.tagName !== 'SPAN') return;
-            document.getElementById('fullscreenModal').style.display = 'none';
-        }
+		.tab-content.active {
+			display: block;
+		}
 
-        function escapeHtml(text) {
-            return String(text).replace(/[&<>"']/g, m => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            }[m]));
-        }
-    </script>
+		.image-review-card {
+			border: 1px solid #ddd;
+			border-radius: 6px;
+			padding: 15px;
+			margin-bottom: 15px;
+			background: white;
+		}
+
+		.image-comparison {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 15px;
+			margin-top: 15px;
+		}
+
+		.image-box img {
+			width: 100%;
+			height: 150px;
+			object-fit: cover;
+			display: block;
+			border-radius: 4px;
+			margin-bottom: 5px;
+		}
+
+		.image-actions {
+			margin-top: 15px;
+			display: flex;
+			gap: 10px;
+		}
+    </style>
 </body>
 </html>
