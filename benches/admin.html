@@ -305,8 +305,7 @@
             
             const results = {
                 pending: { success: false, error: null, data: [] },
-                approved: { success: false, error: null, data: [] },
-                users: { success: false, error: null, data: [] }
+                approved: { success: false, error: null, data: [] }
             };
             
             // Load pending benches
@@ -373,43 +372,13 @@
                 approvedBenches = [];
             }
             
-            // Load users
-            try {
-                console.log('Fetching users...');
-                const usersRes = await fetch('/.netlify/functions/get_all_users');
-                console.log('Users response status:', usersRes.status);
-                
-                if (usersRes.ok) {
-                    const text = await usersRes.text();
-                    console.log('Users raw response:', text.substring(0, 200) + '...');
-                    
-                    try {
-                        users = JSON.parse(text);
-                        results.users.success = true;
-                        results.users.data = users;
-                        console.log('Users parsed successfully:', users.length, 'items');
-                    } catch (parseError) {
-                        console.error('Parse error for users:', parseError);
-                        results.users.error = 'JSON Parse Error: ' + parseError.message;
-                        users = [];
-                    }
-                } else {
-                    const errorText = await usersRes.text();
-                    console.error('Failed to fetch users:', usersRes.status, errorText);
-                    results.users.error = `HTTP ${usersRes.status}: ${usersRes.statusText}`;
-                    users = [];
-                }
-            } catch (fetchError) {
-                console.error('Network error fetching users:', fetchError);
-                results.users.error = 'Network Error: ' + fetchError.message;
-                users = [];
-            }
+            // Set users to empty array since the function doesn't exist
+            users = [];
 
             // Show diagnostic information if there are errors
             const errors = [];
             if (!results.pending.success) errors.push(`Pending Benches: ${results.pending.error}`);
             if (!results.approved.success) errors.push(`Approved Benches: ${results.approved.error}`);
-            if (!results.users.success) errors.push(`Users: ${results.users.error}`);
             
             if (errors.length > 0) {
                 console.warn('Some API calls failed:', errors);
@@ -423,7 +392,7 @@
         function updateStats() {
             document.getElementById('pendingCount').textContent = pendingBenches.length;
             document.getElementById('approvedCount').textContent = approvedBenches.length;
-            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('totalUsers').textContent = 0; // Function doesn't exist
         }
 
         function showTab(filter, event) {
@@ -441,17 +410,17 @@
 
             switch(currentFilter) {
                 case 'pending':
-                    // Fix the mapping for pending benches
+                    // Fix the mapping for pending benches (API uses lowercase field names)
                     benchesToShow = pendingBenches.map(b => ({
                         id: b.id,
                         name: b.name,
                         description: b.description,
                         approved: false,
-                        lat: b.latitude || b.lat,
-                        lng: b.longitude || b.lng,
-                        benchImage: b.bench_image || b.benchImage,
-                        viewImage: b.view_image || b.viewImage,
-                        user: b.user_email || b.user,
+                        lat: b.lat,
+                        lng: b.lng,
+                        benchImage: b.benchimage, // API uses lowercase
+                        viewImage: b.viewimage,   // API uses lowercase
+                        user: b.user_email || b.user || 'Unbekannt',
                         created: b.created_at || b.created
                     }));
                     break;
@@ -461,11 +430,11 @@
                         name: b.name,
                         description: b.description,
                         approved: true,
-                        lat: b.latitude || b.lat,
-                        lng: b.longitude || b.lng,
-                        benchImage: b.bench_image || b.benchImage,
-                        viewImage: b.view_image || b.viewImage,
-                        user: b.user_email || b.user,
+                        lat: b.lat,
+                        lng: b.lng,
+                        benchImage: b.benchimage, // API uses lowercase
+                        viewImage: b.viewimage,   // API uses lowercase
+                        user: b.user_email || b.user || 'Unbekannt',
                         created: b.created_at || b.created
                     }));
                     break;
@@ -475,11 +444,11 @@
                         name: b.name,
                         description: b.description,
                         approved: false,
-                        lat: b.latitude || b.lat,
-                        lng: b.longitude || b.lng,
-                        benchImage: b.bench_image || b.benchImage,
-                        viewImage: b.view_image || b.viewImage,
-                        user: b.user_email || b.user,
+                        lat: b.lat,
+                        lng: b.lng,
+                        benchImage: b.benchimage, // API uses lowercase
+                        viewImage: b.viewimage,   // API uses lowercase
+                        user: b.user_email || b.user || 'Unbekannt',
                         created: b.created_at || b.created
                     }));
                     const approvedMapped = approvedBenches.map(b => ({
@@ -487,11 +456,11 @@
                         name: b.name,
                         description: b.description,
                         approved: true,
-                        lat: b.latitude || b.lat,
-                        lng: b.longitude || b.lng,
-                        benchImage: b.bench_image || b.benchImage,
-                        viewImage: b.view_image || b.viewImage,
-                        user: b.user_email || b.user,
+                        lat: b.lat,
+                        lng: b.lng,
+                        benchImage: b.benchimage, // API uses lowercase
+                        viewImage: b.viewimage,   // API uses lowercase
+                        user: b.user_email || b.user || 'Unbekannt',
                         created: b.created_at || b.created
                     }));
                     benchesToShow = [...pendingMapped, ...approvedMapped].sort((a, b) => {
@@ -630,19 +599,19 @@
                     card.className = 'image-review-card';
                     card.innerHTML = `
                         <div class="image-header">
-                            <h4>Neues Bild für: ${escapeHtml(img.benchName || 'Unbekannte Bank')}</h4>
-                            <p>Eingereicht am: ${img.createdAt ? new Date(img.createdAt).toLocaleDateString('de-DE') : 'Unbekannt'}</p>
+                            <h4>Neues Bild für Bank ID: ${img.bench_id || 'Unbekannt'}</h4>
+                            <p>Eingereicht am: ${img.created_at ? new Date(img.created_at).toLocaleDateString('de-DE') : 'Unbekannt'}</p>
                         </div>
                         <div class="image-comparison">
                             <div class="image-box">
-                                <h5>Neues Bild</h5>
-                                <img src="${img.imageUrl || ''}" alt="Neues Bild" onclick="openFullscreen('${img.imageUrl || ''}')" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22>Bild nicht verfügbar</text></svg>'">
+                                <h5>Neues wartende Bild</h5>
+                                <img src="${img.imageurl || ''}" alt="Neues wartende Bild" onclick="openFullscreen('${img.imageurl || ''}')" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22>Bild nicht verfügbar</text></svg>'">
                                 <p><strong>Beschreibung:</strong> ${escapeHtml(img.description || 'Keine Angabe')}</p>
                             </div>
                             <div class="image-box">
-                                <h5>Aktuelle Bank-Bilder</h5>
-                                <img src="${img.benchImage || ''}" alt="Bankbild" onclick="openFullscreen('${img.benchImage || ''}')" onerror="this.style.display='none'">
-                                <img src="${img.viewImage || ''}" alt="Aussichtsbild" onclick="openFullscreen('${img.viewImage || ''}')" onerror="this.style.display='none'">
+                                <h5>Hinweis</h5>
+                                <p>Aktuelle Bank-Bilder können nur über die Bankdetails eingesehen werden.</p>
+                                <p><strong>Bank-ID:</strong> ${img.bench_id || 'Unbekannt'}</p>
                             </div>
                         </div>
                         <div class="image-actions">
