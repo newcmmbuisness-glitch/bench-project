@@ -5,335 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin Panel - Bench Map</title>
     <style>
-        /* ... (Deine bisherigen Styles unverändert übernehmen) ... */
-        body { margin:0; font-family: Arial, sans-serif; background: #f5f5f5; }
-        /* (der Rest bleibt wie bisher) */
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🛠️ Admin Panel - Bench Map</h1>
-    </div>
-    
-    <div class="container">
-        <div class="actions" style="margin-bottom: 20px;">
-            <a href="bench_map.html" class="btn btn-back">← Zurück zur Karte</a>
-            <button onclick="refreshData()" class="btn" style="background: #2196F3; color: white;">🔄 Aktualisieren</button>
-        </div>
-        
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="pendingCount">0</div>
-                <div class="stat-label">Wartende Bänke</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="approvedCount">0</div>
-                <div class="stat-label">Genehmigte Bänke</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalUsers">0</div>
-                <div class="stat-label">Registrierte Nutzer</div>
-            </div>
-        </div>
-        
-		<div class="tab-container" style="margin-top: 20px;">
-			<button class="tab" id="benchesTab" onclick="showAdminTab('benches')">Wartende Bänke</button>
-			<button class="tab active" id="imagesTab" onclick="showAdminTab('images')">Wartende Bilder</button>
-		</div>
-
-		<div id="imagesList" class="tab-content active" style="margin-top: 15px;">
-			</div>
-
-		<div id="benchesList" class="tab-content">
-			</div>
-		
-        <div class="filter-tabs">
-            <div class="tab active" onclick="showTab('pending', event)">⏳ Wartende Bänke</div>
-            <div class="tab" onclick="showTab('approved', event)">✅ Genehmigte Bänke</div>
-            <div class="tab" onclick="showTab('all', event)">📋 Alle Bänke</div>
-        </div>
-        
-        <div id="benchesList"></div>
-    </div>
-
-		<script>
-			let pendingBenches = [];
-			let approvedBenches = [];
-			let users = [];
-			let currentFilter = 'pending';
-
-			// Funktion zum Umschalten zwischen den Haupt-Tabs (Bänke und Bilder)
-			function showAdminTab(tab) {
-				const benchesTabBtn = document.getElementById('benchesTab');
-				const imagesTabBtn = document.getElementById('imagesTab');
-				const imagesListContainer = document.getElementById('imagesList');
-				// Targets the benches list tab content, which is the first benchesList ID with the tab-content class
-				const benchesTabContent = document.querySelector('#benchesList.tab-content'); 
-				const benchesListContainer = document.querySelector('#benchesList:not(.tab-content)'); // Targets the second benchesList ID without the tab-content class
-				const filterTabs = document.querySelector('.filter-tabs');
-
-				if (tab === 'benches') {
-					benchesTabContent.style.display = 'block';
-					imagesListContainer.style.display = 'none';
-					filterTabs.style.display = 'flex';
-					benchesTabBtn.classList.add('active');
-					imagesTabBtn.classList.remove('active');
-					loadData();
-				} else {
-					benchesTabContent.style.display = 'none';
-					imagesListContainer.style.display = 'block';
-					filterTabs.style.display = 'none';
-					benchesTabBtn.classList.remove('active');
-					imagesTabBtn.classList.add('active');
-					loadPendingImages();
-				}
-			}
-
-			async function loadData() {
-				try {
-					const pendingRes = await fetch('/.netlify/functions/get-pending-benches');
-					pendingBenches = await pendingRes.json();
-
-					const approvedRes = await fetch('/.netlify/functions/get-approved-benches');
-					approvedBenches = await approvedRes.json();
-					
-					const usersRes = await fetch('/.netlify/functions/get-all-users');
-					users = await usersRes.json();
-
-					updateStats();
-					displayBenches();
-				} catch (e) {
-					alert('Fehler beim Laden der Bänke.');
-					console.error(e);
-				}
-			}
-
-			function updateStats() {
-				document.getElementById('pendingCount').textContent = pendingBenches.length;
-				document.getElementById('approvedCount').textContent = approvedBenches.length;
-				document.getElementById('totalUsers').textContent = users.length;
-			}
-
-			function showTab(filter, event) {
-				currentFilter = filter;
-				document.querySelectorAll('.filter-tabs .tab').forEach(tab => tab.classList.remove('active'));
-				event.target.classList.add('active');
-				displayBenches();
-			}
-
-			function displayBenches() {
-				// Zielt jetzt auf das zweite benchesList-Element ab, das die eigentliche Liste anzeigt
-				const container = document.querySelector('#benchesList:not(.tab-content)');
-				if (!container) return;
-				let benchesToShow = [];
-
-				switch(currentFilter) {
-					case 'pending':
-						benchesToShow = pendingBenches.map(b => ({
-							...b,
-							approved: false,
-							lat: b.latitude,
-							lng: b.longitude,
-							benchImage: b.bench_image,
-							viewImage: b.view_image,
-							user: b.user_email,
-							created: b.created_at
-						}));
-						break;
-					case 'approved':
-						benchesToShow = approvedBenches.map(b => ({...b, approved: true}));
-						break;
-					case 'all':
-						benchesToShow = [
-							...pendingBenches.map(b => ({...b, approved: false})),
-							...approvedBenches.map(b => ({...b, approved: true}))
-						].sort((a, b) => new Date(b.created) - new Date(a.created));
-						break;
-				}
-
-				if (benchesToShow.length === 0) {
-					container.innerHTML = `
-						<div class="no-benches">
-							<h3>Keine Bänke ${currentFilter === 'pending' ? 'wartend' : currentFilter === 'approved' ? 'genehmigt' : 'vorhanden'}</h3>
-							<p>Es gibt derzeit keine Bänke in dieser Kategorie.</p>
-						</div>
-					`;
-					return;
-				}
-
-				container.innerHTML = benchesToShow.map(bench => `
-					<div class="bench-card ${bench.approved ? 'approved' : ''}">
-						<div class="bench-header">
-							<div class="bench-title">${escapeHtml(bench.name)}</div>
-							<div class="bench-status ${bench.approved ? 'status-approved' : 'status-pending'}">
-								${bench.approved ? '✅ Genehmigt' : '⏳ Wartend'}
-							</div>
-						</div>
-						
-						<div class="bench-info">
-							<div>
-								<strong>Beschreibung:</strong><br>
-								${escapeHtml(bench.description)}
-							</div>
-							<div>
-								<strong>Position:</strong> ${bench.lat}, ${bench.lng}<br>
-								<strong>Eingereicht von:</strong> ${escapeHtml(bench.user || 'Unbekannt')}<br>
-								<strong>Erstellt am:</strong> ${new Date(bench.created).toLocaleString()}
-							</div>
-							<div style="margin-top: 10px;">
-								<img src="${bench.benchImage || ''}" alt="Bank Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px;">
-								<img src="${bench.viewImage || ''}" alt="Ansicht Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px; margin-left: 10px;">
-							</div>
-						</div>
-
-						<div class="bench-actions">
-							${!bench.approved ? `
-								<button onclick="approveBench(${bench.id})" class="btn btn-approve">Genehmigen</button>
-								<button onclick="rejectBench(${bench.id})" class="btn btn-reject">Ablehnen</button>
-							` : ''}
-						</div>
-					</div>
-				`).join('');
-			}
-
-			async function approveBench(id) {
-				if (!confirm('Diese Bank genehmigen?')) return;
-				try {
-					const res = await fetch('/.netlify/functions/approve-bench', {
-						method: 'POST',
-						body: JSON.stringify({ id }),
-						headers: { 'Content-Type': 'application/json' }
-					});
-					if (!res.ok) throw new Error('Fehler beim Genehmigen');
-					await loadData();
-				} catch (e) {
-					alert('Fehler beim Genehmigen der Bank.');
-					console.error(e);
-				}
-			}
-
-			async function rejectBench(id) {
-				if (!confirm('Diese Bank ablehnen und löschen?')) return;
-				try {
-					const res = await fetch('/.netlify/functions/reject-bench', {
-						method: 'POST',
-						body: JSON.stringify({ id }),
-						headers: { 'Content-Type': 'application/json' }
-					});
-					if (!res.ok) throw new Error('Fehler beim Ablehnen');
-					await loadData();
-				} catch (e) {
-					alert('Fehler beim Ablehnen der Bank.');
-					console.error(e);
-				}
-			}
-
-			function refreshData() {
-				loadData();
-			}
-
-			function escapeHtml(text) {
-				return text
-					? text.replace(/&/g, "&amp;")
-							.replace(/</g, "&lt;")
-							.replace(/>/g, "&gt;")
-							.replace(/"/g, "&quot;")
-							.replace(/'/g, "&#039;")
-					: '';
-			}
-			
-			// NEUE Funktionen für die Bildverwaltung
-			async function loadPendingImages() {
-				const list = document.getElementById('imagesList');
-				list.innerHTML = 'Lade wartende Bilder...';
-				try {
-					const response = await fetch('/.netlify/functions/get-pending-images');
-					const images = await response.json();
-					
-					list.innerHTML = '';
-					if (images.length === 0) {
-						list.innerHTML = '<p>Keine wartenden Bilder gefunden.</p>';
-						return;
-					}
-
-					images.forEach(img => {
-						const card = document.createElement('div');
-						card.className = 'image-review-card';
-						card.innerHTML = `
-							<div class="image-header">
-								<h4>Neues Bild für: ${img.benchName}</h4>
-								<p>Eingereicht am: ${new Date(img.createdAt).toLocaleDateString()}</p>
-							</div>
-							<div class="image-comparison">
-								<div class="image-box">
-									<h5>Neues Bild</h5>
-									<img src="${img.imageUrl}" alt="Neues Bild" onclick="openFullscreen('${img.imageUrl}')">
-									<p>Beschreibung: ${img.description || 'Keine Angabe'}</p>
-								</div>
-								<div class="image-box">
-									<h5>Aktuelle Bank-Bilder</h5>
-									<img src="${img.benchImage}" alt="Bankbild" onclick="openFullscreen('${img.benchImage}')">
-									<img src="${img.viewImage}" alt="Aussichtsbild" onclick="openFullscreen('${img.viewImage}')">
-								</div>
-							</div>
-							<div class="image-actions">
-								<button class="btn btn-approve" onclick="approveImage('${img.id}')">✔️ Genehmigen</button>
-								<button class="btn btn-reject" onclick="rejectImage('${img.id}')">❌ Ablehnen</button>
-							</div>
-						`;
-						list.appendChild(card);
-					});
-
-				} catch (error) {
-					console.error('Fehler beim Laden der Bilder:', error);
-					list.innerHTML = '<p>Fehler beim Laden der wartenden Bilder.</p>';
-				}
-			}
-
-			async function approveImage(id) {
-				if (!confirm('Möchten Sie dieses Bild wirklich genehmigen?')) return;
-				const response = await fetch('/.netlify/functions/approve-image', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ id })
-				});
-				if (response.ok) {
-					alert('Bild erfolgreich genehmigt.');
-					loadPendingImages();
-				} else {
-					alert('Fehler beim Genehmigen des Bildes.');
-				}
-			}
-
-			async function rejectImage(id) {
-				if (!confirm('Möchten Sie dieses Bild wirklich ablehnen?')) return;
-				const response = await fetch('/.netlify/functions/reject-image', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ id })
-				});
-				if (response.ok) {
-					alert('Bild erfolgreich abgelehnt.');
-					loadPendingImages();
-				} else {
-					alert('Fehler beim Ablehnen des Bildes.');
-				}
-			}
-			
-			function openFullscreen(imageSrc) {
-				// Dummy-Funktion, die in Ihrem HTML fehlt.
-				// Implementieren Sie diese, um Bilder in einem modalen Fenster anzuzeigen.
-				console.log("Open fullscreen for:", imageSrc);
-				window.open(imageSrc, '_blank');
-			}
-
-			// Initialer Aufruf
-			document.addEventListener('DOMContentLoaded', () => {
-				showAdminTab('benches');
-			});
-		</script>		
-
-    <style>
         /* Styles für das Admin Panel */
         body {
             background: #f5f5f5;
@@ -476,70 +147,372 @@
             margin-top: 15px;
             text-align: right;
         }
-				/* admin.html CSS */
-		.tab-container {
-			display: flex;
-			justify-content: center;
-			border-bottom: 2px solid #ddd;
-			margin-bottom: 20px;
-		}
-
-		.tab {
-			padding: 10px 20px;
-			cursor: pointer;
-			background: #f0f0f0;
-			border: none;
-			border-radius: 6px 6px 0 0;
-			margin-right: 5px;
-			font-weight: bold;
-			color: #555;
-			transition: background 0.2s;
-		}
-
-		.tab.active {
-			background: white;
-			border: 1px solid #ddd;
-			border-bottom: 2px solid white;
-			font-weight: bold;
-		}
-
-		.tab-content {
-			display: none;
-		}
-
-		.tab-content.active {
-			display: block;
-		}
-
-		.image-review-card {
-			border: 1px solid #ddd;
-			border-radius: 6px;
-			padding: 15px;
-			margin-bottom: 15px;
-			background: white;
-		}
-
-		.image-comparison {
-			display: grid;
-			grid-template-columns: repeat(2, 1fr);
-			gap: 15px;
-			margin-top: 15px;
-		}
-
-		.image-box img {
-			width: 100%;
-			height: 150px;
-			object-fit: cover;
-			display: block;
-			border-radius: 4px;
-			margin-bottom: 5px;
-		}
-
-		.image-actions {
-			margin-top: 15px;
-			display: flex;
-			gap: 10px;
-		}
+        /* admin.html CSS */
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 6px 6px 0 0;
+            margin-right: 5px;
+            font-weight: bold;
+            color: #555;
+            transition: background 0.2s;
+        }
+        .tab.active {
+            background: white;
+            border: 1px solid #ddd;
+            border-bottom: 2px solid white;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .image-review-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: white;
+        }
+        .image-comparison {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .image-box img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        .image-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
     </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛠️ Admin Panel - Bench Map</h1>
+    </div>
+    
+    <div class="container">
+        <div class="actions" style="margin-bottom: 20px;">
+            <a href="bench_map.html" class="btn btn-back">← Zurück zur Karte</a>
+            <button onclick="refreshData()" class="btn" style="background: #2196F3; color: white;">🔄 Aktualisieren</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">Wartende Bänke</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="approvedCount">0</div>
+                <div class="stat-label">Genehmigte Bänke</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Registrierte Nutzer</div>
+            </div>
+        </div>
+        
+        <div class="tab-container" style="margin-top: 20px;">
+            <button class="tab active" id="benchesTab" onclick="showAdminTab('benches')">Wartende Bänke</button>
+            <button class="tab" id="imagesTab" onclick="showAdminTab('images')">Wartende Bilder</button>
+        </div>
+
+        <div id="benchesContent" class="tab-content active">
+            <div class="filter-tabs">
+                <div class="tab active" onclick="showTab('pending', event)">⏳ Wartende Bänke</div>
+                <div class="tab" onclick="showTab('approved', event)">✅ Genehmigte Bänke</div>
+                <div class="tab" onclick="showTab('all', event)">📋 Alle Bänke</div>
+            </div>
+            <div id="benchesListDisplay"></div>
+        </div>
+        
+        <div id="imagesContent" class="tab-content">
+            <div id="imagesListDisplay"></div>
+        </div>
+    </div>
+
+    <script>
+        let pendingBenches = [];
+        let approvedBenches = [];
+        let users = [];
+        let currentFilter = 'pending';
+
+        function showAdminTab(tab) {
+            const benchesTabBtn = document.getElementById('benchesTab');
+            const imagesTabBtn = document.getElementById('imagesTab');
+            const benchesContent = document.getElementById('benchesContent');
+            const imagesContent = document.getElementById('imagesContent');
+
+            if (tab === 'benches') {
+                benchesContent.style.display = 'block';
+                imagesContent.style.display = 'none';
+                benchesTabBtn.classList.add('active');
+                imagesTabBtn.classList.remove('active');
+                loadData();
+            } else {
+                benchesContent.style.display = 'none';
+                imagesContent.style.display = 'block';
+                benchesTabBtn.classList.remove('active');
+                imagesTabBtn.classList.add('active');
+                loadPendingImages();
+            }
+        }
+
+        async function loadData() {
+            try {
+                const pendingRes = await fetch('/.netlify/functions/get-pending-benches');
+                pendingBenches = await pendingRes.json();
+
+                const approvedRes = await fetch('/.netlify/functions/get-approved-benches');
+                approvedBenches = await approvedRes.json();
+                
+                const usersRes = await fetch('/.netlify/functions/get-all-users');
+                users = await usersRes.json();
+
+                updateStats();
+                displayBenches();
+            } catch (e) {
+                alert('Fehler beim Laden der Bänke.');
+                console.error(e);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('pendingCount').textContent = pendingBenches.length;
+            document.getElementById('approvedCount').textContent = approvedBenches.length;
+            document.getElementById('totalUsers').textContent = users.length;
+        }
+
+        function showTab(filter, event) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-tabs .tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            displayBenches();
+        }
+
+        function displayBenches() {
+            const container = document.getElementById('benchesListDisplay');
+            if (!container) return;
+            let benchesToShow = [];
+
+            switch(currentFilter) {
+                case 'pending':
+                    benchesToShow = pendingBenches.map(b => ({
+                        ...b,
+                        approved: false,
+                        lat: b.latitude,
+                        lng: b.longitude,
+                        benchImage: b.bench_image,
+                        viewImage: b.view_image,
+                        user: b.user_email,
+                        created: b.created_at
+                    }));
+                    break;
+                case 'approved':
+                    benchesToShow = approvedBenches.map(b => ({...b, approved: true}));
+                    break;
+                case 'all':
+                    benchesToShow = [
+                        ...pendingBenches.map(b => ({...b, approved: false})),
+                        ...approvedBenches.map(b => ({...b, approved: true}))
+                    ].sort((a, b) => new Date(b.created) - new Date(a.created));
+                    break;
+            }
+
+            if (benchesToShow.length === 0) {
+                container.innerHTML = `
+                    <div class="no-benches">
+                        <h3>Keine Bänke ${currentFilter === 'pending' ? 'wartend' : currentFilter === 'approved' ? 'genehmigt' : 'vorhanden'}</h3>
+                        <p>Es gibt derzeit keine Bänke in dieser Kategorie.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = benchesToShow.map(bench => `
+                <div class="bench-card ${bench.approved ? 'approved' : ''}">
+                    <div class="bench-header">
+                        <div class="bench-title">${escapeHtml(bench.name)}</div>
+                        <div class="bench-status ${bench.approved ? 'status-approved' : 'status-pending'}">
+                            ${bench.approved ? '✅ Genehmigt' : '⏳ Wartend'}
+                        </div>
+                    </div>
+                    
+                    <div class="bench-info">
+                        <div>
+                            <strong>Beschreibung:</strong><br>
+                            ${escapeHtml(bench.description)}
+                        </div>
+                        <div>
+                            <strong>Position:</strong> ${bench.lat}, ${bench.lng}<br>
+                            <strong>Eingereicht von:</strong> ${escapeHtml(bench.user || 'Unbekannt')}<br>
+                            <strong>Erstellt am:</strong> ${new Date(bench.created).toLocaleString()}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <img src="${bench.benchImage || ''}" alt="Bank Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px;">
+                            <img src="${bench.viewImage || ''}" alt="Ansicht Bild" style="max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 4px; margin-left: 10px;">
+                        </div>
+                    </div>
+
+                    <div class="bench-actions">
+                        ${!bench.approved ? `
+                            <button onclick="approveBench(${bench.id})" class="btn btn-approve">Genehmigen</button>
+                            <button onclick="rejectBench(${bench.id})" class="btn btn-reject">Ablehnen</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function approveBench(id) {
+            if (!confirm('Diese Bank genehmigen?')) return;
+            try {
+                const res = await fetch('/.netlify/functions/approve-bench', {
+                    method: 'POST',
+                    body: JSON.stringify({ id }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!res.ok) throw new Error('Fehler beim Genehmigen');
+                await loadData();
+            } catch (e) {
+                alert('Fehler beim Genehmigen der Bank.');
+                console.error(e);
+            }
+        }
+
+        async function rejectBench(id) {
+            if (!confirm('Diese Bank ablehnen und löschen?')) return;
+            try {
+                const res = await fetch('/.netlify/functions/reject-bench', {
+                    method: 'POST',
+                    body: JSON.stringify({ id }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!res.ok) throw new Error('Fehler beim Ablehnen');
+                await loadData();
+            } catch (e) {
+                alert('Fehler beim Ablehnen der Bank.');
+                console.error(e);
+            }
+        }
+
+        function refreshData() {
+            loadData();
+        }
+
+        function escapeHtml(text) {
+            return text
+                ? text.replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;")
+                        .replace(/'/g, "&#039;")
+                : '';
+        }
+        
+        async function loadPendingImages() {
+            const list = document.getElementById('imagesListDisplay');
+            list.innerHTML = 'Lade wartende Bilder...';
+            try {
+                const response = await fetch('/.netlify/functions/get-pending-images');
+                const images = await response.json();
+                
+                list.innerHTML = '';
+                if (images.length === 0) {
+                    list.innerHTML = '<p>Keine wartenden Bilder gefunden.</p>';
+                    return;
+                }
+
+                images.forEach(img => {
+                    const card = document.createElement('div');
+                    card.className = 'image-review-card';
+                    card.innerHTML = `
+                        <div class="image-header">
+                            <h4>Neues Bild für: ${img.benchName}</h4>
+                            <p>Eingereicht am: ${new Date(img.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="image-comparison">
+                            <div class="image-box">
+                                <h5>Neues Bild</h5>
+                                <img src="${img.imageUrl}" alt="Neues Bild" onclick="openFullscreen('${img.imageUrl}')">
+                                <p>Beschreibung: ${img.description || 'Keine Angabe'}</p>
+                            </div>
+                            <div class="image-box">
+                                <h5>Aktuelle Bank-Bilder</h5>
+                                <img src="${img.benchImage}" alt="Bankbild" onclick="openFullscreen('${img.benchImage}')">
+                                <img src="${img.viewImage}" alt="Aussichtsbild" onclick="openFullscreen('${img.viewImage}')">
+                            </div>
+                        </div>
+                        <div class="image-actions">
+                            <button class="btn btn-approve" onclick="approveImage('${img.id}')">✔️ Genehmigen</button>
+                            <button class="btn btn-reject" onclick="rejectImage('${img.id}')">❌ Ablehnen</button>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Fehler beim Laden der Bilder:', error);
+                list.innerHTML = '<p>Fehler beim Laden der wartenden Bilder.</p>';
+            }
+        }
+
+        async function approveImage(id) {
+            if (!confirm('Möchten Sie dieses Bild wirklich genehmigen?')) return;
+            const response = await fetch('/.netlify/functions/approve-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            if (response.ok) {
+                alert('Bild erfolgreich genehmigt.');
+                loadPendingImages();
+            } else {
+                alert('Fehler beim Genehmigen des Bildes.');
+            }
+        }
+
+        async function rejectImage(id) {
+            if (!confirm('Möchten Sie dieses Bild wirklich ablehnen?')) return;
+            const response = await fetch('/.netlify/functions/reject-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            if (response.ok) {
+                alert('Bild erfolgreich abgelehnt.');
+                loadPendingImages();
+            } else {
+                alert('Fehler beim Ablehnen des Bildes.');
+            }
+        }
+        
+        function openFullscreen(imageSrc) {
+            window.open(imageSrc, '_blank');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showAdminTab('benches');
+        });
+    </script>
 </body>
 </html>
