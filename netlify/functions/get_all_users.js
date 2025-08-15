@@ -9,6 +9,7 @@ exports.handler = async (event) => {
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
   };
 
+  // CORS Preflight
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
   }
@@ -18,23 +19,20 @@ exports.handler = async (event) => {
   }
 
   try {
-    const users = await sql`
-      SELECT id, email, created_at
-      FROM users
-      ORDER BY created_at DESC
-    `;
+    // Nur die Anzahl zurückgeben
+    const result = await sql`SELECT COUNT(*) AS count FROM users`;
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(users),
+      body: JSON.stringify({ count: parseInt(result[0].count, 10) }),
     };
   } catch (err) {
     console.error('get_all_users error', err);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: err.message }), // Fehlertext direkt zurückgeben
+      body: JSON.stringify({ error: err.message }),
     };
   }
 };
