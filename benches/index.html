@@ -670,12 +670,12 @@
     </div>
     
     <div id="authButtons" class="auth-buttons">
-        <button class="login-btn" onclick="showLogin()">🔓 Anmelden</button>
+        <button class="login-btn" onclick="showLogin()">🔒 Anmelden</button>
     </div>
     
     <div class="plz-control">
         <input type="text" id="plzChangeInput" placeholder="PLZ eingeben" maxlength="5" pattern="[0-9]{5}">
-        <button onclick="changePlzLocation()" title="Zu PLZ navigieren">📍</button>
+        <button onclick="changePlzLocation()" title="Zu PLZ navigieren">🔍</button>
     </div>
     
     <button class="add-bench-btn" id="addBenchBtn" onclick="checkLoginAndAdd()" title="Bank hinzufügen">➕</button>
@@ -738,7 +738,7 @@
     <div class="map-instruction" id="mapInstruction">
         📍 Klicken Sie auf die Karte, um die neue Bank zu platzieren
         <br><small style="font-weight: normal; margin-top: 10px; display: block;">
-            Oder klicken Sie auf ❌ zum Abbrechen
+            Oder klicken Sie auf ⌘ zum Abbrechen
         </small>
     </div>
     
@@ -776,7 +776,7 @@
             </div>
             <div class="form-buttons">
                 <button type="submit" class="btn-submit">📤 Bank einreichen</button>
-                <button type="button" class="btn-cancel" onclick="cancelAddBench()">❌ Abbrechen</button>
+                <button type="button" class="btn-cancel" onclick="cancelAddBench()">⌘ Abbrechen</button>
             </div>
         </form>
     </div>
@@ -814,7 +814,7 @@
                 </div>
                 <div class="form-buttons">
                     <button type="submit" class="btn-submit">📤 Bild einreichen</button>
-                    <button type="button" class="btn-cancel" onclick="closeAddImageModal()">❌ Abbrechen</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddImageModal()">⌘ Abbrechen</button>
                 </div>
             </form>
         </div>
@@ -831,9 +831,6 @@
         let benchImageFile = null, viewImageFile = null;
         let additionalImageFile = null;
         let currentBenchId = null;
-        
-        // Fallback für localStorage während Entwicklung
-        let approvedBenches = JSON.parse(localStorage.getItem('approvedBenches') || '[]');
         
         // Funktion zum Umschalten der Seitenleiste
         function toggleSidebar() {
@@ -942,7 +939,7 @@
                     }
                     document.getElementById('plzChangeInput').value = '';
                 } else {
-                    showNotification(`❌ PLZ ${plz} konnte nicht gefunden werden.`, 'error');
+                    showNotification(`⌘ PLZ ${plz} konnte nicht gefunden werden.`, 'error');
                     document.getElementById('plzChangeInput').focus();
                 }
             });
@@ -1019,7 +1016,7 @@
                     adminBtn.style.display = 'block';
                 }
             } else {
-                authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔓 Anmelden</button>';
+                authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔒 Anmelden</button>';
                 addBtn.style.display = 'none';
                 if (adminBtn) adminBtn.style.display = 'none';
             }
@@ -1091,7 +1088,13 @@
             event.preventDefault();
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
             const captchaAnswer = parseInt(document.getElementById('registerCaptchaAnswer').value);
+
+            if (password !== passwordConfirm) {
+                showNotification('Passwörter stimmen nicht überein!', 'error');
+                return;
+            }
 
             if (password.length < 6) {
                 showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
@@ -1120,7 +1123,7 @@
                 }
             })
             .catch(error => {
-                showNotification('❌ Netzwerkfehler bei Registrierung!', 'error');
+                showNotification('⌘ Netzwerkfehler bei Registrierung!', 'error');
                 console.error('Register error:', error);
             });
         }
@@ -1156,11 +1159,11 @@
                     document.getElementById('loginPassword').value = '';
                     document.getElementById('loginCaptchaAnswer').value = '';
                 } else {
-                    showNotification(data.error || '❌ Ungültige Anmeldedaten!', 'error');
+                    showNotification(data.error || '⌘ Ungültige Anmeldedaten!', 'error');
                 }
             })
             .catch(error => {
-                showNotification('❌ Netzwerkfehler beim Login!', 'error');
+                showNotification('⌘ Netzwerkfehler beim Login!', 'error');
                 console.error('Login error:', error);
             });
         }
@@ -1211,7 +1214,7 @@
         
         function checkLoginAndAdd() {
             if (!currentUser) {
-                showNotification('🔐 Sie müssen sich anmelden, um eine Bank hinzuzufügen!', 'error');
+                showNotification('🔒 Sie müssen sich anmelden, um eine Bank hinzuzufügen!', 'error');
                 showLogin();
                 return;
             }
@@ -1312,7 +1315,7 @@
         
         function handleImageFile(file, preview, callback) {
             if (file.size > 16 * 1024 * 1024) {
-                showNotification('❌ Datei ist zu groß! Maximum: 16MB', 'error');
+                showNotification('⌘ Datei ist zu groß! Maximum: 16MB', 'error');
                 return;
             }
             
@@ -1343,12 +1346,12 @@
             const description = document.getElementById('benchDescription').value.trim();
 
             if (!name || !description) {
-                showNotification('❌ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
+                showNotification('⌘ Bitte füllen Sie alle Pflichtfelder aus!', 'error');
                 return;
             }
 
             if (!benchImageFile || !viewImageFile) {
-                showNotification('❌ Bitte laden Sie beide Bilder hoch (Bank und Aussicht)!', 'error');
+                showNotification('⌘ Bitte laden Sie beide Bilder hoch (Bank und Aussicht)!', 'error');
                 return;
             }
 
@@ -1369,8 +1372,8 @@
                         body: JSON.stringify({
                             name, 
                             description, 
-                            lat, 
-                            lng,
+                            latitude: lat, 
+                            longitude: lng,
                             benchImage: benchImageData,
                             viewImage: viewImageData,
                             userEmail: currentUser.email
@@ -1382,11 +1385,11 @@
                             cancelAddBench();
                             showNotification('✅ Bank erfolgreich eingereicht! Sie wird nach Admin-Prüfung freigeschaltet.', 'success');
                         } else {
-                            showNotification('❌ Fehler beim Speichern: ' + (data.error || 'Unbekannter Fehler'), 'error');
+                            showNotification('⌘ Fehler beim Speichern: ' + (data.error || 'Unbekannter Fehler'), 'error');
                         }
                     })
                     .catch(err => {
-                        showNotification('❌ Netzwerkfehler: ' + err.message, 'error');
+                        showNotification('⌘ Netzwerkfehler: ' + err.message, 'error');
                     });
                 };
                 reader2.readAsDataURL(viewImageFile);
@@ -1399,7 +1402,7 @@
             const btn = document.getElementById('addBenchBtn');
             const instruction = document.getElementById('mapInstruction');
             if (addMode) {
-                btn.innerHTML = '❌';
+                btn.innerHTML = '⌘';
                 btn.classList.add('cancel');
                 btn.title = 'Abbrechen';
                 instruction.style.display = 'block';
@@ -1414,9 +1417,7 @@
         }
         
         function loadBenches() {
-            fetch('/.netlify/functions/get_benches', {
-                method: 'GET'
-            })
+            fetch('/.netlify/functions/get_benches')
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.benches) {
@@ -1427,20 +1428,12 @@
                     
                     data.benches.forEach(addSingleBenchToMap);
                 } else {
-                    benchMarkers.forEach(item => {
-                        map.removeLayer(item.marker);
-                    });
-                    benchMarkers = [];
-                    approvedBenches.forEach(addSingleBenchToMap);
+                    console.error('Error loading benches:', data.error || 'No data received');
                 }
             })
             .catch(error => {
                 console.error('Error loading benches:', error);
-                benchMarkers.forEach(item => {
-                    map.removeLayer(item.marker);
-                });
-                benchMarkers = [];
-                approvedBenches.forEach(addSingleBenchToMap);
+                showNotification('Fehler beim Laden der Bänke', 'error');
             });
         }
         
@@ -1458,8 +1451,8 @@
                     <p><strong>Aussicht:</strong> ${escapeHtml(b.description)}</p>
                     <p id="addr-${b.id}" style="font-weight:600; margin-top:8px; color:#666;">📍 <em>Adresse wird geladen...</em></p>
                     <p style="font-size:12px; color:#999; margin-top:8px;">
-                        👤 Eingereicht von: ${escapeHtml(b.user || b.user_email || 'Unbekannt')}<br>
-                        📅 ${new Date(b.created || b.created_at).toLocaleDateString('de-DE')}
+                        👤 Eingereicht von: ${escapeHtml(b.user_email || 'Unbekannt')}<br>
+                        📅 ${new Date(b.created_at).toLocaleDateString('de-DE')}
                     </p>
                     <button onclick="showBenchImages(${b.id})" style="background:#4caf50; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-top:8px;">
                         📸 Bilder ansehen
@@ -1530,10 +1523,10 @@
                 
                 if (additionalImages && additionalImages.length > 0) {
                     const additionalImagesGrid = additionalImages.map(img => `
-                        <img src="${img.imageData || fallback}" 
+                        <img src="${img.imageUrl || fallback}" 
                              alt="${escapeHtml(img.description || 'Zusätzliches Bild')}" 
                              class="grid-image" 
-                             onclick="showFullscreen('${img.imageData || fallback}')"
+                             onclick="showFullscreen('${img.imageUrl || fallback}')"
                              onerror="this.src='${fallback}'">
                     `).join('');
                     
@@ -1561,16 +1554,16 @@
                     <div class="main-images">
                         <div class="image-box">
                             <h4>🪑 Die Bank</h4>
-                            <img src="${bench.benchImage || bench.bench_image || fallback}" 
+                            <img src="${bench.bench_image || fallback}" 
                                  alt="Bank" 
-                                 onclick="showFullscreen('${bench.benchImage || bench.bench_image || fallback}')"
+                                 onclick="showFullscreen('${bench.bench_image || fallback}')"
                                  onerror="this.src='${fallback}'">
                         </div>
                         <div class="image-box">
                             <h4>🌄 Die Aussicht</h4>
-                            <img src="${bench.viewImage || bench.view_image || fallback}" 
+                            <img src="${bench.view_image || fallback}" 
                                  alt="Aussicht" 
-                                 onclick="showFullscreen('${bench.viewImage || bench.view_image || fallback}')"
+                                 onclick="showFullscreen('${bench.view_image || fallback}')"
                                  onerror="this.src='${fallback}'">
                         </div>
                     </div>
@@ -1583,9 +1576,13 @@
         
         async function loadAdditionalImages(benchId) {
             try {
-                const response = await fetch(`/.netlify/functions/get_additional_images?benchId=${benchId}`);
+                const response = await fetch(`/.netlify/functions/get-approved-images-for-bench?bench_id=${benchId}`);
+                if (!response.ok) {
+                    console.warn('Failed to load additional images:', response.status);
+                    return [];
+                }
                 const data = await response.json();
-                return data.success ? data.images : [];
+                return Array.isArray(data) ? data : [];
             } catch (error) {
                 console.error('Error loading additional images:', error);
                 return [];
@@ -1605,7 +1602,7 @@
         
         function openAddImageModal() {
             if (!currentUser) {
-                showNotification('🔐 Sie müssen sich anmelden, um Bilder hinzuzufügen!', 'error');
+                showNotification('🔒 Sie müssen sich anmelden, um Bilder hinzuzufügen!', 'error');
                 showLogin();
                 return;
             }
@@ -1625,47 +1622,47 @@
             const description = document.getElementById('additionalImageDescription').value.trim();
             
             if (!description) {
-                showNotification('❌ Bitte geben Sie eine Beschreibung ein!', 'error');
+                showNotification('⌘ Bitte geben Sie eine Beschreibung ein!', 'error');
                 return;
             }
             
             if (!additionalImageFile) {
-                showNotification('❌ Bitte wählen Sie ein Bild aus!', 'error');
+                showNotification('⌘ Bitte wählen Sie ein Bild aus!', 'error');
                 return;
             }
             
             if (!currentBenchId) {
-                showNotification('❌ Keine Bank ausgewählt!', 'error');
+                showNotification('⌘ Keine Bank ausgewählt!', 'error');
                 return;
             }
             
             const reader = new FileReader();
             reader.onload = function(e) {
-                const imageData = e.target.result;
+                const imageUrl = e.target.result;
                 
-                fetch('/.netlify/functions/add_additional_image', {
+                fetch('/.netlify/functions/add-additional-images', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        benchId: currentBenchId,
-                        description: description,
-                        imageData: imageData,
-                        userEmail: currentUser.email
+                        bench_id: currentBenchId,
+                        image_url: imageUrl,
+                        description: description
                     })
                 })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
+                    if (data.id) {
                         closeAddImageModal();
                         showNotification('✅ Bild erfolgreich eingereicht! Es wird nach Admin-Prüfung freigeschaltet.', 'success');
                         // Refresh the image gallery
                         showBenchImages(currentBenchId);
                     } else {
-                        showNotification('❌ Fehler beim Speichern: ' + (data.error || 'Unbekannter Fehler'), 'error');
+                        showNotification('⌘ Fehler beim Speichern des Bildes', 'error');
                     }
                 })
                 .catch(err => {
-                    showNotification('❌ Netzwerkfehler: ' + err.message, 'error');
+                    console.error('Error submitting additional image:', err);
+                    showNotification('⌘ Netzwerkfehler: ' + err.message, 'error');
                 });
             };
             reader.readAsDataURL(additionalImageFile);
@@ -1677,6 +1674,7 @@
         }
         
         function escapeHtml(text){
+            if (!text) return '';
             return String(text).replace(/[&<>"']/g, m => ({
                 '&':'&amp;',
                 '<':'&lt;',
@@ -1702,26 +1700,6 @@
         
         // Initialize app when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Add some sample approved benches if none exist (fallback)
-            if (approvedBenches.length === 0) {
-                const sampleBenches = [
-                    {
-                        id: 1,
-                        name: "Panoramabank Jordanbad",
-                        description: "Wunderschöner Blick über das Jordanbad und die umliegenden Hügel. Besonders schön bei Sonnenuntergang!",
-                        latitude: 48.1668,
-                        longitude: 9.8333,
-                        benchImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2E4ZDVhOCIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM0Y2FmNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn6qRPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CYW5rIGFtIEpvcmRhbmJhZDwvdGV4dD48L3N2Zz4=",
-                        viewImage: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2FkZGZmZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiMyMTk2RjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7wn4yEPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5QYW5vcmFtYS1BdXNzaWNodDwvdGV4dD48L3N2Zz4=",
-                        user: "system@benchmap.com",
-                        approved: true,
-                        created: new Date().toISOString()
-                    }
-                ];
-                approvedBenches = sampleBenches;
-                localStorage.setItem('approvedBenches', JSON.stringify(approvedBenches));
-            }
-            
             initMap();
         });
     </script>
