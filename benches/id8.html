@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank 8 Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-button { background: #4caf50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .result { margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 3px; white-space: pre-wrap; }
+        .error { background: #fee; color: #c33; }
+        .success { background: #efe; color: #363; }
+        .image-test { display: flex; gap: 10px; align-items: center; margin: 10px 0; padding: 10px; border: 1px solid #eee; }
+        .test-image { max-width: 150px; height: 100px; object-fit: cover; border: 2px solid #ddd; }
+        .error-border { border-color: #c33; }
+        .success-border { border-color: #3c3; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Bank 8 Spezific Debug</h1>
+    
+    <div class="section">
+        <h3>1. Datenquelle prüfen</h3>
+        <button class="test-button" onclick="checkDataSource()">Check Data Source</button>
+        <div id="dataSourceResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="section">
+        <h3>2. Bank 8 Details laden</h3>
+        <button class="test-button" onclick="loadBank8Details()">Load Bank 8 Details</button>
+        <div id="bank8Details" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="section">
+        <h3>3. Zusätzliche Bilder für Bank 8</h3>
+        <button class="test-button" onclick="loadBank8AdditionalImages()">Load Additional Images</button>
+        <div id="additionalImagesResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="section">
+        <h3>4. Alle Bild-URLs testen</h3>
+        <button class="test-button" onclick="testAllImageUrls()">Test All Image URLs</button>
+        <div id="imageUrlResults"></div>
+    </div>
+
+    <div class="section">
+        <h3>5. localStorage vs Database Vergleich</h3>
+        <button class="test-button" onclick="compareDataSources()">Compare Sources</button>
+        <div id="comparisonResult" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        let bank8Data = null;
+        let additionalImagesData = null;
+
+        async function checkDataSource() {
+            const resultDiv = document.getElementById('dataSourceResult');
+            
+            let result = '=== DATENQUELLE ANALYSE ===\n\n';
+            
+            // localStorage prüfen
+            const localStorage_benches = JSON.parse(localStorage.getItem('approvedBenches') || '[]');
+            const localStorage_bank8 = localStorage_benches.find(b => b.id == 8);
+            
+            result += `localStorage:\n`;
+            result += `- approvedBenches Anzahl: ${localStorage_benches.length}\n`;
+            result += `- Bank 8 vorhanden: ${localStorage_bank8 ? 'JA' : 'NEIN'}\n`;
+            if (localStorage_bank8) {
+                result += `- Bank 8 Name: ${localStorage_bank8.name}\n`;
+                result += `- Bank 8 benchImage: ${localStorage_bank8.benchImage ? 'JA' : 'NEIN'}\n`;
+                result += `- Bank 8 viewImage: ${localStorage_bank8.viewImage ? 'JA' : 'NEIN'}\n`;
+            }
+            
+            result += '\n';
+            
+            // Database prüfen
+            try {
+                const response = await fetch('/.netlify/functions/get_benches');
+                const data = await response.json();
+                
+                result += `Database:\n`;
+                result += `- Response Status: ${response.status}\n`;
+                result += `- Success: ${data.success}\n`;
+                result += `- Benches Anzahl: ${data.benches ? data.benches.length : 'N/A'}\n`;
+                
+                if (data.benches) {
+                    const db_bank8 = data.benches.find(b => b.id == 8);
+                    result += `- Bank 8 vorhanden: ${db_bank8 ? 'JA' : 'NEIN'}\n`;
+                    if (db_bank8) {
+                        result += `- Bank 8 Name: ${db_bank8.name}\n`;
+                        result += `- Bank 8 benchImage: ${db_bank8.bench_image || db_bank8.benchImage ? 'JA' : 'NEIN'}\n`;
+                        result += `- Bank 8 viewImage: ${db_bank8.view_image || db_bank8.viewImage ? 'JA' : 'NEIN'}\n`;
+                        bank8Data = db_bank8;
+                    }
+                }
+            } catch (error) {
+                result += `Database Error: ${error.message}\n`;
+            }
+            
+            resultDiv.textContent = result;
+            resultDiv.style.display = 'block';
+        }
+
+        async function loadBank8Details() {
+            const resultDiv = document.getElementById('bank8Details');
+            
+            try {
+                const response = await fetch('/.netlify/functions/get_benches');
+                const data = await response.json();
+                
+                if (data.success && data.benches) {
+                    const bank8 = data.benches.find(b => b.id == 8);
+                    
+                    if (bank8) {
+                        bank8Data = bank8;
+                        let html = `
+                            <div class="success">✅ Bank 8 gefunden in Database</div>
+                            <table>
+                                <tr><th>Feld</th><th>Wert</th></tr>
+                                <tr><td>ID</td><td>${bank8.id}</td></tr>
+                                <tr><td>Name</td><td>${bank8.name}</td></tr>
+                                <tr><td>Description</td><td>${bank8.description}</td></tr>
+                                <tr><td>Latitude</td><td>${bank8.latitude}</td></tr>
+                                <tr><td>Longitude</td><td>${bank8.longitude}</td></tr>
+                                <tr><td>Bench Image</td><td>${bank8.bench_image || bank8.benchImage || 'NICHT GESETZT'}</td></tr>
+                                <tr><td>View Image</td><td>${bank8.view_image || bank8.viewImage || 'NICHT GESETZT'}</td></tr>
+                                <tr><td>User Email</td><td>${bank8.user_email || bank8.user || 'N/A'}</td></tr>
+                                <tr><td>Created</td><td>${bank8.created_at || bank8.created || 'N/A'}</td></tr>
+                                <tr><td>Status</td><td>${bank8.status || 'N/A'}</td></tr>
+                            </table>
+                        `;
+                        
+                        resultDiv.innerHTML = html;
+                    } else {
+                        resultDiv.innerHTML = '<div class="error">❌ Bank 8 nicht in Database gefunden</div>';
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Fehler beim Laden: ${data.error || 'Unbekannt'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+
+        async function loadBank8AdditionalImages() {
+            const resultDiv = document.getElementById('additionalImagesResult');
+            
+            try {
+                const response = await fetch('/.netlify/functions/get-approved-images-for-bench?bench_id=8');
+                const data = await response.json();
+                
+                let html = `
+                    <div class="success">✅ Response erhalten</div>
+                    <strong>Response Status:</strong> ${response.status}<br>
+                    <strong>Response OK:</strong> ${response.ok}<br>
+                    <strong>Data Type:</strong> ${Array.isArray(data) ? 'Array' : typeof data}<br>
+                    <strong>Data Length:</strong> ${Array.isArray(data) ? data.length : 'N/A'}<br><br>
+                    <strong>Raw Data:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    additionalImagesData = data;
+                    html += '<br><strong>Parsed Images:</strong><br>';
+                    data.forEach((img, index) => {
+                        html += `
+                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0;">
+                                <strong>Image ${index + 1}:</strong><br>
+                                ID: ${img.id}<br>
+                                Description: ${img.description || 'Keine Beschreibung'}<br>
+                                URL: ${img.imageUrl || img.image_url || 'KEINE URL'}<br>
+                            </div>
+                        `;
+                    });
+                } else if (Array.isArray(data)) {
+                    html += '<br><div class="error">⚠️ Leeres Array - keine zusätzlichen Bilder gefunden</div>';
+                } else {
+                    html += '<br><div class="error">❌ Response ist kein Array</div>';
+                }
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+
+        async function testAllImageUrls() {
+            const resultDiv = document.getElementById('imageUrlResults');
+            
+            if (!bank8Data && !additionalImagesData) {
+                resultDiv.innerHTML = '<div class="error">❌ Bitte laden Sie zuerst die Bank 8 Details und zusätzliche Bilder</div>';
+                return;
+            }
+            
+            let html = '<h4>🖼️ Image URL Tests:</h4>';
+            const imagesToTest = [];
+            
+            // Bank Hauptbilder
+            if (bank8Data) {
+                if (bank8Data.bench_image || bank8Data.benchImage) {
+                    imagesToTest.push({
+                        type: 'Bench Image (Database)',
+                        url: bank8Data.bench_image || bank8Data.benchImage,
+                        description: 'Hauptbild der Bank aus Database'
+                    });
+                }
+                if (bank8Data.view_image || bank8Data.viewImage) {
+                    imagesToTest.push({
+                        type: 'View Image (Database)',
+                        url: bank8Data.view_image || bank8Data.viewImage,
+                        description: 'Aussichtsbild aus Database'
+                    });
+                }
+            }
+            
+            // Zusätzliche Bilder
+            if (additionalImagesData && Array.isArray(additionalImagesData)) {
+                additionalImagesData.forEach((img, index) => {
+                    imagesToTest.push({
+                        type: `Additional Image ${index + 1}`,
+                        url: img.imageUrl || img.image_url,
+                        description: img.description || `Zusätzliches Bild ${index + 1}`
+                    });
+                });
+            }
+            
+            if (imagesToTest.length === 0) {
+                html += '<div class="error">❌ Keine Bild-URLs zum Testen gefunden</div>';
+            } else {
+                imagesToTest.forEach((img, index) => {
+                    const testId = `img-test-${index}`;
+                    html += `
+                        <div class="image-test">
+                            <img id="${testId}" 
+                                 src="${img.url}" 
+                                 class="test-image"
+                                 onload="document.getElementById('${testId}-status').innerHTML='✅ Erfolgreich geladen'; this.className='test-image success-border'"
+                                 onerror="document.getElementById('${testId}-status').innerHTML='❌ Fehler beim Laden'; this.className='test-image error-border'">
+                            <div>
+                                <strong>${img.type}</strong><br>
+                                ${img.description}<br>
+                                <small style="word-break: break-all;">${img.url}</small><br>
+                                <span id="${testId}-status">⏳ Wird geladen...</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+
+        async function compareDataSources() {
+            const resultDiv = document.getElementById('comparisonResult');
+            
+            let result = '=== VOLLSTÄNDIGER VERGLEICH ===\n\n';
+            
+            // localStorage
+            const localStorage_benches = JSON.parse(localStorage.getItem('approvedBenches') || '[]');
+            const localStorage_bank8 = localStorage_benches.find(b => b.id == 8);
+            
+            result += 'localStorage Bank 8:\n';
+            if (localStorage_bank8) {
+                result += JSON.stringify(localStorage_bank8, null, 2) + '\n\n';
+            } else {
+                result += 'NICHT GEFUNDEN\n\n';
+            }
+            
+            // Database
+            try {
+                const response = await fetch('/.netlify/functions/get_benches');
+                const data = await response.json();
+                const db_bank8 = data.benches ? data.benches.find(b => b.id == 8) : null;
+                
+                result += 'Database Bank 8:\n';
+                if (db_bank8) {
+                    result += JSON.stringify(db_bank8, null, 2) + '\n\n';
+                } else {
+                    result += 'NICHT GEFUNDEN\n\n';
+                }
+                
+                // Zusätzliche Bilder
+                const imgResponse = await fetch('/.netlify/functions/get-approved-images-for-bench?bench_id=8');
+                const imgData = await imgResponse.json();
+                
+                result += 'Zusätzliche Bilder Bank 8:\n';
+                result += JSON.stringify(imgData, null, 2) + '\n\n';
+                
+            } catch (error) {
+                result += `Database Error: ${error.message}\n\n`;
+            }
+            
+            resultDiv.textContent = result;
+            resultDiv.style.display = 'block';
+        }
+
+        // Auto-load auf Seitenstart
+        window.addEventListener('load', () => {
+            console.log('🔍 Bank 8 Debug Tool loaded');
+            // Automatisch Datenquelle prüfen
+            setTimeout(checkDataSource, 500);
+        });
+    </script>
+</body>
+</html>
