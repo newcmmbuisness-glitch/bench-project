@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Additional Images</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        .image-preview { max-width: 200px; margin: 10px 0; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Additional Images Loading</h1>
+    
+    <div class="debug-section">
+        <h2>1. Test Database Connection</h2>
+        <button onclick="testDbConnection()">Test DB Connection</button>
+        <div id="dbResult"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>2. Test Additional Images Function</h2>
+        <input type="number" id="testBenchId" placeholder="Bench ID (z.B. 3 oder 8)" value="3">
+        <button onclick="testAdditionalImages()">Test Additional Images</button>
+        <div id="additionalImagesResult"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>3. Test Direct Cloudinary URL</h2>
+        <input type="url" id="cloudinaryUrl" placeholder="Cloudinary URL" value="https://res.cloudinary.com/dp3t4ctxz/image/upload/v1755251244/rriavcgafsxzs7ynynwa.png">
+        <button onclick="testCloudinaryImage()">Test Image Loading</button>
+        <div id="cloudinaryResult"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>4. Check Network Tab</h2>
+        <p>Öffnen Sie die Browser-Entwicklertools (F12) und schauen Sie in den Network-Tab, um zu sehen, ob die Requests erfolgreich sind.</p>
+        <button onclick="simulateShowImages()">Simulate showBenchImages()</button>
+        <div id="simulateResult"></div>
+    </div>
+
+    <script>
+        async function testDbConnection() {
+            const resultDiv = document.getElementById('dbResult');
+            resultDiv.innerHTML = '<p class="info">Testing database connection...</p>';
+            
+            try {
+                const response = await fetch('/.netlify/functions/get_benches');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Database connection successful!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ Database error: ${response.status}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testAdditionalImages() {
+            const benchId = document.getElementById('testBenchId').value;
+            const resultDiv = document.getElementById('additionalImagesResult');
+            
+            if (!benchId) {
+                resultDiv.innerHTML = '<p class="error">Please enter a bench ID</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p class="info">Testing additional images function...</p>';
+            
+            try {
+                const response = await fetch(`/.netlify/functions/get-approved-images-for-bench?bench_id=${benchId}`);
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Response data:', data);
+                    
+                    let html = `<p class="success">✅ Function response successful!</p>`;
+                    html += `<p><strong>Found ${data.length} additional images:</strong></p>`;
+                    
+                    if (data.length === 0) {
+                        html += '<p class="info">No additional images found for this bench.</p>';
+                    } else {
+                        html += '<div>';
+                        data.forEach((img, index) => {
+                            html += `
+                                <div style="margin: 10px 0; padding: 10px; border: 1px solid #eee;">
+                                    <strong>Image ${index + 1}:</strong><br>
+                                    ID: ${img.id}<br>
+                                    URL: <a href="${img.imageUrl}" target="_blank">${img.imageUrl}</a><br>
+                                    Description: ${img.description || 'No description'}<br>
+                                    <img src="${img.imageUrl}" class="image-preview" onerror="this.style.border='2px solid red'" onload="this.style.border='2px solid green'">
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Function error: ${response.status}</p>
+                        <pre>${errorText}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+        
+        function testCloudinaryImage() {
+            const url = document.getElementById('cloudinaryUrl').value;
+            const resultDiv = document.getElementById('cloudinaryResult');
+            
+            if (!url) {
+                resultDiv.innerHTML = '<p class="error">Please enter a Cloudinary URL</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = `
+                <p class="info">Testing image loading...</p>
+                <img src="${url}" class="image-preview" 
+                     onload="this.nextElementSibling.innerHTML='<p class=\\"success\\">✅ Image loaded successfully!</p>'"
+                     onerror="this.nextElementSibling.innerHTML='<p class=\\"error\\">❌ Image failed to load!</p>'">
+                <div></div>
+            `;
+        }
+        
+        async function simulateShowImages() {
+            const resultDiv = document.getElementById('simulateResult');
+            resultDiv.innerHTML = '<p class="info">Simulating showBenchImages function...</p>';
+            
+            // Test with bench ID 3 (from your database)
+            const benchId = 3;
+            
+            try {
+                console.log(`Fetching additional images for bench ${benchId}...`);
+                const response = await fetch(`/.netlify/functions/get-approved-images-for-bench?bench_id=${benchId}`);
+                
+                let html = `<p><strong>Request URL:</strong> ${response.url}</p>`;
+                html += `<p><strong>Response Status:</strong> ${response.status} ${response.statusText}</p>`;
+                
+                if (response.ok) {
+                    const additionalImages = await response.json();
+                    html += `<p class="success">✅ Successfully fetched ${additionalImages.length} additional images</p>`;
+                    
+                    if (additionalImages.length > 0) {
+                        html += '<h3>Additional Images HTML that would be generated:</h3>';
+                        html += '<div style="background: #f5f5f5; padding: 10px; border-radius: 5px;">';
+                        
+                        additionalImages.forEach(img => {
+                            html += `
+                                <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; display: inline-block;">
+                                    <h4>${img.description || 'Zusätzliches Bild'}</h4>
+                                    <img src="${img.imageUrl || 'fallback'}" alt="${img.description || 'Zusätzliches Bild'}" style="width: 150px; height: 100px; object-fit: cover;">
+                                    <p><small>URL: ${img.imageUrl}</small></p>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    }
+                } else {
+                    html += `<p class="error">❌ Request failed</p>`;
+                    const errorText = await response.text();
+                    html += `<pre>${errorText}</pre>`;
+                }
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
