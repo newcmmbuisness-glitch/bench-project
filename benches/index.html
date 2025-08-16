@@ -1347,41 +1347,93 @@ function requestPasswordReset() {
 		}
 
 		async function uploadImageToCloudinary(file) {
+			console.log('🔄 Starting Cloudinary upload for file:', file.name, file.type, file.size);
+			
+			// Validierung
+			if (!file.type.startsWith('image/')) {
+				throw new Error('Datei ist kein Bild');
+			}
+			
+			if (file.size > 16 * 1024 * 1024) { // 16MB limit
+				throw new Error('Datei ist zu groß (max 16MB)');
+			}
+			
 			const formData = new FormData();
 			formData.append('file', file);
-			formData.append('upload_preset', 'benches_upload'); // Name Ihres Upload-Presets
-
-			const res = await fetch('https://api.cloudinary.com/v1_1/dp3t4ctxz/image/upload', {
-				method: 'POST',
-				body: formData
-			});
-
-			if (!res.ok) {
-				throw new Error('Cloudinary-Upload fehlgeschlagen');
+			formData.append('upload_preset', 'benches_upload');
+			
+			// Optional: Spezifische Transformation hinzufügen
+			formData.append('transformation', 'c_limit,w_1200,h_1200,q_auto:good,f_auto');
+			
+			try {
+				console.log('📤 Uploading to Cloudinary...');
+				const response = await fetch('https://api.cloudinary.com/v1_1/dp3t4ctxz/image/upload', {
+					method: 'POST',
+					body: formData
+				});
+				
+				console.log('📡 Cloudinary response status:', response.status);
+				
+				if (!response.ok) {
+					const errorText = await response.text();
+					console.error('❌ Cloudinary error response:', errorText);
+					
+					let errorMessage = 'Cloudinary-Upload fehlgeschlagen';
+					try {
+						const errorData = JSON.parse(errorText);
+						if (errorData.error && errorData.error.message) {
+							errorMessage += ': ' + errorData.error.message;
+						}
+					} catch (e) {
+						// Fallback wenn Error nicht parsbar ist
+					}
+					
+					throw new Error(errorMessage);
+				}
+				
+				const data = await response.json();
+				console.log('✅ Cloudinary upload successful:', data);
+				
+				// Wichtige Felder loggen
+				console.log('📋 Upload Details:');
+				console.log('- Public ID:', data.public_id);
+				console.log('- Secure URL:', data.secure_url);
+				console.log('- Access Mode:', data.access_mode || 'public');
+				console.log('- Format:', data.format);
+				console.log('- Resource Type:', data.resource_type);
+				
+				// URL testen
+				console.log('🧪 Testing uploaded image URL...');
+				await testImageUrl(data.secure_url);
+				
+				return data.secure_url;
+				
+			} catch (error) {
+				console.error('❌ Upload error:', error);
+				throw error;
 			}
-
-			const data = await res.json();
-			return data.secure_url;
 		}
-            
-        function toggleAddMode(){
-            addMode = !addMode;
-            const btn = document.getElementById('addBenchBtn');
-            const instruction = document.getElementById('mapInstruction');
-            if (addMode) {
-                btn.innerHTML = '❌';
-                btn.classList.add('cancel');
-                btn.title = 'Abbrechen';
-                instruction.style.display = 'block';
-                map.getContainer().style.cursor = 'crosshair';
-            } else {
-                btn.innerHTML = '➕';
-                btn.classList.remove('cancel');
-                btn.title = 'Bank hinzufügen';
-                instruction.style.display = 'none';
-                map.getContainer().style.cursor = '';
-            }
-        }
+
+		// Hilfsfunktion um zu testen ob die URL funktioniert
+		function testImageUrl(url) {
+			return new Promise((resolve, reject) => {
+				const img = new Image();
+				img.onload = () => {
+					console.log('✅ Uploaded image URL is accessible:', url);
+					resolve();
+				};
+				img.onerror = () => {
+					console.error('❌ Uploaded image URL is NOT accessible:', url);
+					reject(new Error('Uploaded image is not accessible'));
+				};
+				img.src = url;
+				
+				// Timeout nach 10 Sekunden
+				setTimeout(() => {
+					reject(new Error('Image test timeout'));
+				}, 10000);
+			});
+		}
         
         function loadBenches() {
             // Load benches from database
