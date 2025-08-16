@@ -534,7 +534,13 @@
         .sidebar.open {
             left: 0; /* Zeigt die Seitenleiste an */
         }
+		.main-content {
+			transition: margin-left 0.3s ease;
+		}
 
+		.sidebar.open + .main-content {
+			margin-left: 250px; /* Die Breite der Seitenleiste */
+		}
         .sidebar a {
             display: block;
             padding: 15px;
@@ -630,13 +636,16 @@
 			">
 		</div>
     
-    <div id="sidebar" class="sidebar">
-        <a href="contact.html">Contact</a>
-    </div>
-    
-    <div id="authButtons" class="auth-buttons">
-        <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
-    </div>
+		<div id="sidebar" class="sidebar">
+			<a href="contact.html">Contact</a>
+		</div>
+		
+		<main class="main-content">
+		</main>
+		
+		<div id="authButtons" class="auth-buttons">
+			<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
+		</div>
     
     <div class="plz-control">
         <input type="text" id="plzChangeInput" placeholder="PLZ eingeben" maxlength="5" pattern="[0-9]{5}">
