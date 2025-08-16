@@ -1548,42 +1548,55 @@ function requestPasswordReset() {
 			const description = document.getElementById('newImageDescription').value;
 
 			if (!benchId || !imageFile) {
-				alert('Bank-ID oder Bild fehlt.');
+				showNotification('Bank-ID oder Bild fehlt.', 'error');
 				return;
 			}
+
+			showNotification('Bild wird hochgeladen...', 'success');
 
 			const formData = new FormData();
 			formData.append('file', imageFile);
-			formData.append('upload_preset', 'benches_upload'); // Diese Zeile wurde hinzugefügt
+			formData.append('upload_preset', 'benches_upload'); // Ihr Cloudinary Upload Preset
 
-			// Bild zu Cloudinary hochladen
-			const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dp3t4ctxz/image/upload', {
-				method: 'POST',
-				body: formData
-			});
-			const imageData = await cloudinaryResponse.json();
+			try {
+				// 1. Bild zu Cloudinary hochladen
+				const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dp3t4ctxz/image/upload', {
+					method: 'POST',
+					body: formData
+				});
+				const imageData = await cloudinaryResponse.json();
 
-			if (!imageData.secure_url) {
-				alert('Fehler beim Hochladen des Bildes.');
-				return;
-			}
+				if (!cloudinaryResponse.ok || !imageData.secure_url) {
+					throw new Error('Fehler beim Cloudinary-Upload.');
+				}
 
-			// Bild an Netlify Funktion senden
-			const response = await fetch('/.netlify/functions/add-additional-image', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					bench_id: benchId,
-					image_url: imageData.secure_url,
-					description: description
-				})
-			});
+				const imageUrl = imageData.secure_url;
+				showNotification('Bild erfolgreich bei Cloudinary hochgeladen.', 'success');
 
-			if (response.ok) {
-				alert('Bild erfolgreich zur Prüfung eingereicht!');
+				// 2. Bild-URL und ID an die Netlify Funktion senden
+				const netlifyResponse = await fetch('/.netlify/functions/add-additional-image', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						bench_id: benchId,
+						image_url: imageUrl,
+						description: description
+					})
+				});
+
+				if (!netlifyResponse.ok) {
+					throw new Error('Fehler beim Senden an Netlify-Funktion.');
+				}
+				
+				// 3. Nach erfolgreichem Backend-Update die Bänke neu laden
+				await loadBenches(); // Diese Funktion muss die Daten vom Server abrufen
+				
+				showNotification('Bild erfolgreich hinzugefügt und Karte aktualisiert!', 'success');
 				closeAddImageModal();
-			} else {
-				alert('Fehler beim Absenden des Bildes.');
+
+			} catch (error) {
+				console.error('Fehler beim Hinzufügen des Bildes:', error);
+				showNotification(`Fehler: ${error.message}`, 'error');
 			}
 		}
 
