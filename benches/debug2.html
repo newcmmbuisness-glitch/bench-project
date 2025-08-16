@@ -94,7 +94,7 @@
                 console.log(`Response ok: ${response.ok}`);
                 
                 const data = await response.json();
-                console.log('Response data:', data);
+                console.log('Response data (raw):', JSON.stringify(data, null, 2));
 
                 if (response.ok) {
                     resultDiv.innerHTML = `
@@ -185,7 +185,7 @@ Error: ${JSON.stringify(data, null, 2)}</pre>
                 // Test basic bench data
                 const benchesResponse = await fetch('/.netlify/functions/get_benches');
                 const benchesData = await benchesResponse.json();
-                console.log('Benches data:', benchesData);
+                console.log('Benches data (raw):', JSON.stringify(benchesData, null, 2));
 
                 let html = `
                     <div class="success">✅ Database connection working</div>
