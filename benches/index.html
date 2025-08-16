@@ -1531,14 +1531,16 @@ function requestPasswordReset() {
 			const benchData = benchMarkers.find(item => item.bench.id === id);
 			const bench = benchData ? benchData.bench : null;
 
-			if (!bench) return;
+			if (!bench) {
+				console.error(`Bench with ID ${id} not found`);
+				return;
+			}
 
 			const cont = document.getElementById('imageContainer');
 			const fallback = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDEwMCAxMDAiPjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjZWRlZGUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJTYW5zLXNlcmlmIiBmb250LXNpemU9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjY2NjY2NjIj7igJk8L3RleHQ+PC9zdmc+';
-			let imagesHtml = '';
-
-			// Standardbilder
-			imagesHtml += `
+			
+			// Standardbilder sofort anzeigen
+			let imagesHtml = `
 				<div class="image-box" onclick="openFullscreen('${bench.benchImage || bench.bench_image || fallback}')">
 					<h4>🪑 Die Bank</h4>
 					<img src="${bench.benchImage || bench.bench_image || fallback}" alt="Bank" onerror="this.src='${fallback}'">
@@ -1549,27 +1551,111 @@ function requestPasswordReset() {
 				</div>
 			`;
 
-			// Zusätzliche Bilder laden
-			try {
-				const response = await fetch(`/.netlify/functions/get-approved-images-for-bench?bench_id=${id}`);
-				if (response.ok) {
-					const additionalImages = await response.json();
-					additionalImages.forEach(img => {
-						imagesHtml += `
-							<div class="image-box" onclick="openFullscreen('${img.imageUrl || fallback}')">
-								<h4>${img.description || 'Zusätzliches Bild'}</h4>
-								<img src="${img.imageUrl || fallback}" alt="${img.description || 'Zusätzliches Bild'}" onerror="this.src='${fallback}'">
-							</div>
-						`;
-					});
-				}
-			} catch (error) {
-				console.error('Fehler beim Laden zusätzlicher Bilder:', error);
-			}
+			// Loading-Indikator für zusätzliche Bilder
+			imagesHtml += `
+				<div class="image-box" id="loading-additional-images">
+					<h4>📸 Lade zusätzliche Bilder...</h4>
+					<div style="display: flex; justify-content: center; align-items: center; height: 200px;">
+						<div style="border: 4px solid #f3f3f3; border-top: 4px solid #4caf50; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite;"></div>
+					</div>
+				</div>
+			`;
 
 			cont.innerHTML = imagesHtml;
 			document.getElementById('imageViewer').style.display = 'flex';
-			document.getElementById('addImageModal').dataset.benchId = id; // Bank-ID im Modal speichern
+			document.getElementById('addImageModal').dataset.benchId = id;
+
+			// CSS für Loading-Animation hinzufügen (falls noch nicht vorhanden)
+			if (!document.getElementById('loading-styles')) {
+				const style = document.createElement('style');
+				style.id = 'loading-styles';
+				style.textContent = `
+					@keyframes spin {
+						0% { transform: rotate(0deg); }
+						100% { transform: rotate(360deg); }
+					}
+				`;
+				document.head.appendChild(style);
+			}
+
+			// Zusätzliche Bilder asynchron laden
+			try {
+				console.log(`Loading additional images for bench ID: ${id}`);
+				const url = `/.netlify/functions/get-approved-images-for-bench?bench_id=${id}`;
+				console.log(`Calling URL: ${url}`);
+				
+				const response = await fetch(url);
+				console.log(`Response status: ${response.status}, ok: ${response.ok}`);
+
+				if (!response.ok) {
+					throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+				}
+
+				const additionalImages = await response.json();
+				console.log(`Received ${Array.isArray(additionalImages) ? additionalImages.length : 'non-array'} additional images:`, additionalImages);
+
+				// Loading-Indikator entfernen
+				const loadingDiv = document.getElementById('loading-additional-images');
+				if (loadingDiv) {
+					loadingDiv.remove();
+				}
+
+				if (Array.isArray(additionalImages) && additionalImages.length > 0) {
+					// Zusätzliche Bilder hinzufügen
+					additionalImages.forEach((img, index) => {
+						const imageDiv = document.createElement('div');
+						imageDiv.className = 'image-box';
+						imageDiv.onclick = () => openFullscreen(img.imageUrl || fallback);
+						imageDiv.innerHTML = `
+							<h4>${img.description || `Zusätzliches Bild ${index + 1}`}</h4>
+							<img src="${img.imageUrl || fallback}" 
+								 alt="${img.description || 'Zusätzliches Bild'}" 
+								 onerror="console.error('Failed to load additional image:', this.src); this.src='${fallback}'"
+								 onload="console.log('Successfully loaded additional image:', this.src)">
+						`;
+						cont.appendChild(imageDiv);
+					});
+					console.log(`Successfully added ${additionalImages.length} additional images`);
+				} else {
+					console.log('No additional images found or empty array returned');
+					// Hinweis anzeigen, dass keine zusätzlichen Bilder vorhanden sind
+					const noImagesDiv = document.createElement('div');
+					noImagesDiv.className = 'image-box';
+					noImagesDiv.innerHTML = `
+						<h4>📷 Keine zusätzlichen Bilder</h4>
+						<div style="display: flex; justify-content: center; align-items: center; height: 200px; color: #999;">
+							Für diese Bank sind noch keine zusätzlichen Bilder verfügbar.
+						</div>
+					`;
+					cont.appendChild(noImagesDiv);
+				}
+
+			} catch (error) {
+				console.error('Error loading additional images:', error);
+				
+				// Loading-Indikator entfernen
+				const loadingDiv = document.getElementById('loading-additional-images');
+				if (loadingDiv) {
+					loadingDiv.remove();
+				}
+
+				// Fehler-Nachricht anzeigen
+				const errorDiv = document.createElement('div');
+				errorDiv.className = 'image-box';
+				errorDiv.innerHTML = `
+					<h4>❌ Fehler beim Laden</h4>
+					<div style="display: flex; justify-content: center; align-items: center; height: 200px; color: #c33; text-align: center;">
+						Zusätzliche Bilder konnten nicht geladen werden.<br>
+						<small>Fehler: ${error.message}</small>
+					</div>
+				`;
+				cont.appendChild(errorDiv);
+
+				// Optional: Fehler auch als Notification anzeigen
+				if (typeof showNotification === 'function') {
+					showNotification(`Fehler beim Laden zusätzlicher Bilder: ${error.message}`, 'error');
+				}
+			}
 		}
 
 		// 🔹 Globale Funktionen für Bild- und Modal-Handling
