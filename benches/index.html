@@ -1778,103 +1778,153 @@
             }
         }
         
-        function loadBenches() {
-            const userEmail = currentUser?.email;
-            const url = userEmail ? 
-                `/.netlify/functions/get_benches?userEmail=${encodeURIComponent(userEmail)}` :
-                '/.netlify/functions/get_benches';
-                
-            fetch(url, { method: 'GET' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.benches) {
-                    // Clear existing markers
-                    benchMarkers.forEach(item => {
-                        map.removeLayer(item.marker);
-                    });
-                    benchMarkers = [];
-                    
-                    // Update like data from backend
-                    if (data.benches) {
-                        data.benches.forEach(bench => {
-                            benchLikes[bench.id] = bench.like_count || 0;
-                        });
-                    }
-                    
-                    if (data.userLikes && currentUser) {
-                        userLikes[currentUser.email] = data.userLikes;
-                    }
-                    
-                    // Save to localStorage for offline fallback
-                    localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
-                    localStorage.setItem('userLikes', JSON.stringify(userLikes));
-                    
-                    // Add approved benches to map
-                    data.benches.forEach(addSingleBenchToMap);
-                } else {
-                    // Fallback to localStorage if database not available
-                    benchMarkers.forEach(item => {
-                        map.removeLayer(item.marker);
-                    });
-                    benchMarkers = [];
-                    approvedBenches.forEach(addSingleBenchToMap);
-                }
-            })
-            .catch(error => {
-                console.error('Error loading benches:', error);
-                // Fallback to localStorage
-                benchMarkers.forEach(item => {
-                    map.removeLayer(item.marker);
-                });
-                benchMarkers = [];
-                approvedBenches.forEach(addSingleBenchToMap);
-            });
-        }
-        
-        function addSingleBenchToMap(b){
-            const likes = benchLikes[b.id] || 0;
-            const isPopular = b.is_popular || likes >= 10;
-            
-            const benchIcon = L.divIcon({ 
-                html:'🪑', 
-                className: `custom-bench-icon${isPopular ? ' popular' : ''}`, 
-                iconSize:[30,30], 
-                iconAnchor:[15,15] 
-            });
-            
-            const marker = L.marker([b.latitude, b.longitude], { icon: benchIcon }).addTo(map);
-            
-            const userKey = currentUser?.email;
-            const isLiked = userLikes[userKey]?.includes(b.id);
-            
-            const popupContent = `
-                <div class="popup-content" style="position: relative; padding: 15px; min-width: 250px;">
-                    ${isPopular ? '<div class="popular-badge">Beliebte Bank</div>' : ''}
-                    <h3 style="margin-top: ${isPopular ? '20px' : '0'};">${escapeHtml(b.name)}</h3>
-                    <p><strong>Aussicht:</strong> ${escapeHtml(b.description)}</p>
-                    <p id="addr-${b.id}" style="font-weight:600; margin-top:8px; color:#666;">📍 <em>Adresse wird geladen...</em></p>
-                    <p style="font-size:12px; color:#999; margin-top:8px;">
-                        👤 Eingereicht von: ${escapeHtml(b.user || b.user_email || 'Unbekannt')}<br>
-                        📅 ${new Date(b.created || b.created_at).toLocaleDateString('de-DE')}
-                    </p>
-                    <div class="like-count" id="like-count-${b.id}">❤️ ${likes}</div>
-                    <button onclick="showBenchImages(${b.id})" style="background:#4caf50; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-top:8px;">
-                        📸 Bilder ansehen
-                    </button>
-                    ${currentUser ? `
-                        <button class="like-btn ${isLiked ? 'liked' : ''}" id="like-btn-${b.id}" 
-                                onclick="likeBench(${b.id}, event)" 
-                                title="${isLiked ? 'Like entfernen' : 'Bank liken'}">
-                            ${isLiked ? '❤️' : '🤍'}
-                        </button>
-                    ` : ''}
-                </div>`;
-            
-            marker.bindPopup(popupContent);
-            marker.on('popupopen', () => updateAddressForBench(b.id, b.latitude, b.longitude));
-            benchMarkers.push({ marker, bench: b });
-        }
-        
+		async function likeBench(benchId) {
+			if (!currentUser) {
+				showNotification('Du musst angemeldet sein, um zu liken!', 'error');
+				return;
+			}
+
+			const isLiked = userLikes[currentUser.email]?.includes(benchId);
+			const action = isLiked ? 'unlike' : 'like';
+
+			try {
+				const response = await fetch(`/.netlify/functions/like-bench`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						benchId: benchId,
+						userEmail: currentUser.email,
+						action: action
+					})
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+
+					// Frontend-Zustand (userLikes) aktualisieren
+					if (action === 'like') {
+						if (!userLikes[currentUser.email]) {
+							userLikes[currentUser.email] = [];
+						}
+						userLikes[currentUser.email].push(benchId);
+					} else {
+						userLikes[currentUser.email] = userLikes[currentUser.email].filter(id => id !== benchId);
+					}
+					
+					// Lokale Speicherung aktualisieren
+					localStorage.setItem('userLikes', JSON.stringify(userLikes));
+
+					// Hier die Like-Zahl in unserem lokalen "benchLikes"-Objekt aktualisieren
+					benchLikes[benchId] = data.likeCount;
+					localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
+					
+					// *** NEU: Bench-Daten direkt im benchMarkers Array aktualisieren ***
+					const benchItem = benchMarkers.find(item => item.bench.id === benchId);
+					if (benchItem) {
+						benchItem.bench.like_count = data.likeCount;
+						benchItem.bench.is_popular = data.likeCount >= 10;
+						
+						// Icon aktualisieren falls es popular wird/aufhört popular zu sein
+						const iconElement = benchItem.marker.getElement().querySelector('.custom-bench-icon');
+						if (iconElement) {
+							if (data.likeCount >= 10) {
+								iconElement.classList.add('popular');
+							} else {
+								iconElement.classList.remove('popular');
+							}
+						}
+					}
+					
+					// UI-Elemente direkt aktualisieren
+					const likeCountEl = document.getElementById(`like-count-${benchId}`);
+					const likeBtnEl = document.getElementById(`like-btn-${benchId}`);
+					
+					if (likeCountEl) {
+						likeCountEl.innerHTML = `❤️ ${data.likeCount}`;
+					}
+
+					if (likeBtnEl) {
+						if (action === 'like') {
+							likeBtnEl.innerHTML = '❤️';
+							likeBtnEl.classList.add('liked');
+						} else {
+							likeBtnEl.innerHTML = '🤍';
+							likeBtnEl.classList.remove('liked');
+						}
+					}
+					
+					console.log('Like-Status erfolgreich aktualisiert.');
+					
+				} else {
+					const errorData = await response.json();
+					showNotification(`Fehler: ${errorData.error}`, 'error');
+					console.error('Fehler beim Liken der Bank:', errorData.error);
+				}
+			} catch (error) {
+				console.error('Verbindungsfehler:', error);
+				showNotification('Verbindungsfehler. Bitte versuche es später erneut.', 'error');
+			}
+		}        
+       
+		function addSingleBenchToMap(b){
+			// *** NEU: Verwende aktuelle Like-Daten statt nur die aus der DB ***
+			const likes = benchLikes[b.id] || b.like_count || 0;
+			const isPopular = b.is_popular || likes >= 10;
+			
+			const benchIcon = L.divIcon({ 
+				html:'🪑', 
+				className: `custom-bench-icon${isPopular ? ' popular' : ''}`, 
+				iconSize:[30,30], 
+				iconAnchor:[15,15] 
+			});
+			
+			const marker = L.marker([b.latitude, b.longitude], { icon: benchIcon }).addTo(map);
+			
+			const userKey = currentUser?.email;
+			const isLiked = userLikes[userKey]?.includes(b.id);
+			
+			// *** NEU: Funktion für dynamisches Popup-Content ***
+			const getPopupContent = () => {
+				const currentLikes = benchLikes[b.id] || b.like_count || 0;
+				const currentIsPopular = b.is_popular || currentLikes >= 10;
+				const currentIsLiked = userLikes[userKey]?.includes(b.id);
+				
+				return `
+					<div class="popup-content" style="position: relative; padding: 15px; min-width: 250px;">
+						${currentIsPopular ? '<div class="popular-badge">Beliebte Bank</div>' : ''}
+						<h3 style="margin-top: ${currentIsPopular ? '20px' : '0'};">${escapeHtml(b.name)}</h3>
+						<p><strong>Aussicht:</strong> ${escapeHtml(b.description)}</p>
+						<p id="addr-${b.id}" style="font-weight:600; margin-top:8px; color:#666;">📍 <em>Adresse wird geladen...</em></p>
+						<p style="font-size:12px; color:#999; margin-top:8px;">
+							👤 Eingereicht von: ${escapeHtml(b.user || b.user_email || 'Unbekannt')}<br>
+							📅 ${new Date(b.created || b.created_at).toLocaleDateString('de-DE')}
+						</p>
+						<div class="like-count" id="like-count-${b.id}">❤️ ${currentLikes}</div>
+						<button onclick="showBenchImages(${b.id})" style="background:#4caf50; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-top:8px;">
+							📸 Bilder ansehen
+						</button>
+						${currentUser ? `
+							<button class="like-btn ${currentIsLiked ? 'liked' : ''}" id="like-btn-${b.id}" 
+									onclick="likeBench(${b.id}, event)" 
+									title="${currentIsLiked ? 'Like entfernen' : 'Bank liken'}">
+								${currentIsLiked ? '❤️' : '🤍'}
+							</button>
+						` : ''}
+					</div>`;
+			};
+			
+			// *** NEU: Verwende dynamisches Popup-Content ***
+			marker.bindPopup(getPopupContent);
+			
+			// *** NEU: Aktualisiere Popup-Content beim Öffnen ***
+			marker.on('popupopen', () => {
+				marker.setPopupContent(getPopupContent());
+				updateAddressForBench(b.id, b.latitude, b.longitude);
+			});
+			
+			benchMarkers.push({ marker, bench: b });
+		}     
+   
         async function updateAddressForBench(id, lat, lng) {
             const el = document.getElementById(`addr-${id}`);
             if (!el) return;
