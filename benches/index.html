@@ -1270,83 +1270,55 @@
         
 		function useCurrentLocation() {
 			if (navigator.geolocation) {
-				showNotification('GPS-Standort wird ermittelt (kann etwas dauern)...', 'success');
-				
-				navigator.geolocation.getCurrentPosition(
-					handleLocationSuccess, 
-					handleLocationError, 
-					{
-						enableHighAccuracy: true,    // *** Wichtig: Erzwingt GPS ***
-						timeout: 30000,              // *** Längere Wartezeit ***
-						maximumAge: 0                // *** Keine Cache-Daten ***
+				showNotification('Standort wird ermittelt...', 'success');
+				navigator.geolocation.getCurrentPosition(function(position) {
+					const lat = position.coords.latitude;
+					const lng = position.coords.longitude;
+					const coords = [lat, lng];
+					
+					localStorage.setItem('mapCenter', JSON.stringify(coords));
+					document.getElementById('plzModal').style.display = 'none';
+					
+					if (map) {
+						map.setView(coords, 15);
+						setTimeout(() => {
+							if (typeof loadBenches === 'function') {
+								loadBenches();
+							}
+						}, 100);
+					} else {
+						initMap();
 					}
-				);
+					
+					showNotification('Standort erfolgreich ermittelt!', 'success');
+					
+				}, function(error) {
+					console.error('Geolocation error:', error);
+					let errorMsg = 'Standort konnte nicht ermittelt werden. ';
+					switch(error.code) {
+						case error.PERMISSION_DENIED:
+							errorMsg += 'Berechtigung verweigert.';
+							break;
+						case error.POSITION_UNAVAILABLE:
+							errorMsg += 'Position nicht verfügbar.';
+							break;
+						case error.TIMEOUT:
+							errorMsg += 'Zeitüberschreitung.';
+							break;
+						default:
+							errorMsg += 'Unbekannter Fehler.';
+					}
+					showNotification(errorMsg + ' Stuttgart wird verwendet.', 'error');
+					useDefaultLocation();
+				}, {
+					enableHighAccuracy: true,
+					timeout: 10000,
+					maximumAge: 60000
+				});
 			} else {
 				showNotification('Standortbestimmung nicht verfügbar.', 'error');
 				useDefaultLocation();
 			}
-		}
-
-		function handleLocationSuccess(position) {
-			const lat = position.coords.latitude;
-			const lng = position.coords.longitude;
-			const accuracy = position.coords.accuracy;
-			const coords = [lat, lng];
-			
-			console.log('GPS-Standort:', { lat, lng, accuracy });
-			
-			// *** Warnung bei schlechter Genauigkeit ***
-			if (accuracy > 1000) {
-				showNotification(`⚠️ Standort ungenau (±${Math.round(accuracy/1000)}km). Aktivieren Sie GPS/Standortdienste für bessere Genauigkeit.`, 'error');
-			}
-			
-			localStorage.setItem('mapCenter', JSON.stringify(coords));
-			document.getElementById('plzModal').style.display = 'none';
-			
-			if (map) {
-				map.setView(coords, accuracy > 1000 ? 12 : 16);
-				
-				// Kreis für Genauigkeit anzeigen
-				const circle = L.circle(coords, {
-					color: 'red',
-					fillColor: '#f03',
-					fillOpacity: 0.1,
-					radius: accuracy
-				}).addTo(map);
-				
-				L.marker(coords)
-					.addTo(map)
-					.bindPopup(`📍 Ihr Standort<br>Genauigkeit: ±${Math.round(accuracy)}m`)
-					.openPopup();
-					
-				setTimeout(() => {
-					if (typeof loadBenches === 'function') {
-						loadBenches();
-					}
-				}, 100);
-			} else {
-				initMap();
-			}
-			
-			showNotification(`Standort ermittelt! Genauigkeit: ±${Math.round(accuracy)}m`, 'success');
-		}
-
-		function handleLocationError(error) {
-			console.error('Geolocation error:', error);
-			let errorMsg = 'Standort konnte nicht ermittelt werden. ';
-			switch(error.code) {
-				case error.PERMISSION_DENIED:
-					errorMsg += 'Zugriff verweigert. Bitte erlauben Sie Standortbestimmung in den Browser-Einstellungen.';
-					break;
-				case error.POSITION_UNAVAILABLE:
-					errorMsg += 'GPS/Standortdienste nicht verfügbar.';
-					break;
-				case error.TIMEOUT:
-					errorMsg += 'Zeitüberschreitung bei Standortbestimmung.';
-					break;
-			}
-			showNotification(errorMsg, 'error');
-			useDefaultLocation();
 		}
         
         function useDefaultLocation() {
