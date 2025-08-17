@@ -31,11 +31,10 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Prüfen ob die Bank in der richtigen Tabelle existiert
+    // Prüfen ob die Bank existiert
     const benchExists = await sql`
       SELECT id FROM benches WHERE id = ${benchId}
     `;
-
     if (benchExists.length === 0) {
       return {
         statusCode: 404,
@@ -71,14 +70,15 @@ exports.handler = async (event, context) => {
         DELETE FROM bench_likes 
         WHERE bench_id = ${benchId} AND user_email = ${userEmail}
       `;
-      
-      if (deleteResult.length === 0) {
+
+      if (deleteResult.rowCount === 0) {
         return {
           statusCode: 400,
           headers,
           body: JSON.stringify({ success: false, error: 'Like nicht gefunden!' }),
         };
       }
+
     } else {
       return {
         statusCode: 400,
@@ -88,11 +88,10 @@ exports.handler = async (event, context) => {
     }
 
     // Get updated like count
-    const likeCount = await sql`
+    const likeCountResult = await sql`
       SELECT COUNT(*) as count FROM bench_likes WHERE bench_id = ${benchId}
     `;
-
-    const currentLikeCount = parseInt(likeCount[0].count);
+    const currentLikeCount = parseInt(likeCountResult[0].count, 10);
     const isPopular = currentLikeCount >= 10;
 
     // Update is_popular status in benches table
@@ -103,9 +102,7 @@ exports.handler = async (event, context) => {
       RETURNING id, is_popular
     `;
 
-    console.log(`Updated bench ${benchId}: likes=${currentLikeCount}, is_popular=${isPopular}`);
-
-    if (updateResult.length === 0) {
+    if (updateResult.rowCount === 0) {
       console.error(`Failed to update bench ${benchId} - bench not found in benches table`);
       return {
         statusCode: 404,
@@ -114,15 +111,17 @@ exports.handler = async (event, context) => {
       };
     }
 
+    console.log(`Updated bench ${benchId}: likes=${currentLikeCount}, is_popular=${isPopular}`);
+
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        success: true, 
+      body: JSON.stringify({
+        success: true,
         likeCount: currentLikeCount,
         action: action,
         isPopular: isPopular,
-        benchId: benchId
+        benchId: benchId,
       }),
     };
 
