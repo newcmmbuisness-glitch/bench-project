@@ -1270,44 +1270,17 @@
         
 		function useCurrentLocation() {
 			if (navigator.geolocation) {
-				showNotification('Präziser Standort wird ermittelt...', 'success');
+				showNotification('GPS-Standort wird ermittelt (kann etwas dauern)...', 'success');
 				
-				// Erst mit hoher Genauigkeit versuchen
-				navigator.geolocation.getCurrentPosition(function(position) {
-					const lat = position.coords.latitude;
-					const lng = position.coords.longitude;
-					const accuracy = position.coords.accuracy;
-					
-					console.log('Ermittelter Standort:', {
-						latitude: lat,
-						longitude: lng,
-						accuracy: accuracy
-					});
-					
-					// *** Prüfe Genauigkeit ***
-					if (accuracy > 10000) { // Mehr als 10km ungenau
-						showNotification(`Standort sehr ungenau (±${Math.round(accuracy/1000)}km). Bitte erlauben Sie präzise Standortbestimmung.`, 'error');
-						
-						// Versuche nochmal mit anderen Optionen
-						navigator.geolocation.getCurrentPosition(
-							handleLocationSuccess, 
-							handleLocationError, 
-							{
-								enableHighAccuracy: true,
-								timeout: 15000,
-								maximumAge: 0 // Keine Cache-Daten verwenden
-							}
-						);
-						return;
+				navigator.geolocation.getCurrentPosition(
+					handleLocationSuccess, 
+					handleLocationError, 
+					{
+						enableHighAccuracy: true,    // *** Wichtig: Erzwingt GPS ***
+						timeout: 30000,              // *** Längere Wartezeit ***
+						maximumAge: 0                // *** Keine Cache-Daten ***
 					}
-					
-					handleLocationSuccess(position);
-					
-				}, handleLocationError, {
-					enableHighAccuracy: false, // Erst schnelle Bestimmung
-					timeout: 5000,
-					maximumAge: 300000 // 5 Minuten Cache
-				});
+				);
 			} else {
 				showNotification('Standortbestimmung nicht verfügbar.', 'error');
 				useDefaultLocation();
@@ -1320,16 +1293,30 @@
 			const accuracy = position.coords.accuracy;
 			const coords = [lat, lng];
 			
+			console.log('GPS-Standort:', { lat, lng, accuracy });
+			
+			// *** Warnung bei schlechter Genauigkeit ***
+			if (accuracy > 1000) {
+				showNotification(`⚠️ Standort ungenau (±${Math.round(accuracy/1000)}km). Aktivieren Sie GPS/Standortdienste für bessere Genauigkeit.`, 'error');
+			}
+			
 			localStorage.setItem('mapCenter', JSON.stringify(coords));
 			document.getElementById('plzModal').style.display = 'none';
 			
 			if (map) {
-				map.setView(coords, 16);
+				map.setView(coords, accuracy > 1000 ? 12 : 16);
 				
-				// Marker für Standort setzen
+				// Kreis für Genauigkeit anzeigen
+				const circle = L.circle(coords, {
+					color: 'red',
+					fillColor: '#f03',
+					fillOpacity: 0.1,
+					radius: accuracy
+				}).addTo(map);
+				
 				L.marker(coords)
 					.addTo(map)
-					.bindPopup(`📍 Ihr Standort (±${Math.round(accuracy)}m Genauigkeit)`)
+					.bindPopup(`📍 Ihr Standort<br>Genauigkeit: ±${Math.round(accuracy)}m`)
 					.openPopup();
 					
 				setTimeout(() => {
