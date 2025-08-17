@@ -1019,28 +1019,40 @@
 
 				if (response.ok) {
 					const data = await response.json();
-					const likeCountEl = document.getElementById(`like-count-${benchId}`);
-					const likeBtnEl = document.getElementById(`like-btn-${benchId}`);
 
-					// UI-Aktualisierung basierend auf der Server-Antwort
-					likeCountEl.innerHTML = `❤️ ${data.likeCount}`;
-
-					// Frontend-Zustand (userLikes) synchronisieren
+					// Frontend-Zustand (userLikes) aktualisieren
 					if (action === 'like') {
 						if (!userLikes[currentUser.email]) {
 							userLikes[currentUser.email] = [];
 						}
 						userLikes[currentUser.email].push(benchId);
-						likeBtnEl.innerHTML = '❤️';
-						likeBtnEl.classList.add('liked');
 					} else {
 						userLikes[currentUser.email] = userLikes[currentUser.email].filter(id => id !== benchId);
-						likeBtnEl.innerHTML = '🤍';
-						likeBtnEl.classList.remove('liked');
 					}
+					
+					// Lokale Speicherung aktualisieren
 					localStorage.setItem('userLikes', JSON.stringify(userLikes));
+					
+					// UI-Elemente direkt aktualisieren
+					const likeCountEl = document.getElementById(`like-count-${benchId}`);
+					const likeBtnEl = document.getElementById(`like-btn-${benchId}`);
+					
+					if (likeCountEl) {
+						likeCountEl.innerHTML = `❤️ ${data.likeCount}`;
+					}
+
+					if (likeBtnEl) {
+						if (action === 'like') {
+							likeBtnEl.innerHTML = '❤️';
+							likeBtnEl.classList.add('liked');
+						} else {
+							likeBtnEl.innerHTML = '🤍';
+							likeBtnEl.classList.remove('liked');
+						}
+					}
+					
 					console.log('Like-Status erfolgreich aktualisiert.');
-					loadBenches(); // Optional, um die Karte zu aktualisieren
+					
 				} else {
 					const errorData = await response.json();
 					showNotification(`Fehler: ${errorData.error}`, 'error');
