@@ -997,34 +997,16 @@
             closeSidebar();
         }
         
-		async function likeBench(benchId, event) {
+		async function likeBench(benchId) {
 			if (!currentUser) {
 				showNotification('Du musst angemeldet sein, um zu liken!', 'error');
 				return;
 			}
 
-			// Bestimme den aktuellen Like-Status
 			const isLiked = userLikes[currentUser.email]?.includes(benchId);
 			const action = isLiked ? 'unlike' : 'like';
 
 			try {
-				// Starte die UI-Änderung sofort (optimistisches Update)
-				const likeCountEl = document.getElementById(`like-count-${benchId}`);
-				const likeBtnEl = document.getElementById(`like-btn-${benchId}`);
-				let currentLikes = parseInt(likeCountEl.innerText.replace('❤️ ', ''));
-
-				if (action === 'like') {
-					likeBtnEl.classList.add('liked');
-					likeBtnEl.title = 'Like entfernen';
-					likeBtnEl.innerHTML = '❤️';
-					likeCountEl.innerHTML = `❤️ ${currentLikes + 1}`;
-				} else {
-					likeBtnEl.classList.remove('liked');
-					likeBtnEl.title = 'Bank liken';
-					likeBtnEl.innerHTML = '🤍';
-					likeCountEl.innerHTML = `❤️ ${currentLikes - 1}`;
-				}
-
 				const response = await fetch(`/.netlify/functions/like-bench`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -1035,53 +1017,38 @@
 					})
 				});
 
-				// Verarbeite die Antwort
 				if (response.ok) {
 					const data = await response.json();
-					// Optional: Die UI hier noch einmal mit den Daten aus der DB abgleichen
-					likeCountEl.innerHTML = `❤️ ${data.likeCount}`;
-					console.log('Like-Status erfolgreich aktualisiert.');
-				} else {
-					// Bei Fehler, das optimistische Update rückgängig machen
-					showNotification('Ein Fehler ist aufgetreten: Like nicht gespeichert.', 'error');
-					
-					// UI in den ursprünglichen Zustand zurückversetzen
-					const initialLikes = benchLikes[benchId] || 0;
-					const wasInitiallyLiked = userLikes[currentUser.email]?.includes(benchId);
+					const likeCountEl = document.getElementById(`like-count-${benchId}`);
+					const likeBtnEl = document.getElementById(`like-btn-${benchId}`);
 
-					if (wasInitiallyLiked) {
-						likeBtnEl.classList.add('liked');
-						likeBtnEl.title = 'Like entfernen';
+					// UI-Aktualisierung basierend auf der Server-Antwort
+					likeCountEl.innerHTML = `❤️ ${data.likeCount}`;
+
+					// Frontend-Zustand (userLikes) synchronisieren
+					if (action === 'like') {
+						if (!userLikes[currentUser.email]) {
+							userLikes[currentUser.email] = [];
+						}
+						userLikes[currentUser.email].push(benchId);
 						likeBtnEl.innerHTML = '❤️';
-						likeCountEl.innerHTML = `❤️ ${initialLikes}`;
+						likeBtnEl.classList.add('liked');
 					} else {
-						likeBtnEl.classList.remove('liked');
-						likeBtnEl.title = 'Bank liken';
+						userLikes[currentUser.email] = userLikes[currentUser.email].filter(id => id !== benchId);
 						likeBtnEl.innerHTML = '🤍';
-						likeCountEl.innerHTML = `❤️ ${initialLikes}`;
+						likeBtnEl.classList.remove('liked');
 					}
+					localStorage.setItem('userLikes', JSON.stringify(userLikes));
+					console.log('Like-Status erfolgreich aktualisiert.');
+					loadBenches(); // Optional, um die Karte zu aktualisieren
+				} else {
+					const errorData = await response.json();
+					showNotification(`Fehler: ${errorData.error}`, 'error');
+					console.error('Fehler beim Liken der Bank:', errorData.error);
 				}
 			} catch (error) {
-				console.error('Fehler beim Liken der Bank:', error);
+				console.error('Verbindungsfehler:', error);
 				showNotification('Verbindungsfehler. Bitte versuche es später erneut.', 'error');
-				// UI bei Netzwerkfehler zurücksetzen
-				const initialLikes = benchLikes[benchId] || 0;
-				const wasInitiallyLiked = userLikes[currentUser.email]?.includes(benchId);
-				
-				const likeCountEl = document.getElementById(`like-count-${benchId}`);
-				const likeBtnEl = document.getElementById(`like-btn-${benchId}`);
-
-				if (wasInitiallyLiked) {
-					likeBtnEl.classList.add('liked');
-					likeBtnEl.title = 'Like entfernen';
-					likeBtnEl.innerHTML = '❤️';
-					likeCountEl.innerHTML = `❤️ ${initialLikes}`;
-				} else {
-					likeBtnEl.classList.remove('liked');
-					likeBtnEl.title = 'Bank liken';
-					likeBtnEl.innerHTML = '🤍';
-					likeCountEl.innerHTML = `❤️ ${initialLikes}`;
-				}
 			}
 		}
 
