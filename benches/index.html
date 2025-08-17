@@ -1270,65 +1270,96 @@
         
 		function useCurrentLocation() {
 			if (navigator.geolocation) {
-				showNotification('Standort wird ermittelt...', 'success');
+				showNotification('Präziser Standort wird ermittelt...', 'success');
+				
+				// Erst mit hoher Genauigkeit versuchen
 				navigator.geolocation.getCurrentPosition(function(position) {
 					const lat = position.coords.latitude;
 					const lng = position.coords.longitude;
-					const coords = [lat, lng];
+					const accuracy = position.coords.accuracy;
 					
-					// *** DEBUG: Koordinaten ausgeben ***
 					console.log('Ermittelter Standort:', {
 						latitude: lat,
 						longitude: lng,
-						accuracy: position.coords.accuracy
+						accuracy: accuracy
 					});
 					
-					localStorage.setItem('mapCenter', JSON.stringify(coords));
-					document.getElementById('plzModal').style.display = 'none';
-					
-					if (map) {
-						map.setView(coords, 15); // *** Höheren Zoom für bessere Sichtbarkeit ***
-						setTimeout(() => {
-							if (typeof loadBenches === 'function') {
-								loadBenches();
+					// *** Prüfe Genauigkeit ***
+					if (accuracy > 10000) { // Mehr als 10km ungenau
+						showNotification(`Standort sehr ungenau (±${Math.round(accuracy/1000)}km). Bitte erlauben Sie präzise Standortbestimmung.`, 'error');
+						
+						// Versuche nochmal mit anderen Optionen
+						navigator.geolocation.getCurrentPosition(
+							handleLocationSuccess, 
+							handleLocationError, 
+							{
+								enableHighAccuracy: true,
+								timeout: 15000,
+								maximumAge: 0 // Keine Cache-Daten verwenden
 							}
-						}, 100);
-					} else {
-						initMap();
+						);
+						return;
 					}
 					
-					// *** Bessere Erfolgsmeldung mit Koordinaten ***
-					showNotification(`Standort erfolgreich ermittelt! (${lat.toFixed(4)}, ${lng.toFixed(4)})`, 'success');
+					handleLocationSuccess(position);
 					
-				}, function(error) {
-					// *** Detailliertere Fehlermeldung ***
-					console.error('Geolocation error:', error);
-					let errorMsg = 'Standort konnte nicht ermittelt werden. ';
-					switch(error.code) {
-						case error.PERMISSION_DENIED:
-							errorMsg += 'Berechtigung verweigert.';
-							break;
-						case error.POSITION_UNAVAILABLE:
-							errorMsg += 'Position nicht verfügbar.';
-							break;
-						case error.TIMEOUT:
-							errorMsg += 'Zeitüberschreitung.';
-							break;
-						default:
-							errorMsg += 'Unbekannter Fehler.';
-					}
-					showNotification(errorMsg + ' Stuttgart wird verwendet.', 'error');
-					useDefaultLocation();
-				}, {
-					// *** Bessere Geolocation-Optionen ***
-					enableHighAccuracy: true,
-					timeout: 10000,
-					maximumAge: 60000
+				}, handleLocationError, {
+					enableHighAccuracy: false, // Erst schnelle Bestimmung
+					timeout: 5000,
+					maximumAge: 300000 // 5 Minuten Cache
 				});
 			} else {
 				showNotification('Standortbestimmung nicht verfügbar.', 'error');
 				useDefaultLocation();
 			}
+		}
+
+		function handleLocationSuccess(position) {
+			const lat = position.coords.latitude;
+			const lng = position.coords.longitude;
+			const accuracy = position.coords.accuracy;
+			const coords = [lat, lng];
+			
+			localStorage.setItem('mapCenter', JSON.stringify(coords));
+			document.getElementById('plzModal').style.display = 'none';
+			
+			if (map) {
+				map.setView(coords, 16);
+				
+				// Marker für Standort setzen
+				L.marker(coords)
+					.addTo(map)
+					.bindPopup(`📍 Ihr Standort (±${Math.round(accuracy)}m Genauigkeit)`)
+					.openPopup();
+					
+				setTimeout(() => {
+					if (typeof loadBenches === 'function') {
+						loadBenches();
+					}
+				}, 100);
+			} else {
+				initMap();
+			}
+			
+			showNotification(`Standort ermittelt! Genauigkeit: ±${Math.round(accuracy)}m`, 'success');
+		}
+
+		function handleLocationError(error) {
+			console.error('Geolocation error:', error);
+			let errorMsg = 'Standort konnte nicht ermittelt werden. ';
+			switch(error.code) {
+				case error.PERMISSION_DENIED:
+					errorMsg += 'Zugriff verweigert. Bitte erlauben Sie Standortbestimmung in den Browser-Einstellungen.';
+					break;
+				case error.POSITION_UNAVAILABLE:
+					errorMsg += 'GPS/Standortdienste nicht verfügbar.';
+					break;
+				case error.TIMEOUT:
+					errorMsg += 'Zeitüberschreitung bei Standortbestimmung.';
+					break;
+			}
+			showNotification(errorMsg, 'error');
+			useDefaultLocation();
 		}
         
         function useDefaultLocation() {
