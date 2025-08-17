@@ -1268,29 +1268,68 @@
             }
         }
         
-        function useCurrentLocation() {
-            if (navigator.geolocation) {
-                showNotification('Standort wird ermittelt...', 'success');
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const coords = [position.coords.latitude, position.coords.longitude];
-                    localStorage.setItem('mapCenter', JSON.stringify(coords));
-                    document.getElementById('plzModal').style.display = 'none';
-                    
-                    if (map) {
-                        map.setView(coords, 13);
-                    } else {
-                        initMap();
-                    }
-                    showNotification('Standort erfolgreich ermittelt!', 'success');
-                }, function(error) {
-                    showNotification('Standort konnte nicht ermittelt werden. Stuttgart wird verwendet.', 'error');
-                    useDefaultLocation();
-                });
-            } else {
-                showNotification('Standortbestimmung nicht verfügbar.', 'error');
-                useDefaultLocation();
-            }
-        }
+		function useCurrentLocation() {
+			if (navigator.geolocation) {
+				showNotification('Standort wird ermittelt...', 'success');
+				navigator.geolocation.getCurrentPosition(function(position) {
+					const lat = position.coords.latitude;
+					const lng = position.coords.longitude;
+					const coords = [lat, lng];
+					
+					// *** DEBUG: Koordinaten ausgeben ***
+					console.log('Ermittelter Standort:', {
+						latitude: lat,
+						longitude: lng,
+						accuracy: position.coords.accuracy
+					});
+					
+					localStorage.setItem('mapCenter', JSON.stringify(coords));
+					document.getElementById('plzModal').style.display = 'none';
+					
+					if (map) {
+						map.setView(coords, 15); // *** Höheren Zoom für bessere Sichtbarkeit ***
+						setTimeout(() => {
+							if (typeof loadBenches === 'function') {
+								loadBenches();
+							}
+						}, 100);
+					} else {
+						initMap();
+					}
+					
+					// *** Bessere Erfolgsmeldung mit Koordinaten ***
+					showNotification(`Standort erfolgreich ermittelt! (${lat.toFixed(4)}, ${lng.toFixed(4)})`, 'success');
+					
+				}, function(error) {
+					// *** Detailliertere Fehlermeldung ***
+					console.error('Geolocation error:', error);
+					let errorMsg = 'Standort konnte nicht ermittelt werden. ';
+					switch(error.code) {
+						case error.PERMISSION_DENIED:
+							errorMsg += 'Berechtigung verweigert.';
+							break;
+						case error.POSITION_UNAVAILABLE:
+							errorMsg += 'Position nicht verfügbar.';
+							break;
+						case error.TIMEOUT:
+							errorMsg += 'Zeitüberschreitung.';
+							break;
+						default:
+							errorMsg += 'Unbekannter Fehler.';
+					}
+					showNotification(errorMsg + ' Stuttgart wird verwendet.', 'error');
+					useDefaultLocation();
+				}, {
+					// *** Bessere Geolocation-Optionen ***
+					enableHighAccuracy: true,
+					timeout: 10000,
+					maximumAge: 60000
+				});
+			} else {
+				showNotification('Standortbestimmung nicht verfügbar.', 'error');
+				useDefaultLocation();
+			}
+		}
         
         function useDefaultLocation() {
             localStorage.setItem('mapCenter', JSON.stringify([48.7758, 9.1829]));
