@@ -1810,7 +1810,7 @@
         
         function addSingleBenchToMap(b){
             const likes = benchLikes[b.id] || 0;
-            const isPopular = likes >= 10;
+            const isPopular = b.is_popular || likes >= 10;
             
             const benchIcon = L.divIcon({ 
                 html:'🪑', 
