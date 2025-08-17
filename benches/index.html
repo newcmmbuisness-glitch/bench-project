@@ -1032,6 +1032,10 @@
 					
 					// Lokale Speicherung aktualisieren
 					localStorage.setItem('userLikes', JSON.stringify(userLikes));
+
+					// Hier die Like-Zahl in unserem lokalen "benchLikes"-Objekt aktualisieren
+                    benchLikes[benchId] = data.likeCount;
+                    localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
 					
 					// UI-Elemente direkt aktualisieren
 					const likeCountEl = document.getElementById(`like-count-${benchId}`);
