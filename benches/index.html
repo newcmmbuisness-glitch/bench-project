@@ -994,108 +994,139 @@
             closeSidebar();
         }
         
-        // Like system functions
-        async function likeBench(benchId, event) {
-            event.stopPropagation();
-            
-            if (!currentUser) {
-                showNotification('🔐 Sie müssen sich anmelden, um Bänke zu liken!', 'error');
-                showLogin();
-                return;
-            }
-            
-            const userKey = currentUser.email;
-            const isLiked = userLikes[userKey]?.includes(benchId);
-            
-            try {
-                // Call backend API
-                const response = await fetch('/.netlify/functions/like-bench', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        benchId: benchId,
-                        userEmail: currentUser.email,
-                        action: isLiked ? 'unlike' : 'like'
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Update local storage
-                    if (isLiked) {
-                        benchLikes[benchId] = Math.max(0, data.likeCount);
-                        userLikes[userKey] = userLikes[userKey].filter(id => id !== benchId);
-                        showNotification('💔 Like entfernt', 'success');
-                    } else {
-                        benchLikes[benchId] = data.likeCount;
-                        if (!userLikes[userKey]) userLikes[userKey] = [];
-                        userLikes[userKey].push(benchId);
-                        showNotification('❤️ Bank geliked!', 'success');
-                    }
-                    
-                    // Save to localStorage for offline fallback
-                    localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
-                    localStorage.setItem('userLikes', JSON.stringify(userLikes));
-                    
-                    // Update UI
-                    updateLikeButton(benchId);
-                    
-                    // Check if bench became popular (>= 10 likes)
-                    if (data.likeCount >= 10) {
-                        updateBenchIconToPopular(benchId);
-                    }
-                } else {
-                    showNotification('❌ ' + (data.error || 'Fehler beim Liken'), 'error');
-                }
-                
-            } catch (error) {
-                // Fallback to localStorage if API fails
-                console.warn('API call failed, using localStorage fallback:', error);
-                
-                if (isLiked) {
-                    benchLikes[benchId] = Math.max(0, (benchLikes[benchId] || 0) - 1);
-                    userLikes[userKey] = userLikes[userKey].filter(id => id !== benchId);
-                    showNotification('💔 Like entfernt (offline)', 'success');
-                } else {
-                    benchLikes[benchId] = (benchLikes[benchId] || 0) + 1;
-                    if (!userLikes[userKey]) userLikes[userKey] = [];
-                    userLikes[userKey].push(benchId);
-                    showNotification('❤️ Bank geliked (offline)!', 'success');
-                }
-                
-                localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
-                localStorage.setItem('userLikes', JSON.stringify(userLikes));
-                updateLikeButton(benchId);
-                
-                const likes = benchLikes[benchId] || 0;
-                if (likes >= 10) {
-                    updateBenchIconToPopular(benchId);
-                }
-            }
-        }
-        
-        function updateLikeButton(benchId) {
-            const likeBtn = document.getElementById(`like-btn-${benchId}`);
-            const likeCount = document.getElementById(`like-count-${benchId}`);
-            
-            if (!likeBtn || !likeCount) return;
-            
-            const userKey = currentUser?.email;
-            const isLiked = userLikes[userKey]?.includes(benchId);
-            const likes = benchLikes[benchId] || 0;
-            
-            if (isLiked) {
-                likeBtn.classList.add('liked');
-                likeBtn.innerHTML = '❤️';
-            } else {
-                likeBtn.classList.remove('liked');
-                likeBtn.innerHTML = '🤍';
-            }
-            
-            likeCount.innerHTML = `❤️ ${likes}`;
-        }
-        
+		// Like system functions
+		async function likeBench(benchId, event) {
+			event.stopPropagation();
+			
+			if (!currentUser) {
+				showNotification('🔐 Sie müssen sich anmelden, um Bänke zu liken!', 'error');
+				showLogin();
+				return;
+			}
+			
+			const userKey = currentUser.email;
+			const isLiked = userLikes[userKey]?.includes(benchId);
+			
+			try {
+				// Call backend API
+				const response = await fetch('/.netlify/functions/like-bench', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						benchId: benchId,
+						userEmail: currentUser.email,
+						action: isLiked ? 'unlike' : 'like'
+					})
+				});
+				
+				const data = await response.json();
+				
+				if (data.success) {
+					// Update local storage
+					if (isLiked) {
+						benchLikes[benchId] = Math.max(0, data.likeCount);
+						userLikes[userKey] = userLikes[userKey].filter(id => id !== benchId);
+						showNotification('💔 Like entfernt', 'success');
+					} else {
+						benchLikes[benchId] = data.likeCount;
+						if (!userLikes[userKey]) userLikes[userKey] = [];
+						userLikes[userKey].push(benchId);
+						showNotification('❤️ Bank geliked!', 'success');
+					}
+					
+					// Save to localStorage for offline fallback
+					localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
+					localStorage.setItem('userLikes', JSON.stringify(userLikes));
+					
+					// Update UI
+					updateLikeButton(benchId);
+					
+					// Update bench popularity status in bench data and marker
+					if (data.isPopular !== undefined) {
+						updateBenchPopularityStatus(benchId, data.isPopular);
+					}
+					
+				} else {
+					showNotification('❌ ' + (data.error || 'Fehler beim Liken'), 'error');
+				}
+				
+			} catch (error) {
+				// Fallback to localStorage if API fails
+				console.warn('API call failed, using localStorage fallback:', error);
+				
+				if (isLiked) {
+					benchLikes[benchId] = Math.max(0, (benchLikes[benchId] || 0) - 1);
+					userLikes[userKey] = userLikes[userKey].filter(id => id !== benchId);
+					showNotification('💔 Like entfernt (offline)', 'success');
+				} else {
+					benchLikes[benchId] = (benchLikes[benchId] || 0) + 1;
+					if (!userLikes[userKey]) userLikes[userKey] = [];
+					userLikes[userKey].push(benchId);
+					showNotification('❤️ Bank geliked (offline)!', 'success');
+				}
+				
+				localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
+				localStorage.setItem('userLikes', JSON.stringify(userLikes));
+				updateLikeButton(benchId);
+				
+				const likes = benchLikes[benchId] || 0;
+				if (likes >= 10) {
+					updateBenchPopularityStatus(benchId, true);
+				}
+			}
+		}
+
+		function updateBenchPopularityStatus(benchId, isPopular) {
+			// Find the bench marker
+			const benchItem = benchMarkers.find(item => item.bench.id === benchId);
+			if (benchItem) {
+				// Update the bench data
+				benchItem.bench.is_popular = isPopular;
+				
+				// Update the marker icon
+				const iconElement = benchItem.marker.getElement().querySelector('.custom-bench-icon');
+				if (iconElement) {
+					if (isPopular) {
+						iconElement.classList.add('popular');
+						console.log(`✨ Bank ${benchId} ist jetzt popular (golden)`);
+					} else {
+						iconElement.classList.remove('popular');
+						console.log(`📍 Bank ${benchId} ist nicht mehr popular`);
+					}
+				}
+				
+				// Update any open popups
+				const popup = benchItem.marker.getPopup();
+				if (popup && popup.isOpen()) {
+					// Close and reopen popup to refresh content
+					benchItem.marker.closePopup();
+					setTimeout(() => {
+						benchItem.marker.openPopup();
+					}, 100);
+				}
+			}
+		}
+
+		function updateLikeButton(benchId) {
+			const likeBtn = document.getElementById(`like-btn-${benchId}`);
+			const likeCount = document.getElementById(`like-count-${benchId}`);
+			
+			if (!likeBtn || !likeCount) return;
+			
+			const userKey = currentUser?.email;
+			const isLiked = userLikes[userKey]?.includes(benchId);
+			const likes = benchLikes[benchId] || 0;
+			
+			if (isLiked) {
+				likeBtn.classList.add('liked');
+				likeBtn.innerHTML = '❤️';
+			} else {
+				likeBtn.classList.remove('liked');
+				likeBtn.innerHTML = '🤍';
+			}
+			
+			likeCount.innerHTML = `❤️ ${likes}`;
+		}        
         function updateBenchIconToPopular(benchId) {
             const benchItem = benchMarkers.find(item => item.bench.id === benchId);
             if (benchItem) {
