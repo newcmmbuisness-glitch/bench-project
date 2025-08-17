@@ -31,6 +31,19 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Prüfen ob die Bank in der richtigen Tabelle existiert
+    const benchExists = await sql`
+      SELECT id FROM benches WHERE id = ${benchId}
+    `;
+
+    if (benchExists.length === 0) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Bank nicht gefunden!' }),
+      };
+    }
+
     if (action === 'like') {
       // Check if user already liked this bench
       const existingLike = await sql`
@@ -54,10 +67,18 @@ exports.handler = async (event, context) => {
 
     } else if (action === 'unlike') {
       // Remove like
-      await sql`
+      const deleteResult = await sql`
         DELETE FROM bench_likes 
         WHERE bench_id = ${benchId} AND user_email = ${userEmail}
       `;
+      
+      if (deleteResult.length === 0) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ success: false, error: 'Like nicht gefunden!' }),
+        };
+      }
     } else {
       return {
         statusCode: 400,
@@ -72,13 +93,26 @@ exports.handler = async (event, context) => {
     `;
 
     const currentLikeCount = parseInt(likeCount[0].count);
+    const isPopular = currentLikeCount >= 10;
 
-    // Update is_popular status basierend auf like count
-    await sql`
+    // Update is_popular status in benches table
+    const updateResult = await sql`
       UPDATE benches 
-      SET is_popular = ${currentLikeCount >= 10}
+      SET is_popular = ${isPopular}
       WHERE id = ${benchId}
+      RETURNING id, is_popular
     `;
+
+    console.log(`Updated bench ${benchId}: likes=${currentLikeCount}, is_popular=${isPopular}`);
+
+    if (updateResult.length === 0) {
+      console.error(`Failed to update bench ${benchId} - bench not found in benches table`);
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Bank konnte nicht aktualisiert werden!' }),
+      };
+    }
 
     return {
       statusCode: 200,
@@ -87,7 +121,8 @@ exports.handler = async (event, context) => {
         success: true, 
         likeCount: currentLikeCount,
         action: action,
-        isPopular: currentLikeCount >= 10
+        isPopular: isPopular,
+        benchId: benchId
       }),
     };
 
