@@ -71,13 +71,23 @@ exports.handler = async (event, context) => {
       SELECT COUNT(*) as count FROM bench_likes WHERE bench_id = ${benchId}
     `;
 
+    const currentLikeCount = parseInt(likeCount[0].count);
+
+    // Update is_popular status basierend auf like count
+    await sql`
+      UPDATE benches 
+      SET is_popular = ${currentLikeCount >= 10}
+      WHERE id = ${benchId}
+    `;
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ 
         success: true, 
-        likeCount: parseInt(likeCount[0].count),
-        action: action
+        likeCount: currentLikeCount,
+        action: action,
+        isPopular: currentLikeCount >= 10
       }),
     };
 
