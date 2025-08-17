@@ -924,7 +924,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script>
-        let map, benches = [], benchMarkers = [], addMode = false;
+        let map, benches = [], benchMarkers = {}, addMode = false;
         let currentUser = null;
         let loginCaptcha = null, registerCaptcha = null;
         let pendingBenchLat = null, pendingBenchLng = null;
@@ -994,6 +994,51 @@
             closeSidebar();
         }
         
+		function drawBenches(benches) {
+		    const newBenchIds = new Set(benches.map(b => b.id));
+
+			// Entferne alte Markierungen, die nicht mehr in der Liste sind
+			for (const id in benchMarkers) {
+				if (!newBenchIds.has(parseInt(id))) {
+					map.removeLayer(benchMarkers[id]);
+					delete benchMarkers[id];
+				}
+			}
+
+			// Füge neue Markierungen hinzu oder aktualisiere bestehende
+			benches.forEach(bench => {
+				const markerExists = bench.id in benchMarkers;
+				
+				const iconClass = 'custom-bench-icon' + (bench.is_popular ? ' popular' : '');
+				const newIcon = L.divIcon({
+					className: iconClass,
+					html: `
+						<div class="icon-wrapper">
+							<span class="heart-icon">❤️</span>
+							${bench.is_popular ? '<div class="popular-text pulsend">Beliebte Bank</div>' : ''}
+						</div>
+					`,
+					iconSize: [30, 30],
+					iconAnchor: [15, 30],
+				});
+				
+				if (markerExists) {
+					benchMarkers[bench.id].setIcon(newIcon);
+				} else {
+					const newMarker = L.marker([bench.latitude, bench.longitude], {
+						icon: newIcon,
+						title: bench.name,
+						alt: bench.name,
+					});
+
+					newMarker.addTo(map);
+					newMarker.on('click', () => showBenchDetails(bench));
+					
+					benchMarkers[bench.id] = newMarker;
+				}
+			});
+		}
+		
 		// Like system functions
 		async function likeBench(benchId, event) {
 			event.stopPropagation();
