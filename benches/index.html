@@ -1831,58 +1831,94 @@
             }
         }
         
-        function loadBenches() {
-            const userEmail = currentUser?.email;
-            const url = userEmail ? 
-                `/.netlify/functions/get_benches?userEmail=${encodeURIComponent(userEmail)}` :
-                '/.netlify/functions/get_benches';
-                
-            fetch(url, { method: 'GET' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.benches) {
-                    // Clear existing markers
-                    benchMarkers.forEach(item => {
-                        map.removeLayer(item.marker);
-                    });
-                    benchMarkers = [];
-                    
-                    // Update like data from backend
-                    if (data.benches) {
-                        data.benches.forEach(bench => {
-                            benchLikes[bench.id] = bench.like_count || 0;
-                        });
-                    }
-                    
-                    if (data.userLikes && currentUser) {
-                        userLikes[currentUser.email] = data.userLikes;
-                    }
-                    
-                    // Save to localStorage for offline fallback
-                    localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
-                    localStorage.setItem('userLikes', JSON.stringify(userLikes));
-                    
-                    // Add approved benches to map
-                    data.benches.forEach(addSingleBenchToMap);
-                } else {
-                    // Fallback to localStorage if database not available
-                    benchMarkers.forEach(item => {
-                        map.removeLayer(item.marker);
-                    });
-                    benchMarkers = [];
-                    approvedBenches.forEach(addSingleBenchToMap);
-                }
-            })
-            .catch(error => {
-                console.error('Error loading benches:', error);
-                // Fallback to localStorage
-                benchMarkers.forEach(item => {
-                    map.removeLayer(item.marker);
-                });
-                benchMarkers = [];
-                approvedBenches.forEach(addSingleBenchToMap);
-            });
-        }
+		function loadBenches() {
+			const userEmail = currentUser?.email;
+			const url = userEmail ? 
+				`/.netlify/functions/get_benches?userEmail=${encodeURIComponent(userEmail)}` :
+				'/.netlify/functions/get_benches';
+			
+			fetch(url, { method: 'GET' })
+				.then(res => {
+					if (!res.ok) {
+						throw new Error(`Serverantwort war nicht OK: ${res.status} ${res.statusText}`);
+					}
+					return res.json();
+				})
+				.then(data => {
+					if (data.success && data.benches) {
+						benches = data.benches;
+						data.benches.forEach(bench => {
+							benchLikes[bench.id] = bench.like_count || 0;
+						});
+						if (data.userLikes && currentUser) {
+							userLikes[currentUser.email] = data.userLikes;
+						}
+						localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
+						localStorage.setItem('userLikes', JSON.stringify(userLikes));
+
+						const newBenchIds = new Set(data.benches.map(b => b.id));
+
+						for (const id in benchMarkers) {
+							if (!newBenchIds.has(parseInt(id))) {
+								map.removeLayer(benchMarkers[id].marker);
+								delete benchMarkers[id];
+							}
+						}
+
+						data.benches.forEach(bench => {
+							if (bench.id in benchMarkers) {
+								const markerItem = benchMarkers[bench.id];
+								const iconClass = 'custom-bench-icon' + (bench.is_popular ? ' popular' : '');
+								const newIcon = L.divIcon({
+									className: iconClass,
+									html: markerItem.marker.getIcon().options.html,
+									iconSize: [30, 30],
+									iconAnchor: [15, 30],
+								});
+								markerItem.marker.setIcon(newIcon);
+							} else {
+								addSingleBenchToMap(bench);
+							}
+						});
+					} else {
+						console.error('API-Antwort war nicht erfolgreich oder enthielt keine Bänke:', data);
+						showLocalFallback();
+					}
+				})
+				.catch(error => {
+					console.error('Fehler beim Laden der Bänke:', error);
+					showLocalFallback();
+				});
+		}
+
+		function showLocalFallback() {
+			console.log('Fallback to localStorage data.');
+			const storedBenches = JSON.parse(localStorage.getItem('approvedBenches') || '[]');
+			const newBenchIds = new Set(storedBenches.map(b => b.id));
+
+			for (const id in benchMarkers) {
+				if (!newBenchIds.has(parseInt(id))) {
+					map.removeLayer(benchMarkers[id].marker);
+					delete benchMarkers[id];
+				}
+			}
+
+			storedBenches.forEach(bench => {
+				if (bench.id in benchMarkers) {
+					const markerItem = benchMarkers[bench.id];
+					const iconClass = 'custom-bench-icon' + (bench.is_popular ? ' popular' : '');
+					const newIcon = L.divIcon({
+						className: iconClass,
+						html: markerItem.marker.getIcon().options.html,
+						iconSize: [30, 30],
+						iconAnchor: [15, 30],
+					});
+					markerItem.marker.setIcon(newIcon);
+				} else {
+					addSingleBenchToMap(bench);
+				}
+			});
+		}
         
         function addSingleBenchToMap(b){
             const likes = benchLikes[b.id] || 0;
