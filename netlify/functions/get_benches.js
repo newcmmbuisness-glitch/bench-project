@@ -22,26 +22,27 @@ exports.handler = async (event, context) => {
 
   try {
     // Get approved benches with like counts
-    const benches = await sql`
-      SELECT 
-        ab.id,
-        ab.name,
-        ab.description,
-        ab.latitude,
-        ab.longitude,
-        ab.bench_image,
-        ab.view_image,
-        ab.user_email,
-        ab.created_at,
-        COALESCE(like_counts.like_count, 0) as like_count
-      FROM benches ab
-      LEFT JOIN (
-        SELECT bench_id, COUNT(*) as like_count
-        FROM bench_likes
-        GROUP BY bench_id
-      ) like_counts ON ab.id = like_counts.bench_id
-      ORDER BY ab.created_at DESC
-    `;
+	const benches = await sql`
+	  SELECT 
+		ab.id,
+		ab.name,
+		ab.description,
+		ab.latitude,
+		ab.longitude,
+		ab.bench_image,
+		ab.view_image,
+		ab.user_email,
+		ab.created_at,
+		ab.is_popular,
+		COALESCE(like_counts.like_count, 0) as like_count
+	  FROM benches ab
+	  LEFT JOIN (
+		SELECT bench_id, COUNT(*) as like_count
+		FROM bench_likes
+		GROUP BY bench_id
+	  ) like_counts ON ab.id = like_counts.bench_id
+	  ORDER BY ab.created_at DESC
+	`;
 
     // Get user's likes if email provided in query
     const { userEmail } = event.queryStringParameters || {};
@@ -73,4 +74,3 @@ exports.handler = async (event, context) => {
     };
   }
 };
-
