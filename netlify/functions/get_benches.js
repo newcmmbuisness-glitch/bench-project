@@ -34,7 +34,7 @@ exports.handler = async (event, context) => {
         ab.user_email,
         ab.created_at,
         COALESCE(like_counts.like_count, 0) as like_count
-      FROM approved_benches ab
+      FROM benches ab
       LEFT JOIN (
         SELECT bench_id, COUNT(*) as like_count
         FROM bench_likes
@@ -73,3 +73,4 @@ exports.handler = async (event, context) => {
     };
   }
 };
+
