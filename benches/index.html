@@ -1778,58 +1778,59 @@
             }
         }
         
-        function loadBenches() {
-            const userEmail = currentUser?.email;
-            const url = userEmail ? 
-                `/.netlify/functions/get_benches?userEmail=${encodeURIComponent(userEmail)}` :
-                '/.netlify/functions/get_benches';
-                
-            fetch(url, { method: 'GET' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.benches) {
-                    // Clear existing markers
-                    benchMarkers.forEach(item => {
-                        map.removeLayer(item.marker);
-                    });
-                    benchMarkers = [];
-                    
-                    // Update like data from backend
-                    if (data.benches) {
-                        data.benches.forEach(bench => {
-                            benchLikes[bench.id] = bench.like_count || 0;
-                        });
-                    }
-                    
-                    if (data.userLikes && currentUser) {
-                        userLikes[currentUser.email] = data.userLikes;
-                    }
-                    
-                    // Save to localStorage for offline fallback
-                    localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
-                    localStorage.setItem('userLikes', JSON.stringify(userLikes));
-                    
-                    // Add approved benches to map
-                    data.benches.forEach(addSingleBenchToMap);
-                } else {
-                    // Fallback to localStorage if database not available
-                    benchMarkers.forEach(item => {
-                        map.removeLayer(item.marker);
-                    });
-                    benchMarkers = [];
-                    approvedBenches.forEach(addSingleBenchToMap);
-                }
-            })
-            .catch(error => {
-                console.error('Error loading benches:', error);
-                // Fallback to localStorage
-                benchMarkers.forEach(item => {
-                    map.removeLayer(item.marker);
-                });
-                benchMarkers = [];
-                approvedBenches.forEach(addSingleBenchToMap);
-            });
-        }
+		async function loadBenches() {
+			try {
+				const response = await fetch(`/.netlify/functions/get-benches`);
+				const benches = await response.json();
+				
+				// Marker-Gruppe leeren, um alte Marker zu entfernen
+				if (markers) {
+					map.removeLayer(markers);
+				}
+				markers = L.markerClusterGroup();
+
+				benches.forEach(bench => {
+					const lat = bench.lat;
+					const lng = bench.lng;
+					const marker = L.marker([lat, lng], { benchId: bench.id });
+
+					// NEU: on('click')-Event-Listener für jeden Marker
+					marker.on('click', function(e) {
+						// Holen Sie die aktuelle Like-Anzahl aus dem benchLikes-Cache
+						const currentLikes = benchLikes[bench.id] || bench.like_count;
+						const isLiked = userLikes[currentUser?.email]?.includes(bench.id);
+						
+						// Erstellen Sie den Popup-Inhalt mit den neuesten Daten
+						const popupContent = `
+							<div class="popup-content">
+								<h3>${bench.name}</h3>
+								<p>${bench.description}</p>
+								<div class="like-container">
+									<span id="like-count-${bench.id}" class="like-count">
+										❤️ ${currentLikes}
+									</span>
+									<button id="like-btn-${bench.id}" class="like-btn ${isLiked ? 'liked' : ''}" onclick="likeBench('${bench.id}')">
+										${isLiked ? '❤️' : '🤍'}
+									</button>
+								</div>
+							</div>`;
+
+						// Das Popup mit dem neuen Inhalt binden und öffnen
+						marker.bindPopup(popupContent, {
+							maxWidth: 300,
+							autoPan: true
+						}).openPopup();
+					});
+
+					markers.addLayer(marker);
+				});
+
+				map.addLayer(markers);
+
+			} catch (error) {
+				console.error('Fehler beim Laden der Bänke:', error);
+			}
+		}
         
         function addSingleBenchToMap(b){
             const likes = benchLikes[b.id] || 0;
