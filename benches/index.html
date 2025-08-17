@@ -1034,8 +1034,25 @@
 					localStorage.setItem('userLikes', JSON.stringify(userLikes));
 
 					// Hier die Like-Zahl in unserem lokalen "benchLikes"-Objekt aktualisieren
-                    benchLikes[benchId] = data.likeCount;
-                    localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
+					benchLikes[benchId] = data.likeCount;
+					localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
+					
+					// *** NEU: Bench-Daten direkt im benchMarkers Array aktualisieren ***
+					const benchItem = benchMarkers.find(item => item.bench.id === benchId);
+					if (benchItem) {
+						benchItem.bench.like_count = data.likeCount;
+						benchItem.bench.is_popular = data.likeCount >= 10;
+						
+						// Icon aktualisieren falls es popular wird/aufhört popular zu sein
+						const iconElement = benchItem.marker.getElement().querySelector('.custom-bench-icon');
+						if (iconElement) {
+							if (data.likeCount >= 10) {
+								iconElement.classList.add('popular');
+							} else {
+								iconElement.classList.remove('popular');
+							}
+						}
+					}
 					
 					// UI-Elemente direkt aktualisieren
 					const likeCountEl = document.getElementById(`like-count-${benchId}`);
@@ -1778,94 +1795,59 @@
             }
         }
         
-		async function likeBench(benchId) {
-			if (!currentUser) {
-				showNotification('Du musst angemeldet sein, um zu liken!', 'error');
-				return;
-			}
-
-			const isLiked = userLikes[currentUser.email]?.includes(benchId);
-			const action = isLiked ? 'unlike' : 'like';
-
-			try {
-				const response = await fetch(`/.netlify/functions/like-bench`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						benchId: benchId,
-						userEmail: currentUser.email,
-						action: action
-					})
-				});
-
-				if (response.ok) {
-					const data = await response.json();
-
-					// Frontend-Zustand (userLikes) aktualisieren
-					if (action === 'like') {
-						if (!userLikes[currentUser.email]) {
-							userLikes[currentUser.email] = [];
-						}
-						userLikes[currentUser.email].push(benchId);
-					} else {
-						userLikes[currentUser.email] = userLikes[currentUser.email].filter(id => id !== benchId);
-					}
-					
-					// Lokale Speicherung aktualisieren
-					localStorage.setItem('userLikes', JSON.stringify(userLikes));
-
-					// Hier die Like-Zahl in unserem lokalen "benchLikes"-Objekt aktualisieren
-					benchLikes[benchId] = data.likeCount;
-					localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
-					
-					// *** NEU: Bench-Daten direkt im benchMarkers Array aktualisieren ***
-					const benchItem = benchMarkers.find(item => item.bench.id === benchId);
-					if (benchItem) {
-						benchItem.bench.like_count = data.likeCount;
-						benchItem.bench.is_popular = data.likeCount >= 10;
-						
-						// Icon aktualisieren falls es popular wird/aufhört popular zu sein
-						const iconElement = benchItem.marker.getElement().querySelector('.custom-bench-icon');
-						if (iconElement) {
-							if (data.likeCount >= 10) {
-								iconElement.classList.add('popular');
-							} else {
-								iconElement.classList.remove('popular');
-							}
-						}
-					}
-					
-					// UI-Elemente direkt aktualisieren
-					const likeCountEl = document.getElementById(`like-count-${benchId}`);
-					const likeBtnEl = document.getElementById(`like-btn-${benchId}`);
-					
-					if (likeCountEl) {
-						likeCountEl.innerHTML = `❤️ ${data.likeCount}`;
-					}
-
-					if (likeBtnEl) {
-						if (action === 'like') {
-							likeBtnEl.innerHTML = '❤️';
-							likeBtnEl.classList.add('liked');
-						} else {
-							likeBtnEl.innerHTML = '🤍';
-							likeBtnEl.classList.remove('liked');
-						}
-					}
-					
-					console.log('Like-Status erfolgreich aktualisiert.');
-					
-				} else {
-					const errorData = await response.json();
-					showNotification(`Fehler: ${errorData.error}`, 'error');
-					console.error('Fehler beim Liken der Bank:', errorData.error);
-				}
-			} catch (error) {
-				console.error('Verbindungsfehler:', error);
-				showNotification('Verbindungsfehler. Bitte versuche es später erneut.', 'error');
-			}
-		}        
-       
+        function loadBenches() {
+            const userEmail = currentUser?.email;
+            const url = userEmail ? 
+                `/.netlify/functions/get_benches?userEmail=${encodeURIComponent(userEmail)}` :
+                '/.netlify/functions/get_benches';
+                
+            fetch(url, { method: 'GET' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.benches) {
+                    // Clear existing markers
+                    benchMarkers.forEach(item => {
+                        map.removeLayer(item.marker);
+                    });
+                    benchMarkers = [];
+                    
+                    // Update like data from backend
+                    if (data.benches) {
+                        data.benches.forEach(bench => {
+                            benchLikes[bench.id] = bench.like_count || 0;
+                        });
+                    }
+                    
+                    if (data.userLikes && currentUser) {
+                        userLikes[currentUser.email] = data.userLikes;
+                    }
+                    
+                    // Save to localStorage for offline fallback
+                    localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
+                    localStorage.setItem('userLikes', JSON.stringify(userLikes));
+                    
+                    // Add approved benches to map
+                    data.benches.forEach(addSingleBenchToMap);
+                } else {
+                    // Fallback to localStorage if database not available
+                    benchMarkers.forEach(item => {
+                        map.removeLayer(item.marker);
+                    });
+                    benchMarkers = [];
+                    approvedBenches.forEach(addSingleBenchToMap);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading benches:', error);
+                // Fallback to localStorage
+                benchMarkers.forEach(item => {
+                    map.removeLayer(item.marker);
+                });
+                benchMarkers = [];
+                approvedBenches.forEach(addSingleBenchToMap);
+            });
+        }
+        
 		function addSingleBenchToMap(b){
 			// *** NEU: Verwende aktuelle Like-Daten statt nur die aus der DB ***
 			const likes = benchLikes[b.id] || b.like_count || 0;
@@ -1923,8 +1905,8 @@
 			});
 			
 			benchMarkers.push({ marker, bench: b });
-		}     
-   
+		}
+				
         async function updateAddressForBench(id, lat, lng) {
             const el = document.getElementById(`addr-${id}`);
             if (!el) return;
