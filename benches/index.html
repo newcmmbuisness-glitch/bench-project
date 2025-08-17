@@ -1831,7 +1831,7 @@
             }
         }
         
-		function loadBenches() {
+		 function loadBenches() {
 			const userEmail = currentUser?.email;
 			const url = userEmail ? 
 				`/.netlify/functions/get_benches?userEmail=${encodeURIComponent(userEmail)}` :
@@ -1890,79 +1890,80 @@
 					showLocalFallback();
 				});
 		}
-
-		function showLocalFallback() {
-			console.log('Fallback to localStorage data.');
-			const storedBenches = JSON.parse(localStorage.getItem('approvedBenches') || '[]');
-			const newBenchIds = new Set(storedBenches.map(b => b.id));
-
-			for (const id in benchMarkers) {
-				if (!newBenchIds.has(parseInt(id))) {
-					map.removeLayer(benchMarkers[id].marker);
-					delete benchMarkers[id];
-				}
-			}
-
-			storedBenches.forEach(bench => {
-				if (bench.id in benchMarkers) {
-					const markerItem = benchMarkers[bench.id];
-					const iconClass = 'custom-bench-icon' + (bench.is_popular ? ' popular' : '');
-					const newIcon = L.divIcon({
-						className: iconClass,
-						html: markerItem.marker.getIcon().options.html,
-						iconSize: [30, 30],
-						iconAnchor: [15, 30],
-					});
-					markerItem.marker.setIcon(newIcon);
-				} else {
-					addSingleBenchToMap(bench);
-				}
-			});
-		}
         
-        function addSingleBenchToMap(b){
-            const likes = benchLikes[b.id] || 0;
-            const isPopular = b.is_popular || likes >= 10;
-            
-            const benchIcon = L.divIcon({ 
-                html:'🪑', 
-                className: `custom-bench-icon${isPopular ? ' popular' : ''}`, 
-                iconSize:[30,30], 
-                iconAnchor:[15,15] 
-            });
-            
-            const marker = L.marker([b.latitude, b.longitude], { icon: benchIcon }).addTo(map);
-            
-            const userKey = currentUser?.email;
-            const isLiked = userLikes[userKey]?.includes(b.id);
-            
-            const popupContent = `
-                <div class="popup-content" style="position: relative; padding: 15px; min-width: 250px;">
-                    ${isPopular ? '<div class="popular-badge">Beliebte Bank</div>' : ''}
-                    <h3 style="margin-top: ${isPopular ? '20px' : '0'};">${escapeHtml(b.name)}</h3>
-                    <p><strong>Aussicht:</strong> ${escapeHtml(b.description)}</p>
-                    <p id="addr-${b.id}" style="font-weight:600; margin-top:8px; color:#666;">📍 <em>Adresse wird geladen...</em></p>
-                    <p style="font-size:12px; color:#999; margin-top:8px;">
-                        👤 Eingereicht von: ${escapeHtml(b.user || b.user_email || 'Unbekannt')}<br>
-                        📅 ${new Date(b.created || b.created_at).toLocaleDateString('de-DE')}
-                    </p>
-                    <div class="like-count" id="like-count-${b.id}">❤️ ${likes}</div>
-                    <button onclick="showBenchImages(${b.id})" style="background:#4caf50; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-top:8px;">
-                        📸 Bilder ansehen
-                    </button>
-                    ${currentUser ? `
-                        <button class="like-btn ${isLiked ? 'liked' : ''}" id="like-btn-${b.id}" 
-                                onclick="likeBench(${b.id}, event)" 
-                                title="${isLiked ? 'Like entfernen' : 'Bank liken'}">
-                            ${isLiked ? '❤️' : '🤍'}
-                        </button>
-                    ` : ''}
-                </div>`;
-            
-            marker.bindPopup(popupContent);
-            marker.on('popupopen', () => updateAddressForBench(b.id, b.latitude, b.longitude));
-            benchMarkers.push({ marker, bench: b });
-        }
+	   function addSingleBenchToMap(b){
+			const likes = benchLikes[b.id] || 0;
+			const isPopular = b.is_popular || likes >= 10;
+			
+			const benchIcon = L.divIcon({ 
+				html:'🪑', 
+				className: `custom-bench-icon${isPopular ? ' popular' : ''}`, 
+				iconSize:[30,30], 
+				iconAnchor:[15,15] 
+			});
+			
+			const marker = L.marker([b.latitude, b.longitude], { icon: benchIcon }).addTo(map);
+			
+			const userKey = currentUser?.email;
+			const isLiked = userLikes[userKey]?.includes(b.id);
+			
+			const popupContent = `
+				<div class="popup-content" style="position: relative; padding: 15px; min-width: 250px;">
+					${isPopular ? '<div class="popular-badge">Beliebte Bank</div>' : ''}
+					<h3 style="margin-top: ${isPopular ? '20px' : '0'};">${escapeHtml(b.name)}</h3>
+					<p><strong>Aussicht:</strong> ${escapeHtml(b.description)}</p>
+					<p id="addr-${b.id}" style="font-weight:600; margin-top:8px; color:#666;">📍 <em>Adresse wird geladen...</em></p>
+					<p style="font-size:12px; color:#999; margin-top:8px;">
+						👤 Eingereicht von: ${escapeHtml(b.user || b.user_email || 'Unbekannt')}<br>
+						📅 ${new Date(b.created || b.created_at).toLocaleDateString('de-DE')}
+					</p>
+					<div class="like-count" id="like-count-${b.id}">❤️ ${likes}</div>
+					<button onclick="showBenchImages(${b.id})" style="background:#4caf50; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-top:8px;">
+						📸 Bilder ansehen
+					</button>
+					${currentUser ? `
+						<button class="like-btn ${isLiked ? 'liked' : ''}" id="like-btn-${b.id}" 
+								onclick="likeBench(${b.id}, event)" 
+								title="${isLiked ? 'Like entfernen' : 'Bank liken'}">
+							${isLiked ? '❤️' : '🤍'}
+						</button>
+					` : ''}
+				</div>`;
+			
+			marker.bindPopup(popupContent);
+			marker.on('popupopen', () => updateAddressForBench(b.id, b.latitude, b.longitude));
+			benchMarkers.push({ marker, bench: b });
+		}
+		
+		async function updateAddressForBench(id, lat, lng) {
+			const el = document.getElementById(`addr-${id}`);
+			if (!el) return;
+			
+			try {
+				const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=de`);
+				const data = await resp.json();
+				const ad = data.address || {};
+				
+				const street = [ad.road, ad.house_number].filter(Boolean).join(' ');
+				const city = ad.city || ad.town || ad.village || ad.hamlet || '';
+				const postcode = ad.postcode ? ad.postcode + ' ' : '';
+				
+				let addressLine = '';
+				if (street && city) {
+					addressLine = `${street}, ${postcode}${city}`;
+				} else if (street) {
+					addressLine = street;
+				} else if (city) {
+					addressLine = `${postcode}${city}`;
+				} else {
+					addressLine = data.display_name || 'Adresse nicht verfügbar';
+				}
+				
+				el.innerHTML = `📍 ${addressLine}`;
+			} catch (error) {
+				el.innerHTML = '📍 Adresse nicht verfügbar';
+			}
+		}
         
         async function updateAddressForBench(id, lat, lng) {
             const el = document.getElementById(`addr-${id}`);
