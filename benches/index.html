@@ -704,7 +704,8 @@
     /* PC-Einstellungen */
     position: fixed;
     top: 35px;
-    left: 7%;
+    left: 7%; /* Position für große Bildschirme */
+    width: max-content; /* Containerbreite passt sich dem Inhalt an */
     z-index: 1001;
     display: flex;
     gap: 5px;
@@ -713,23 +714,15 @@
     border-radius: 25px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     backdrop-filter: blur(5px);
-    width: 200px; /* Hier die gewünschte Gesamtbreite festlegen */
-}
-
-/* Anpassung für Handys (Bildschirme bis 768px) */
-@media (max-width: 768px) {
-    .plz-control {
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%; /* Auf Handys 90% Breite verwenden */
-        max-width: 250px; /* Max. Breite für Handys begrenzen */
-    }
 }
 
 .plz-control input {
-    /* Steuert die Breite des Input-Feldes */
-    width: 130px; 
-    box-sizing: border-box; /* Stellt sicher, dass Padding nicht zur Breite hinzukommt */
+    /* Die Breite des Input-Feldes kontrollieren */
+    width: 120px;
+    height: 32px;
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    padding: 0 12px;
 }
 
 .plz-control input:focus {
@@ -738,6 +731,7 @@
 }
 
 .plz-control button {
+    /* Der Button hat bereits eine feste Breite */
     background: #4caf50;
     color: white;
     border: none;
@@ -751,10 +745,20 @@
     justify-content: center;
     transition: all 0.3s ease;
 }
-    
+
 .plz-control button:hover {
     background: #45a049;
     transform: scale(1.05);
+}
+
+/* Anpassung für Handys (Bildschirme bis 768px) */
+@media (max-width: 768px) {
+    .plz-control {
+        left: 50%; /* Zentriert das Element horizontal */
+        transform: translateX(-50%);
+        width: 90vw; /* Nimmt 90% der Bildschirmbreite ein */
+        max-width: 250px; /* Begrenzt die Breite auf Handys */
+    }
 }
 		
         .bench-icon {
