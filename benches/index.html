@@ -54,7 +54,7 @@
             display: none;
         }
         .auth-buttons {
-            position: fixed;
+			position: absolute;
             top: 20px;
             right: 10px;
             z-index: 1001;
@@ -70,9 +70,6 @@
             cursor: pointer;
             font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            position: relative;
-            left: -5px;
-            top: 50px;
         }
         .logout-btn { background: #f44336; }
         .modal {
@@ -834,6 +831,9 @@
                 <span>Hilfe</span>
             </a>
         </div>
+		
+		<div id="auth-buttons" class="auth-buttons"></div>
+		
     </div>
     
     <button id="layerToggleBtn" title="Kartenansicht wechseln" style="
