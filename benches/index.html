@@ -754,10 +754,12 @@
 /* Anpassung für Handys (Bildschirme bis 768px) */
 @media (max-width: 768px) {
     .plz-control {
-        left: 50%; /* Zentriert das Element horizontal */
-        transform: translateX(-50%);
-        width: 90vw; /* Nimmt 90% der Bildschirmbreite ein */
-        max-width: 250px; /* Begrenzt die Breite auf Handys */
+        left: 50%; /* Positioniert das Element in der Mitte */
+        transform: translateX(-50%); /* Zentriert es horizontal */
+        width: max-content;
+    }
+    .plz-control input {
+        width: 100px; /* Breite des Eingabefelds auf Handys */
     }
 }
 		
