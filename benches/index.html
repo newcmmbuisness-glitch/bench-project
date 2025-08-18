@@ -54,7 +54,7 @@
             display: none;
         }
         .auth-buttons {
-			position: absolute;
+            position: fixed;
             top: 20px;
             right: 10px;
             z-index: 1001;
@@ -70,8 +70,9 @@
             cursor: pointer;
             font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-			position: relative; 
-			top: 50px;
+            position: relative;
+            left: -5px;
+            top: 50px;
         }
         .logout-btn { background: #f44336; }
         .modal {
@@ -317,8 +318,6 @@
             transition: left 0.3s ease;
             display: flex;
             flex-direction: column;
-			position: relative;
-
         }
 
         .sidebar.open {
@@ -835,9 +834,6 @@
                 <span>Hilfe</span>
             </a>
         </div>
-		
-		<div id="auth-buttons" class="auth-buttons"></div>
-		
     </div>
     
     <button id="layerToggleBtn" title="Kartenansicht wechseln" style="
