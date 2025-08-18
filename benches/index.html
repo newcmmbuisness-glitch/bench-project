@@ -107,8 +107,34 @@
         .close:hover { color: black; }
         .auth-tabs {
             display: flex;
-            margin-bottom: 20px;
+            margin-bottom: 20px;	
         }
+				// 1. CSS für Login-Nachricht hinzufügen (in den <style> Bereich)
+		.login-message {
+			position: fixed;
+			top: 20px;
+			left: 50%;
+			transform: translateX(-50%);
+			background: #ff6b6b;
+			color: white;
+			padding: 12px 24px;
+			border-radius: 8px;
+			font-weight: bold;
+			z-index: 1001;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+			animation: slideInMessage 0.3s ease;
+		}
+
+		@keyframes slideInMessage {
+			from {
+				opacity: 0;
+				transform: translateX(-50%) translateY(-20px);
+			}
+			to {
+				opacity: 1;
+				transform: translateX(-50%) translateY(0);
+			}
+		}
         .tab-btn {
             flex: 1;
             padding: 10px;
@@ -1038,9 +1064,15 @@
             closeSidebar();
         }
         
-		async function likeBench(benchId) {
+		async function likeBench(benchId, event) {
+			if (event) {
+				event.stopPropagation();
+			}
+			
 			if (!currentUser) {
-				showNotification('Du musst angemeldet sein, um zu liken!', 'error');
+				// Zeige Login-Modal und Nachricht
+				showLogin();
+				showLoginMessage('Sie müssen sich anmelden, um Bänke zu liken!');
 				return;
 			}
 
@@ -1078,7 +1110,7 @@
 					benchLikes[benchId] = data.likeCount;
 					localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
 					
-					// *** NEU: Bench-Daten direkt im benchMarkers Array aktualisieren ***
+					// Bench-Daten direkt im benchMarkers Array aktualisieren
 					const benchItem = benchMarkers.find(item => item.bench.id === benchId);
 					if (benchItem) {
 						benchItem.bench.like_count = data.likeCount;
@@ -1113,18 +1145,16 @@
 						}
 					}
 					
-					console.log('Like-Status erfolgreich aktualisiert.');
-					
 				} else {
 					const errorData = await response.json();
 					showNotification(`Fehler: ${errorData.error}`, 'error');
-					console.error('Fehler beim Liken der Bank:', errorData.error);
 				}
 			} catch (error) {
 				console.error('Verbindungsfehler:', error);
 				showNotification('Verbindungsfehler. Bitte versuche es später erneut.', 'error');
 			}
 		}
+
 
 		function updateBenchPopularityStatus(benchId, isPopular) {
 			// Find the bench marker
@@ -1440,29 +1470,31 @@
             }
         }
 
-        function updateAuthButtons() {
-            const authDiv = document.getElementById('authButtons');
-            const addBtn = document.getElementById('addBenchBtn');
-            const adminBtn = document.getElementById('adminBtn');
-            
-            if (currentUser) {
-                authDiv.innerHTML = `
-                    <span style="color: white; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 3px; margin-right: 10px;">
-                        👤 ${currentUser.email}
-                    </span>
-                    <button class="logout-btn" onclick="logout()">🚪 Abmelden</button>
-                `;
-                addBtn.style.display = 'block';
-                
-                if (currentUser.isAdmin && adminBtn) {
-                    adminBtn.style.display = 'block';
-                }
-            } else {
-                authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
-                addBtn.style.display = 'none';
-                if (adminBtn) adminBtn.style.display = 'none';
-            }
-        }
+		function updateAuthButtons() {
+			const authDiv = document.getElementById('authButtons');
+			const addBtn = document.getElementById('addBenchBtn');
+			const adminBtn = document.getElementById('adminBtn');
+			
+			if (currentUser) {
+				authDiv.innerHTML = `
+					<span style="color: white; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 3px; margin-right: 10px;">
+						👤 ${currentUser.email}
+					</span>
+					<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>
+				`;
+				addBtn.style.display = 'block';
+				
+				if (currentUser.isAdmin && adminBtn) {
+					adminBtn.style.display = 'block';
+				}
+			} else {
+				authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔒 Anmelden</button>';
+				// *** NEU: Add-Button für nicht angemeldete Benutzer SICHTBAR lassen ***
+				addBtn.style.display = 'block';
+				if (adminBtn) adminBtn.style.display = 'none';
+			}
+		}
+
         
         function openAdmin() {
             window.open('admin.html', '_blank');
@@ -1653,14 +1685,15 @@
             loadBenches(); // Refresh to hide like buttons
         }
         
-        function checkLoginAndAdd() {
-            if (!currentUser) {
-                showNotification('🔐 Sie müssen sich anmelden, um eine Bank hinzuzufügen!', 'error');
-                showLogin();
-                return;
-            }
-            toggleAddMode();
-        }
+		function checkLoginAndAdd() {
+			if (!currentUser) {
+				// Zeige Login-Modal und Nachricht
+				showLogin();
+				showLoginMessage('Sie müssen sich anmelden, um Bänke hinzuzufügen!');
+				return;
+			}
+			toggleAddMode();
+		}
         
         function showNotification(message, type) {
             const notification = document.getElementById('notification');
@@ -1672,6 +1705,27 @@
                 notification.style.display = 'none';
             }, 5000);
         }
+		
+		function showLoginMessage(message) {
+    // Entferne vorherige Nachrichten
+    const existingMessage = document.querySelector('.login-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+
+    // Erstelle neue Nachricht
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'login-message';
+    messageDiv.textContent = message;
+    document.body.appendChild(messageDiv);
+
+    // Nach 4 Sekunden automatisch entfernen
+    setTimeout(() => {
+        if (document.body.contains(messageDiv)) {
+            messageDiv.remove();
+        }
+    }, 4000);
+}
         
         function setupMapClick(){
             map.on('click', function(e){
@@ -1986,7 +2040,7 @@
         }
         
 		function addSingleBenchToMap(b){
-			// *** NEU: Verwende aktuelle Like-Daten statt nur die aus der DB ***
+			// Verwende aktuelle Like-Daten statt nur die aus der DB
 			const likes = benchLikes[b.id] || b.like_count || 0;
 			const isPopular = b.is_popular || likes >= 10;
 			
@@ -2002,7 +2056,7 @@
 			const userKey = currentUser?.email;
 			const isLiked = userLikes[userKey]?.includes(b.id);
 			
-			// *** NEU: Funktion für dynamisches Popup-Content ***
+			// Funktion für dynamisches Popup-Content
 			const getPopupContent = () => {
 				const currentLikes = benchLikes[b.id] || b.like_count || 0;
 				const currentIsPopular = b.is_popular || currentLikes >= 10;
@@ -2022,20 +2076,19 @@
 						<button onclick="showBenchImages(${b.id})" style="background:#4caf50; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-top:8px;">
 							📸 Bilder ansehen
 						</button>
-						${currentUser ? `
-							<button class="like-btn ${currentIsLiked ? 'liked' : ''}" id="like-btn-${b.id}" 
-									onclick="likeBench(${b.id}, event)" 
-									title="${currentIsLiked ? 'Like entfernen' : 'Bank liken'}">
-								${currentIsLiked ? '❤️' : '🤍'}
-							</button>
-						` : ''}
+						<!-- *** NEU: Like-Button IMMER anzeigen *** -->
+						<button class="like-btn ${currentIsLiked ? 'liked' : ''}" id="like-btn-${b.id}" 
+								onclick="likeBench(${b.id}, event)" 
+								title="${currentUser ? (currentIsLiked ? 'Like entfernen' : 'Bank liken') : 'Anmelden zum Liken'}">
+							${currentIsLiked ? '❤️' : '🤍'}
+						</button>
 					</div>`;
 			};
 			
-			// *** NEU: Verwende dynamisches Popup-Content ***
+			// Verwende dynamisches Popup-Content
 			marker.bindPopup(getPopupContent);
 			
-			// *** NEU: Aktualisiere Popup-Content beim Öffnen ***
+			// Aktualisiere Popup-Content beim Öffnen
 			marker.on('popupopen', () => {
 				marker.setPopupContent(getPopupContent());
 				updateAddressForBench(b.id, b.latitude, b.longitude);
