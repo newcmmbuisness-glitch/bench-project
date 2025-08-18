@@ -1070,12 +1070,12 @@
 			}
 			
 			if (!currentUser) {
-				// Zeige Login-Modal und Nachricht
 				showLogin();
-				showLoginMessage('Sie müssen sich anmelden, um Bänke zu liken!');
+				showNotification('🔒 Sie müssen sich anmelden, um Bänke zu liken!', 'error');
 				return;
 			}
-
+			
+			// Rest der likeBench Funktion bleibt gleich...
 			const isLiked = userLikes[currentUser.email]?.includes(benchId);
 			const action = isLiked ? 'unlike' : 'like';
 
@@ -1092,8 +1092,7 @@
 
 				if (response.ok) {
 					const data = await response.json();
-
-					// Frontend-Zustand (userLikes) aktualisieren
+					
 					if (action === 'like') {
 						if (!userLikes[currentUser.email]) {
 							userLikes[currentUser.email] = [];
@@ -1103,20 +1102,15 @@
 						userLikes[currentUser.email] = userLikes[currentUser.email].filter(id => id !== benchId);
 					}
 					
-					// Lokale Speicherung aktualisieren
 					localStorage.setItem('userLikes', JSON.stringify(userLikes));
-
-					// Hier die Like-Zahl in unserem lokalen "benchLikes"-Objekt aktualisieren
 					benchLikes[benchId] = data.likeCount;
 					localStorage.setItem('benchLikes', JSON.stringify(benchLikes));
 					
-					// Bench-Daten direkt im benchMarkers Array aktualisieren
 					const benchItem = benchMarkers.find(item => item.bench.id === benchId);
 					if (benchItem) {
 						benchItem.bench.like_count = data.likeCount;
 						benchItem.bench.is_popular = data.likeCount >= 10;
 						
-						// Icon aktualisieren falls es popular wird/aufhört popular zu sein
 						const iconElement = benchItem.marker.getElement().querySelector('.custom-bench-icon');
 						if (iconElement) {
 							if (data.likeCount >= 10) {
@@ -1127,7 +1121,6 @@
 						}
 					}
 					
-					// UI-Elemente direkt aktualisieren
 					const likeCountEl = document.getElementById(`like-count-${benchId}`);
 					const likeBtnEl = document.getElementById(`like-btn-${benchId}`);
 					
@@ -1687,9 +1680,8 @@
         
 		function checkLoginAndAdd() {
 			if (!currentUser) {
-				// Zeige Login-Modal und Nachricht
 				showLogin();
-				showLoginMessage('Sie müssen sich anmelden, um Bänke hinzuzufügen!');
+				showNotification('🔒 Sie müssen sich anmelden, um Bänke hinzuzufügen!', 'error');
 				return;
 			}
 			toggleAddMode();
@@ -1706,27 +1698,6 @@
             }, 5000);
         }
 		
-		function showLoginMessage(message) {
-    // Entferne vorherige Nachrichten
-    const existingMessage = document.querySelector('.login-message');
-    if (existingMessage) {
-        existingMessage.remove();
-    }
-
-    // Erstelle neue Nachricht
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'login-message';
-    messageDiv.textContent = message;
-    document.body.appendChild(messageDiv);
-
-    // Nach 4 Sekunden automatisch entfernen
-    setTimeout(() => {
-        if (document.body.contains(messageDiv)) {
-            messageDiv.remove();
-        }
-    }, 4000);
-}
-        
         function setupMapClick(){
             map.on('click', function(e){
                 if (!addMode) return;
