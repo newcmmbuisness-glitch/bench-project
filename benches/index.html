@@ -1482,7 +1482,6 @@
 			const addBtn = document.getElementById('addBenchBtn');
 			const adminBtn = document.getElementById('adminBtn');
 
-			// NEUE ZEILE: Holen Sie sich das Element für die E-Mail-Anzeige
 			const userEmailDisplay = document.getElementById('user-email-display');
 
 			if (currentUser) {
@@ -1495,7 +1494,7 @@
 
 				// Zeigt nur den Abmelden-Button an der ursprünglichen Stelle an
 				authDiv.innerHTML = '<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>';
-
+				
 				addBtn.style.display = 'block';
 				if (currentUser.isAdmin && adminBtn) {
 					adminBtn.style.display = 'block';
@@ -1504,12 +1503,13 @@
 				// Wenn nicht angemeldet, Buttons wie gewohnt anzeigen
 				authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔒 Anmelden</button>';
 				
-				// NEUE ZEILE: Entfernen Sie die E-Mail-Anzeige aus der Sidebar
+				// Entfernen Sie die E-Mail-Anzeige aus der Sidebar
 				userEmailDisplay.innerHTML = '';
 				
 				addBtn.style.display = 'block';
 				if (adminBtn) adminBtn.style.display = 'none';
 			}
+		}
 
         
         function openAdmin() {
