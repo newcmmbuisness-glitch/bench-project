@@ -815,7 +815,6 @@
                 <img src="ob.png" alt="OB Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: contain;">
             </div>
             <div class="sidebar-title">Benches</div>
-			        <span id="user-email-display" style="margin-left: auto;"></span>
         </div>
         <div class="sidebar-content">
             <a href="contact.html" class="sidebar-item">
@@ -1481,31 +1480,22 @@
 			const authDiv = document.getElementById('authButtons');
 			const addBtn = document.getElementById('addBenchBtn');
 			const adminBtn = document.getElementById('adminBtn');
-
-			const userEmailDisplay = document.getElementById('user-email-display');
-
+			
 			if (currentUser) {
-				// Fügen Sie die E-Mail in das neue Element in der Sidebar ein
-				userEmailDisplay.innerHTML = `
-					<span style="color: white; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 3px;">
+				authDiv.innerHTML = `
+					<span style="color: white; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 3px; margin-right: 10px;">
 						👤 ${currentUser.email}
 					</span>
+					<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>
 				`;
-
-				// Zeigt nur den Abmelden-Button an der ursprünglichen Stelle an
-				authDiv.innerHTML = '<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>';
-				
 				addBtn.style.display = 'block';
+				
 				if (currentUser.isAdmin && adminBtn) {
 					adminBtn.style.display = 'block';
 				}
 			} else {
-				// Wenn nicht angemeldet, Buttons wie gewohnt anzeigen
 				authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔒 Anmelden</button>';
-				
-				// Entfernen Sie die E-Mail-Anzeige aus der Sidebar
-				userEmailDisplay.innerHTML = '';
-				
+				// *** NEU: Add-Button für nicht angemeldete Benutzer SICHTBAR lassen ***
 				addBtn.style.display = 'block';
 				if (adminBtn) adminBtn.style.display = 'none';
 			}
