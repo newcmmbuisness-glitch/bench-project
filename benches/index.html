@@ -701,10 +701,10 @@
         }
         
 .plz-control {
-    /* PC-Standardposition */
+    /* PC-Einstellungen */
     position: fixed;
     top: 35px;
-    right: 1250px; /* Deine ursprüngliche Position für große Bildschirme */
+    right: 1250px; /* Position für große Bildschirme */
     z-index: 1001;
     display: flex;
     gap: 5px;
@@ -715,12 +715,13 @@
     backdrop-filter: blur(5px);
 }
 
-/* Anpassung für Bildschirme, die kleiner als 1200px sind (z.B. Handys) */
-@media (max-width: 1200px) {
+/* Anpassungen für kleinere Bildschirme (Handys) */
+@media (max-width: 768px) {
     .plz-control {
         right: 10px; /* Positioniert das Element 10px vom rechten Rand */
         left: 10px; /* und 10px vom linken Rand */
         width: auto; /* Nimmt die Breite, die es braucht */
+        transform: none; /* Stellt sicher, dass keine ungewollten Transformationen angewendet werden */
     }
 }
         
