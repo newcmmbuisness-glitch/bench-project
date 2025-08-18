@@ -704,7 +704,8 @@
     /* PC-Einstellungen */
     position: fixed;
     top: 35px;
-    right: 1250px; /* Position für große Bildschirme */
+    right: 1250px;
+    width: 250px; /* Feste Breite hinzugefügt */
     z-index: 1001;
     display: flex;
     gap: 5px;
@@ -715,13 +716,12 @@
     backdrop-filter: blur(5px);
 }
 
-/* Anpassungen für kleinere Bildschirme (Handys) */
-@media (max-width: 80px) {
+/* Anpassung für Handys */
+@media (max-width: 768px) {
     .plz-control {
-        right: 10px; /* Positioniert das Element 10px vom rechten Rand */
-        left: 10px; /* und 10px vom linken Rand */
-        width: auto; /* Nimmt die Breite, die es braucht */
-        transform: none; /* Stellt sicher, dass keine ungewollten Transformationen angewendet werden */
+        right: 10px;
+        left: auto;
+        width: 32px; /* Hier die Breite für Handys festlegen */
     }
 }
         
