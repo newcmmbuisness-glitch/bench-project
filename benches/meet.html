@@ -1305,13 +1305,202 @@
             }
         }
 
-        function swipeCard(direction) {
-            const topCard = document.querySelector('.swipe-card:last-child');
-            if (!topCard) return;
-            
-            const profile = sampleProfiles[currentCardIndex];
-            completeSwipe(topCard, profile, direction);
-        }
+		// Funktion zum Anzeigen des nächsten Profils
+		function showNextCard() {
+			if (currentIndex < currentProfiles.length) {
+				currentSwipeUser = currentProfiles[currentIndex];
+				const swipeContainer = document.getElementById('swipeContainer');
+				
+				// Lösche alte Karten, um nur eine anzuzeigen
+				swipeContainer.innerHTML = '';
+				
+				// Erstelle eine neue Karte
+				const card = document.createElement('div');
+				card.className = 'swipe-card bg-white rounded-lg shadow-lg p-6 w-full max-w-sm transition-all duration-300 transform';
+				card.innerHTML = `
+					<img src="${currentSwipeUser.profile_image}" alt="Profilbild von ${currentSwipeUser.name}" class="rounded-lg mb-4 w-full h-auto">
+					<h3 class="text-xl font-bold">${currentSwipeUser.name}</h3>
+					<p class="text-gray-600 mt-2">${currentSwipeUser.description}</p>
+				`;
+				swipeContainer.appendChild(card);
+				
+				currentIndex++;
+			} else {
+				// Keine Profile mehr zum Anzeigen, zeige eine entsprechende Nachricht
+				const swipeContainer = document.getElementById('swipeContainer');
+				swipeContainer.innerHTML = `
+					<div class="text-center p-8 text-gray-500">
+						<p>Das war's für heute! Schau später wieder vorbei, vielleicht gibt es neue Leute in deiner Nähe.</p>
+					</div>
+				`;
+			}
+		}
+
+		// Funktion für die Swipe-Logik (synchrone Funktion)
+		function swipeCard(direction) {
+			const isLike = direction === 'right';
+			const swipeContainer = document.getElementById('swipeContainer');
+			const activeCard = swipeContainer.querySelector('.swipe-card');
+			
+			if (!activeCard || !currentSwipeUser) return;
+
+			if (isLike) {
+				activeCard.classList.add('swiped-right');
+				// Starte den asynchronen Prozess im Hintergrund
+				handleSwipeAsync(isLike);
+			} else {
+				activeCard.classList.add('swiped-left');
+				handleSwipeAsync(isLike);
+			}
+
+			// Entferne die Karte nach der Animation und zeige die nächste
+			setTimeout(() => {
+				activeCard.remove();
+				showNextCard();
+			}, 300);
+		}
+
+		// Asynchrone Hilfsfunktion für den Netzwerkaufruf
+		async function handleSwipeAsync(isLike) {
+			if (isLike) {
+				try {
+					const likerId = currentUser.uid;
+					const likedId = currentSwipeUser.user_id; // Annahme, dass die ID so im Profil-Objekt ist
+
+					const response = await fetch('/.netlify/functions/create_match', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ likerId, likedId })
+					});
+
+					const result = await response.json();
+					if (result.newMatch) {
+						showNotification('🎉 Es ist ein Match!', 'success');
+						loadMatches(); // Aktualisiert die Match-Liste, sobald ein Match entsteht
+					}
+				} catch (error) {
+					console.error('Fehler beim Erstellen des Matches:', error);
+					showNotification('❌ Fehler beim Match-Versuch.', 'error');
+				}
+			}
+		}
+
+		// Funktion zum Laden und Anzeigen der Matches des Benutzers
+		async function loadMatches() {
+			if (!currentUser) return;
+			const matchesList = document.getElementById('matchesList');
+
+			try {
+				const response = await fetch('/.netlify/functions/get_matches', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+				const result = await response.json();
+
+				if (result.success) {
+					matchesList.innerHTML = '';
+					result.matches.forEach(match => {
+						const matchItem = document.createElement('div');
+						matchItem.classList.add('match-item', 'p-4', 'flex', 'items-center', 'border-b', 'border-gray-200', 'cursor-pointer', 'hover:bg-gray-100');
+						matchItem.innerHTML = `
+							<img src="${match.profile_image}" alt="${match.name}" class="match-avatar w-12 h-12 rounded-full mr-4">
+							<div class="match-info flex-1">
+								<h4 class="font-semibold text-lg">${match.name}</h4>
+								<p class="text-sm text-gray-500">Letzte Nachricht...</p>
+							</div>
+						`;
+						matchItem.onclick = () => openChat(match.match_id, match.name);
+						matchesList.appendChild(matchItem);
+					});
+				}
+			} catch (error) {
+				console.error('Fehler beim Laden der Matches:', error);
+			}
+		}
+		
+		// Funktion zum Öffnen eines individuellen Chats und Laden der Nachrichten
+		async function openChat(matchId, matchedName) {
+			document.getElementById('matchesList').style.display = 'none';
+			const individualChat = document.getElementById('individualChat');
+			individualChat.style.display = 'block';
+			document.getElementById('chatHeaderName').textContent = matchedName;
+			document.getElementById('messageInput').dataset.matchId = matchId;
+
+			try {
+				const response = await fetch('/.netlify/functions/get_messages', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ matchId })
+				});
+				const result = await response.json();
+				
+				if (result.success) {
+					const chatMessages = document.getElementById('chatMessages');
+					chatMessages.innerHTML = '';
+					result.messages.forEach(msg => {
+						const messageElement = document.createElement('div');
+						messageElement.classList.add('message', msg.sender_id === currentUser.uid ? 'sent' : 'received', 'p-2', 'my-1', 'rounded-lg');
+						messageElement.innerHTML = `<div class="message-bubble">${msg.message_text}</div>`;
+						chatMessages.appendChild(messageElement);
+					});
+					chatMessages.scrollTop = chatMessages.scrollHeight;
+				}
+			} catch (error) {
+				console.error('Fehler beim Laden der Nachrichten:', error);
+			}
+		}
+		
+		// Funktion zum Senden einer Nachricht
+		async function sendMessage() {
+			const messageInput = document.getElementById('messageInput');
+			const messageText = messageInput.value;
+			const currentMatchId = messageInput.dataset.matchId;
+
+			if (!messageText.trim() || !currentMatchId) return;
+
+			const senderId = currentUser.uid;
+
+			try {
+				const response = await fetch('/.netlify/functions/send_message', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ matchId: currentMatchId, senderId, messageText })
+				});
+				
+				if (response.ok) {
+					const chatMessages = document.getElementById('chatMessages');
+					const messageElement = document.createElement('div');
+					messageElement.classList.add('message', 'sent', 'p-2', 'my-1', 'rounded-lg');
+					messageElement.innerHTML = `<div class="message-bubble">${messageText}</div>`;
+					chatMessages.appendChild(messageElement);
+					chatMessages.scrollTop = chatMessages.scrollHeight;
+
+					messageInput.value = '';
+				}
+			} catch (error) {
+				console.error('Fehler beim Senden der Nachricht:', error);
+			}
+		}		
+		
+		async function loadProfiles() {
+			try {
+				const response = await fetch('/.netlify/functions/get_profiles', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+				const result = await response.json();
+				
+				if (result.success) {
+					currentProfiles = result.profiles;
+					currentIndex = 0;
+					showNextCard();
+				}
+			} catch (error) {
+				console.error('Fehler beim Laden der Profile:', error);
+			}
+		}		
 
         function completeSwipe(card, profile, direction) {
             card.classList.add(direction === 'left' ? 'swiped-left' : 'swiped-right');
