@@ -1499,20 +1499,35 @@
 		
 		async function loadProfiles() {
 			try {
+				// Schritt 1: Benutzer-ID sicher vom Server abrufen
+				const userResponse = await fetch('/.netlify/functions/get_session_user');
+				const userData = await userResponse.json();
+
+				if (!userData.success || !userData.userId) {
+					console.error('Fehler: Benutzer-ID konnte nicht sicher abgerufen werden. Anmeldung erforderlich.');
+					return;
+				}
+
+				const userId = userData.userId;
+
+				// Schritt 2: Profile mit der abgerufenen userId laden
 				const response = await fetch('/.netlify/functions/get_profiles', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ userId: currentUser.uid })
+					body: JSON.stringify({ userId: userId })
 				});
+
 				const result = await response.json();
-				
+
 				if (result.success) {
 					currentProfiles = result.profiles;
 					currentIndex = 0;
 					showNextCard();
+				} else {
+					console.error('Fehler beim Laden der Profile:', result.error);
 				}
 			} catch (error) {
-				console.error('Fehler beim Laden der Profile:', error);
+				console.error('Ein Fehler ist aufgetreten:', error);
 			}
 		}		
 
