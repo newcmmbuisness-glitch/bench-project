@@ -1458,6 +1458,31 @@
             loadChatMessages();
         }
 
+		async function loadUserProfile() {
+			if (currentUser) {
+				try {
+					const response = await fetch('/.netlify/functions/get_profile', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ userId: currentUser.uid })
+					});
+					
+					const result = await response.json();
+
+					if (result.success) {
+						const profileImage = document.getElementById('profileImage');
+						profileImage.src = result.profile.profile_image;
+						// Zeigen Sie auch andere Profildaten an
+					}
+				} catch (error) {
+					console.error('Fehler beim Laden des Profils:', error);
+				}
+			}
+		}
+
+		// Rufen Sie diese Funktion beim Laden der Seite auf
+		document.addEventListener('DOMContentLoaded', loadUserProfile);
+
         function suggestBench() {
             if (!currentChatUser) return;
             
