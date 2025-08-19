@@ -36,8 +36,8 @@
 			50% { box-shadow: 0 0 0 50px rgba(255, 215, 0, 0); }
 			100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
 		}
-        
-        .admin-btn {
+		
+		.admin-btn {
             position: fixed;
             bottom: 20px;
             left: 20px;
@@ -839,6 +839,10 @@
                 <span class="sidebar-icon">❓</span>
                 <span>Hilfe</span>
             </a>
+			<a href="#" class="sidebar-item" onclick="openMeet()">
+                <span class="sidebar-icon"> </span>
+                <span>Hilfe</span>
+            </a>
         </div>
 		<div class="sidebar-footer" id="user-email-display"></div>
     </div>
@@ -894,6 +898,9 @@
     </div>
 		
     <button id="adminBtn" class="admin-btn" onclick="openAdmin()">🛠️ Admin</button>
+	
+	<button id="ONETMEETBtn" class="ONETMEET-btn" onclick="openMeet()">ONETMEET</button>
+
     
     <div id="authButtons" class="auth-buttons">
         <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
@@ -1082,6 +1089,11 @@
         function showHelp() {
             showNotification('❓ Hilfe: Klicken Sie auf Bänke um Details zu sehen, melden Sie sich an um Bänke hinzuzufügen und zu liken!', 'success');
             closeSidebar();
+        }
+		function openMeet() {
+			const ONETMEETBtn = document.getElementById('ONETMEETBtn');
+            window.open('meet.html', '_blank');
+			closeSidebar();
         }
         
 		async function likeBench(benchId, event) {
@@ -1533,7 +1545,7 @@
         function closeLogin() {
             document.getElementById('loginModal').style.display = 'none';
         }
-        
+		        
         function showTab(tab, event) {
             const targetButton = event ? event.target : document.querySelector('.tab-btn.active');
             
