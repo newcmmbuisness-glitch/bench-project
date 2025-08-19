@@ -1,25 +1,24 @@
-// create_profile.js
 const { neon } = require('@neondatabase/serverless');
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 exports.handler = async (event, context) => {
-    // Fügen Sie hier die CORS-Header wie in add_bench.js hinzu
-
+    // ... CORS-Header wie in add_bench.js
+    
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
     try {
-        const { userEmail, name, description, interests, profileImage } = JSON.parse(event.body);
+        const { userId, name, description, interests, profileImage } = JSON.parse(event.body);
 
-        if (!userEmail || !name || !profileImage) {
-            return { statusCode: 400, body: 'Fehlende Felder' };
+        if (!userId || !name || !profileImage) {
+            return { statusCode: 400, body: 'Fehlende Felder!' };
         }
 
         const result = await sql`
-            INSERT INTO meet_profiles (user_email, profile_name, description, interests, profile_image)
-            VALUES (${userEmail}, ${name}, ${description}, ${interests}, ${profileImage})
-            ON CONFLICT (user_email) DO UPDATE SET
+            INSERT INTO meet_profiles (user_id, profile_name, description, interests, profile_image)
+            VALUES (${userId}, ${name}, ${description}, ${interests}, ${profileImage})
+            ON CONFLICT (user_id) DO UPDATE SET
                 profile_name = EXCLUDED.profile_name,
                 description = EXCLUDED.description,
                 interests = EXCLUDED.interests,
@@ -32,7 +31,6 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({ success: true, profileId: result[0].id }),
         };
     } catch (error) {
-        console.error('Fehler:', error);
         return { statusCode: 500, body: 'Server-Fehler' };
     }
 };
