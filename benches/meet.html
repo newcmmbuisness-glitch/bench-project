@@ -1125,21 +1125,32 @@
 
 			const name = document.getElementById('profileName').value;
 			const description = document.getElementById('profileDescription').value;
-			// Achtung: Hier wird die korrekte ID "profileImage" aus Ihrem HTML verwendet
 			const imageFile = document.getElementById('profileImage').files[0];
 
 			if (!imageFile) {
 				showNotification('Bitte wählen Sie ein Profilbild aus!', 'error');
 				return;
 			}
-
+			
 			try {
-				// Schritt 1: Das Bild auf Cloudinary hochladen und die URL erhalten
+				// Schritt 1: Benutzer-ID sicher vom Server abrufen
+				// Diese Funktion ruft die ID basierend auf Ihrer angemeldeten Sitzung ab
+				const userResponse = await fetch('/.netlify/functions/get_session_user');
+				const userData = await userResponse.json();
+
+				if (!userData.success || !userData.userId) {
+					showNotification('❌ Fehler: Bitte melden Sie sich erneut an, um Ihr Profil zu erstellen.', 'error');
+					return;
+				}
+
+				const userId = userData.userId;
+
+				// Schritt 2: Das Bild auf Cloudinary hochladen und die URL erhalten
 				const profileImageUrl = await uploadImageToCloudinary(imageFile);
 				
-				// Schritt 2: Die Profil-Daten zusammen mit der Bild-URL an die Netlify-Funktion senden
+				// Schritt 3: Die Profil-Daten zusammen mit der Bild-URL und der user_id an die Netlify-Funktion senden
 				const profileData = {
-					userId: currentUser.uid, // Nimmt die ID des angemeldeten Benutzers
+					userId: userId, // Nun wird die sicher abgerufene ID verwendet
 					name: name,
 					description: description,
 					interests: selectedPreferences,
