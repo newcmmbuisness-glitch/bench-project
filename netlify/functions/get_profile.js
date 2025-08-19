@@ -2,32 +2,43 @@ const { neon } = require('@neondatabase/serverless');
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 exports.handler = async (event, context) => {
-    // Fügen Sie hier Ihre CORS-Header hinzu
-
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
-    }
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    };
+    if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
         const { userId } = JSON.parse(event.body);
-
         if (!userId) {
-            return { statusCode: 400, body: 'Fehlende user ID' };
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Fehlende Benutzer-ID' }) };
         }
 
-        const profile = await sql`
-            SELECT * FROM meet_profiles WHERE user_id = ${userId};
+        // Holen Sie die IDs der Benutzer, die der aktuelle Benutzer bereits gelikt hat
+        const likedUsers = await sql`
+            SELECT user_id_2 FROM matches WHERE user_id_1 = ${userId};
         `;
+        const likedUserIds = likedUsers.map(u => u.user_id_2);
+        
+        // Fügen Sie die eigene ID hinzu, um zu vermeiden, dass der Benutzer sein eigenes Profil sieht
+        likedUserIds.push(userId);
 
-        if (profile.length === 0) {
-            return { statusCode: 404, body: 'Profil nicht gefunden' };
-        }
+        // Holen Sie Profile, die der Benutzer noch nicht gesehen hat und die nicht seine eigenen sind
+        const profiles = await sql`
+            SELECT user_id, profile_name, profile_image, description FROM meet_profiles
+            WHERE user_id NOT IN (${likedUserIds.join(',')})
+            ORDER BY RANDOM()
+            LIMIT 10;
+        `;
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ success: true, profile: profile[0] }),
+            headers,
+            body: JSON.stringify({ success: true, profiles }),
         };
+
     } catch (error) {
-        return { statusCode: 500, body: 'Server-Fehler' };
+        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
     }
 };
