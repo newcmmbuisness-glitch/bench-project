@@ -998,44 +998,86 @@
             }
         }
 
-        function register(event) {
-            event.preventDefault();
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+		async function register(event) {
+			event.preventDefault();
+			const email = document.getElementById('registerEmail').value;
+			const password = document.getElementById('registerPassword').value;
+			const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
 
-            if (password !== passwordConfirm) {
-                showNotification('Passwörter stimmen nicht überein!', 'error');
-                return;
-            }
+			if (password !== passwordConfirm) {
+				showNotification('Passwörter stimmen nicht überein!', 'error');
+				return;
+			}
 
-            if (password.length < 6) {
-                showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
-                return;
-            }
+			if (password.length < 6) {
+				showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
+				return;
+			}
 
-            // Simulate registration - in real app, call backend
-            showNotification('✅ Registrierung erfolgreich! Sie können sich jetzt anmelden.', 'success');
-            showTab('login');
-        }
+			try {
+				// Use your existing auth function for registration
+				const response = await fetch('/.netlify/functions/auth', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ action: 'register', email, password })
+				});
 
-        function login(event) {
-            event.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+				const result = await response.json();
 
-            // Simulate login - in real app, validate with backend
-            currentUser = { email: email, isAdmin: false };
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            closeLogin();
-            updateAuthButtons();
-            showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
-            
-            // Clear form
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-        }
+				if (result.success) {
+					showNotification('✅ Registrierung erfolgreich! Sie können sich jetzt anmelden.', 'success');
+					showTab('login');
+				} else {
+					showNotification('❌ ' + result.error, 'error');
+				}
+			} catch (error) {
+				console.error('Registration error:', error);
+				showNotification('❌ Verbindungsfehler bei der Registrierung', 'error');
+			}
+		}
 
+		async function login(event) {
+			event.preventDefault();
+			const email = document.getElementById('loginEmail').value;
+			const password = document.getElementById('loginPassword').value;
+
+			try {
+				// Use your existing login function
+				const response = await fetch('/.netlify/functions/login_user', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ email, password })
+				});
+
+				const result = await response.json();
+
+				if (result.success) {
+					// Store user data from your existing system
+					currentUser = { 
+						uid: result.id,  // Use the actual user ID from database
+						email: result.email, 
+						name: result.name,
+						isAdmin: false 
+					};
+					
+					localStorage.setItem('currentUser', JSON.stringify(currentUser));
+					
+					closeLogin();
+					updateAuthButtons();
+					showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
+					
+					// Clear form
+					document.getElementById('loginEmail').value = '';
+					document.getElementById('loginPassword').value = '';
+				} else {
+					showNotification('❌ ' + result.error, 'error');
+				}
+			} catch (error) {
+				console.error('Login error:', error);
+				showNotification('❌ Verbindungsfehler beim Anmelden', 'error');
+			}
+		}
+		
         function logout() {
             currentUser = null;
             localStorage.removeItem('currentUser');
@@ -1123,6 +1165,11 @@
 		async function createProfile(event) {
 			event.preventDefault();
 
+			if (!currentUser || !currentUser.uid) {
+				showNotification('❌ Fehler: Bitte melden Sie sich erneut an.', 'error');
+				return;
+			}
+
 			const name = document.getElementById('profileName').value;
 			const description = document.getElementById('profileDescription').value;
 			const imageFile = document.getElementById('profileImage').files[0];
@@ -1133,31 +1180,19 @@
 			}
 			
 			try {
-				// Schritt 1: Benutzer-ID sicher vom Server abrufen
-				// Diese Funktion ruft die ID basierend auf Ihrer angemeldeten Sitzung ab
-				const userResponse = await fetch('/.netlify/functions/get_session_user');
-				const userData = await userResponse.json();
-
-				if (!userData.success || !userData.userId) {
-					showNotification('❌ Fehler: Bitte melden Sie sich erneut an, um Ihr Profil zu erstellen.', 'error');
-					return;
-				}
-
-				const userId = userData.userId;
-
-				// Schritt 2: Das Bild auf Cloudinary hochladen und die URL erhalten
+				// Upload image to Cloudinary
 				const profileImageUrl = await uploadImageToCloudinary(imageFile);
 				
-				// Schritt 3: Die Profil-Daten zusammen mit der Bild-URL und der user_id an die Netlify-Funktion senden
+				// Create profile with the logged-in user's ID
 				const profileData = {
-					userId: userId, // Nun wird die sicher abgerufene ID verwendet
+					userId: currentUser.uid, // Use the ID from your existing user system
 					name: name,
 					description: description,
 					interests: selectedPreferences,
 					profileImage: profileImageUrl
 				};
 
-				const response = await fetch('/.netlify/functions/create_profiles', {
+				const response = await fetch('/.netlify/functions/create_profile', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(profileData)
@@ -1165,7 +1200,17 @@
 				
 				const result = await response.json();
 
-				if (response.ok) {
+				if (response.ok && result.success) {
+					// Store profile info locally for this session
+					currentProfile = {
+						id: result.profileId,
+						name: name,
+						description: description,
+						interests: selectedPreferences,
+						profileImage: profileImageUrl
+					};
+					localStorage.setItem('currentProfile', JSON.stringify(currentProfile));
+					
 					showNotification('✅ Profil erfolgreich erstellt!', 'success');
 					showWelcome();
 				} else {
@@ -1498,36 +1543,34 @@
 		}		
 		
 		async function loadProfiles() {
-		    try {
-		        // Schritt 1: Benutzer-ID aus sessionStorage abrufen
-		        const userId = sessionStorage.getItem('userId');
-		
-		        if (!userId) {
-		            console.error('Fehler: Benutzer-ID konnte nicht gefunden werden. Anmeldung erforderlich.');
-		            // Leitet den Benutzer zur Anmeldeseite zurück, falls keine ID gefunden wir		            
-		        }
-		
-		        // Schritt 2: Profile mit der abgerufenen userId laden
-		        const response = await fetch('/.netlify/functions/get_profiles', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ userId: userId })
-		        });
-		
-		        const result = await response.json();
-		
-		        if (result.success) {
-		            currentProfiles = result.profiles;
-		            currentIndex = 0;
-		            showNextCard();
-		        } else {
-		            console.error('Fehler beim Laden der Profile:', result.error);
-		        }
-		    } catch (error) {
-		        console.error('Ein Fehler ist aufgetreten:', error);
-		    }
-		}
+			if (!currentUser || !currentUser.uid) {
+				console.error('Kein angemeldeter Benutzer gefunden');
+				return;
+			}
 
+			try {
+				const response = await fetch('/.netlify/functions/get_profile', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+
+				const result = await response.json();
+
+				if (result.success && result.profiles) {
+					currentProfiles = result.profiles;
+					currentIndex = 0;
+					showNextCard();
+				} else {
+					console.error('Fehler beim Laden der Profile:', result.error);
+					showNotification('Keine neuen Profile gefunden', 'info');
+				}
+			} catch (error) {
+				console.error('Fehler beim Laden der Profile:', error);
+				showNotification('Fehler beim Laden der Profile', 'error');
+			}
+		}
+		
         function completeSwipe(card, profile, direction) {
             card.classList.add(direction === 'left' ? 'swiped-left' : 'swiped-right');
             
