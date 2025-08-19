@@ -1113,7 +1113,7 @@
         // Profile Creation Functions
 		function togglePreference(element, preference) {
 			element.classList.toggle('selected');
-	el		if (selectedPreferences.includes(preference)) {
+			if (selectedPreferences.includes(preference)) {
 				selectedPreferences = selectedPreferences.filter(p => p !== preference);
 			} else {
 				selectedPreferences.push(preference);
