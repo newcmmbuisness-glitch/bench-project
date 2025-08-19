@@ -331,8 +331,14 @@
             gap: 15px;
             border-bottom: 1px solid #e0e0e0;
             background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-            color: white;
+            color: white;		
         }
+
+		.sidebar-footer {
+			padding: 15px 20px;
+			border-top: 1px solid #e0e0e0;
+			background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+		}
 
         .sidebar-logo {
             width: 50px;
@@ -834,6 +840,7 @@
                 <span>Hilfe</span>
             </a>
         </div>
+		<div class="sidebar-footer" id="user-email-display"></div>
     </div>
     
     <button id="layerToggleBtn" title="Kartenansicht wechseln" style="
@@ -1482,7 +1489,7 @@
 			const adminBtn = document.getElementById('adminBtn');
 			
 			if (currentUser) {
-				authDiv.innerHTML = `
+				    userEmailDisplay.innerHTML = `´
 					<span style="color: white; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 3px; margin-right: 10px;">
 						👤 ${currentUser.email}
 					</span>
