@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>One-T-Meet - Dating mit Bank-Meetings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            margin:0; 
+            font-family: 'Inter', Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styling - übernommen von index.html */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            z-index: 1500;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open { left: 0; }
+
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .sidebar-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .sidebar-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            padding: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-logo:hover { transform: scale(1.05); }
+
+        .sidebar-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+        }
+
+        .sidebar-item:hover {
+            background: linear-gradient(90deg, rgba(76,175,80,0.1) 0%, transparent 100%);
+            color: #4caf50;
+            transform: translateX(5px);
+        }
+
+        .sidebar-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            background: #4caf50;
+            transition: width 0.3s ease;
+        }
+
+        .sidebar-item:hover::before { width: 4px; }
+
+        .sidebar-icon {
+            margin-right: 15px;
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .main-logo {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1600;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255,255,255,0.9);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+            padding: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .main-logo.sidebar-open {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .main-logo img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: contain;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 1400;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Auth buttons - übernommen */
+        .auth-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            display: flex;
+            gap: 10px;
+        }
+
+        .login-btn, .logout-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .logout-btn { background: #f44336; }
+
+        /* Modal styles - übernommen */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: none;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 10px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover { color: black; }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: #f1f1f1;
+            cursor: pointer;
+        }
+
+        .tab-btn.active { background: #4caf50; color: white; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .tab-content input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .tab-content button {
+            padding: 12px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 25px;
+            z-index: 2001;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        .notification.success { background: rgba(212, 237, 218, 0.9); color: #155724; border: 1px solid #c3e6cb; }
+        .notification.error { background: rgba(248, 215, 218, 0.9); color: #721c24; border: 1px solid #f5c6cb; }
+
+        /* Main App Container */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 120px 20px 20px;
+        }
+
+        .welcome-screen {
+            text-align: center;
+            color: white;
+            max-width: 400px;
+        }
+
+        .welcome-screen h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .welcome-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .action-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(238, 90, 82, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,255,255,0.3);
+        }
+
+        /* Swipe Cards Container */
+        .swipe-container {
+            display: none;
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            height: 500px;
+            margin: 20px auto;
+        }
+
+        .card-stack {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .swipe-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            cursor: grab;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .swipe-card.dragging {
+            cursor: grabbing;
+            transition: none;
+        }
+
+        .swipe-card.swiped-left {
+            transform: translateX(-100%) rotate(-30deg);
+            opacity: 0;
+        }
+
+        .swipe-card.swiped-right {
+            transform: translateX(100%) rotate(30deg);
+            opacity: 0;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 60%;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 20px;
+            height: 40%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .card-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .card-preferences {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .preference-icon {
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .preference-icon:hover {
+            transform: scale(1.2);
+        }
+
+        .swipe-actions {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+        }
+
+        .swipe-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .swipe-btn.dislike {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .swipe-btn.like {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+        }
+
+        .swipe-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Profile Creation */
+        .profile-creation {
+            display: none;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .profile-creation h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #4caf50;
+        }
+
+        .preferences-section {
+            margin: 20px 0;
+        }
+
+        .preferences-icons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .preference-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .preference-option:hover {
+            background: rgba(76, 175, 80, 0.1);
+            transform: scale(1.05);
+        }
+
+        .preference-option.selected {
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .preference-option span {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .preference-option small {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .preference-option:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* Chat System */
+        .chat-container {
+            display: none;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            max-width: 400px;
+            width: 100%;
+            height: 600px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-back-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .matches-list {
+            padding: 20px;
+            height: calc(100% - 80px);
+            overflow-y: auto;
+        }
+
+        .match-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .match-item:hover {
+            background: rgba(76, 175, 80, 0.1);
+            transform: translateX(5px);
+        }
+
+        .match-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+
+        .match-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+        }
+
+        .match-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Individual Chat */
+        .individual-chat {
+            display: none;
+            height: 100%;
+        }
+
+        .individual-chat .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .suggest-bench-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .suggest-bench-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .chat-messages {
+            padding: 20px;
+            height: calc(100% - 160px);
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.sent {
+            align-items: flex-end;
+        }
+
+        .message.received {
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            word-wrap: break-word;
+        }
+
+        .message.sent .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.received .message-bubble {
+            background: #f1f1f1;
+            color: #333;
+        }
+
+        .message-input-area {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 100px 10px 20px;
+            }
+            
+            .welcome-screen h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    
+    <!-- Main Logo -->
+    <div class="main-logo" id="mainLogo" onclick="toggleSidebar()">
+        <img src="https://via.placeholder.com/80/4caf50/ffffff?text=OB" alt="OB Logo">
+    </div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo" onclick="closeSidebar()">
+                <img src="https://via.placeholder.com/50/4caf50/ffffff?text=OB" alt="OB Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: contain;">
+            </div>
+            <div class="sidebar-title">One-T-Meet</div>
+        </div>
+        <div class="sidebar-content">
+            <a href="#" class="sidebar-item" onclick="showWelcome()">
+                <span class="sidebar-icon">🏠</span>
+                <span>Startseite</span>
+            </a>
+            <a href="index.html" class="sidebar-item">
+                <span class="sidebar-icon">🗺️</span>
+                <span>Zur Bench-Karte</span>
+            </a>
+            <a href="#" class="sidebar-item" onclick="showAbout()">
+                <span class="sidebar-icon">ℹ️</span>
+                <span>Über uns</span>
+            </a>
+        </div>
+        <div class="sidebar-footer" id="user-email-display"></div>
+    </div>
+    
+    <!-- Auth Buttons -->
+    <div id="authButtons" class="auth-buttons">
+        <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
+    </div>
+    
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLogin()">&times;</span>
+            <h2>Anmelden / Registrieren</h2>
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="showTab('login', event)">Anmelden</button>
+                <button class="tab-btn" onclick="showTab('register', event)">Registrieren</button>
+            </div>
+            <div id="loginTab" class="tab-content active">
+                <form onsubmit="login(event)">
+                    <input type="email" id="loginEmail" placeholder="E-Mail" required>
+                    <input type="password" id="loginPassword" placeholder="Passwort" required>
+                    <button type="submit">Anmelden</button>
+                </form>
+            </div>
+            <div id="registerTab" class="tab-content">
+                <form onsubmit="register(event)">
+                    <input type="email" id="registerEmail" placeholder="E-Mail" required>
+                    <input type="password" id="registerPassword" placeholder="Passwort" required>
+                    <input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" required>
+                    <button type="submit">Registrieren</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main App Container -->
+    <div class="app-container">
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="welcome-screen">
+            <h1>💕 One-T-Meet</h1>
+            <p>Finde deine Liebe auf den schönsten Bänken! 🪑✨</p>
+            <div class="action-buttons">
+                <button class="action-btn btn-primary" onclick="showProfileCreation()">
+                    📝 Profil erstellen
+                </button>
+                <button class="action-btn btn-secondary" onclick="showSwipeCards()">
+                    💖 Leute kennenlernen
+                </button>
+                <button class="action-btn btn-secondary" onclick="showChats()">
+                    💬 Meine Matches
+                </button>
+            </div>
+        </div>
+
+        <!-- Profile Creation -->
+        <div id="profileCreation" class="profile-creation">
+            <h2>📝 Profil erstellen</h2>
+            <form onsubmit="createProfile(event)">
+                <div class="form-group">
+                    <label>📷 Profilbild:</label>
+                    <input type="file" id="profileImage" accept="image/*" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>👤 Name:</label>
+                    <input type="text" id="profileName" placeholder="Dein Name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>📝 Kurze Beschreibung:</label>
+                    <textarea id="profileDescription" rows="3" placeholder="Erzähl etwas über dich..." required></textarea>
+                </div>
+                
+                <div class="preferences-section">
+                    <label>🍷 Genussmittel:</label>
+                    <div class="preferences-icons">
+                        <div class="preference-option" onclick="togglePreference(this, 'wine')">
+                            <span>🍷</span>
+                            <div class="tooltip">Wein</div>
+                        </div>
+                        <div class="preference-option" onclick="togglePreference(this, '420')">
+                            <span>🍃</span>
+                            <div class="tooltip">420</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button type="submit" class="action-btn btn-primary">
+                        ✅ Profil speichern
+                    </button>
+                    <button type="button" class="action-btn btn-secondary" onclick="showWelcome()">
+                        ↩️ Zurück
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Swipe Cards -->
+        <div id="swipeContainer" class="swipe-container">
+            <div class="card-stack" id="cardStack">
+                <!-- Cards will be generated here -->
+            </div>
+            <div class="swipe-actions">
+                <button class="swipe-btn dislike" onclick="swipeCard('left')">❌</button>
+                <button class="swipe-btn like" onclick="swipeCard('right')">💖</button>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="action-btn btn-secondary" onclick="showWelcome()">↩️ Zurück</button>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div id="chatContainer" class="chat-container">
+            <!-- Matches List -->
+            <div id="matchesList" class="matches-list-view">
+                <div class="chat-header">
+                    <button class="chat-back-btn" onclick="showWelcome()">←</button>
+                    <h3>💖 Deine Matches</h3>
+                </div>
+                <div class="matches-list" id="matchesListContent">
+                    <!-- Matches will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Individual Chat -->
+            <div id="individualChat" class="individual-chat">
+                <div class="chat-header">
+                    <button class="chat-back-btn" onclick="showMatchesList()">←</button>
+                    <div class="chat-user-info">
+                        <img id="chatUserAvatar" class="match-avatar" src="" alt="User">
+                        <h3 id="chatUserName">User</h3>
+                    </div>
+                    <button class="suggest-bench-btn" onclick="suggestBench()">
+                        🪑 Bank vorschlagen
+                    </button>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will be loaded here -->
+                </div>
+                <div class="message-input-area">
+                    <input type="text" class="message-input" id="messageInput" placeholder="Nachricht schreiben...">
+                    <button class="send-btn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Global Variables
+        let currentUser = null;
+        let sidebarOpen = false;
+        let currentProfile = null;
+        let sampleProfiles = [];
+        let currentCardIndex = 0;
+        let matches = [];
+        let currentChatUser = null;
+        let selectedPreferences = [];
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            matches = JSON.parse(localStorage.getItem('matches') || '[]');
+            currentProfile = JSON.parse(localStorage.getItem('currentProfile') || 'null');
+            
+            updateAuthButtons();
+            generateSampleProfiles();
+            showWelcome();
+        });
+
+        // Sidebar Functions
+        function toggleSidebar() {
+            if (sidebarOpen) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        }
+        
+        function openSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const mainLogo = document.getElementById('mainLogo');
+            
+            sidebarOpen = true;
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+            mainLogo.classList.add('sidebar-open');
+        }
+        
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const mainLogo = document.getElementById('mainLogo');
+            
+            sidebarOpen = false;
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            mainLogo.classList.remove('sidebar-open');
+        }
+
+        // Auth Functions
+        function showLogin() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+        
+        function closeLogin() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+        
+        function showTab(tab, event) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+
+            document.getElementById(tab + 'Tab').classList.add('active');
+            
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+        }
+
+        function register(event) {
+            event.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+
+            if (password !== passwordConfirm) {
+                showNotification('Passwörter stimmen nicht überein!', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
+                return;
+            }
+
+            // Simulate registration - in real app, call backend
+            showNotification('✅ Registrierung erfolgreich! Sie können sich jetzt anmelden.', 'success');
+            showTab('login');
+        }
+
+        function login(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            // Simulate login - in real app, validate with backend
+            currentUser = { email: email, isAdmin: false };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            closeLogin();
+            updateAuthButtons();
+            showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
+            
+            // Clear form
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateAuthButtons();
+            showNotification('👋 Erfolgreich abgemeldet!', 'success');
+            showWelcome();
+        }
+
+        function updateAuthButtons() {
+            const authDiv = document.getElementById('authButtons');
+            const userEmailDisplay = document.getElementById('user-email-display');
+
+            if (currentUser) {
+                if (userEmailDisplay) {
+                    userEmailDisplay.innerHTML = `
+                        <span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
+                            👤 ${currentUser.email}
+                        </span>
+                    `;
+                }
+                authDiv.innerHTML = '<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>';
+            } else {
+                authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
+                if (userEmailDisplay) {
+                    userEmailDisplay.innerHTML = '';
+                }
+            }
+        }
+
+        // Navigation Functions
+        function showWelcome() {
+            hideAllScreens();
+            document.getElementById('welcomeScreen').style.display = 'block';
+        }
+
+        function showProfileCreation() {
+            if (!currentUser) {
+                showLogin();
+                showNotification('🔒 Sie müssen sich anmelden, um ein Profil zu erstellen!', 'error');
+                return;
+            }
+            hideAllScreens();
+            document.getElementById('profileCreation').style.display = 'block';
+        }
+
+        function showSwipeCards() {
+            if (!currentUser) {
+                showLogin();
+                showNotification('🔒 Sie müssen sich anmelden, um Leute kennenzulernen!', 'error');
+                return;
+            }
+            hideAllScreens();
+            document.getElementById('swipeContainer').style.display = 'block';
+            loadSwipeCards();
+        }
+
+        function showChats() {
+            if (!currentUser) {
+                showLogin();
+                showNotification('🔒 Sie müssen sich anmelden, um Ihre Matches zu sehen!', 'error');
+                return;
+            }
+            hideAllScreens();
+            document.getElementById('chatContainer').style.display = 'block';
+            showMatchesList();
+        }
+
+        function hideAllScreens() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('profileCreation').style.display = 'none';
+            document.getElementById('swipeContainer').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'none';
+        }
+
+        // Profile Creation Functions
+        function togglePreference(element, preference) {
+            element.classList.toggle('selected');
+            
+            if (selectedPreferences.includes(preference)) {
+                selectedPreferences = selectedPreferences.filter(p => p !== preference);
+            } else {
+                selectedPreferences.push(preference);
+            }
+        }
+
+        function createProfile(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('profileName').value;
+            const description = document.getElementById('profileDescription').value;
+            const imageFile = document.getElementById('profileImage').files[0];
+            
+            if (!imageFile) {
+                showNotification('Bitte wählen Sie ein Profilbild!', 'error');
+                return;
+            }
+
+            // Create profile object
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentProfile = {
+                    id: Date.now(),
+                    name: name,
+                    description: description,
+                    image: e.target.result,
+                    preferences: [...selectedPreferences],
+                    userEmail: currentUser.email
+                };
+                
+                localStorage.setItem('currentProfile', JSON.stringify(currentProfile));
+                showNotification('✅ Profil erfolgreich erstellt!', 'success');
+                showWelcome();
+            };
+            reader.readAsDataURL(imageFile);
+        }
+
+        // Sample Profiles Generation
+        function generateSampleProfiles() {
+            sampleProfiles = [
+                {
+                    id: 1,
+                    name: "Anna",
+                    description: "Liebe Spaziergänge in der Natur und romantische Sonnenuntergänge auf Bänken 🌅",
+                    image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face",
+                    preferences: ["wine"]
+                },
+                {
+                    id: 2,
+                    name: "Max",
+                    description: "Entspannte Gespräche bei einem Glas Wein sind das Beste! 🍷",
+                    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
+                    preferences: ["wine", "420"]
+                },
+                {
+                    id: 3,
+                    name: "Lisa",
+                    description: "Naturliebhaberin, die gerne neue Orte entdeckt und chillige Momente genießt 🍃",
+                    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
+                    preferences: ["420"]
+                },
+                {
+                    id: 4,
+                    name: "Tom",
+                    description: "Romantiker mit Herz für schöne Aussichten und tiefe Gespräche 💕",
+                    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
+                    preferences: ["wine"]
+                },
+                {
+                    id: 5,
+                    name: "Sarah",
+                    description: "Lebenslustig und immer für Abenteuer zu haben! Lass uns die Welt entdecken 🌍",
+                    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
+                    preferences: ["wine", "420"]
+                }
+            ];
+        }
+
+        // Swipe Card Functions
+        function loadSwipeCards() {
+            const cardStack = document.getElementById('cardStack');
+            cardStack.innerHTML = '';
+            currentCardIndex = 0;
+            
+            // Load first 3 cards for smooth swiping
+            for (let i = 0; i < Math.min(3, sampleProfiles.length); i++) {
+                createSwipeCard(sampleProfiles[i], i);
+            }
+        }
+
+        function createSwipeCard(profile, index) {
+            const cardStack = document.getElementById('cardStack');
+            const card = document.createElement('div');
+            card.className = 'swipe-card';
+            card.style.zIndex = 3 - index;
+            card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 5}px)`;
+            
+            const preferencesHtml = profile.preferences.map(pref => {
+                const icon = pref === 'wine' ? '🍷' : '🍃';
+                return `<span class="preference-icon" title="${pref === 'wine' ? 'Wein' : '420'}">${icon}</span>`;
+            }).join('');
+
+            card.innerHTML = `
+                <img src="${profile.image}" alt="${profile.name}" class="card-image">
+                <div class="card-content">
+                    <div>
+                        <h3 class="card-name">${profile.name}</h3>
+                        <p class="card-description">${profile.description}</p>
+                    </div>
+                    <div class="card-preferences">
+                        ${preferencesHtml}
+                    </div>
+                </div>
+            `;
+            
+            cardStack.appendChild(card);
+            setupSwipeGestures(card, profile);
+        }
+
+        function setupSwipeGestures(card, profile) {
+            let startX = 0;
+            let currentX = 0;
+            let cardBeingDragged = false;
+
+            card.addEventListener('mousedown', startDrag);
+            card.addEventListener('touchstart', startDrag);
+
+            function startDrag(e) {
+                if (card !== document.querySelector('.swipe-card:last-child')) return;
+                
+                cardBeingDragged = true;
+                card.classList.add('dragging');
+                
+                startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+                
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('touchmove', drag);
+                document.addEventListener('mouseup', endDrag);
+                document.addEventListener('touchend', endDrag);
+            }
+
+            function drag(e) {
+                if (!cardBeingDragged) return;
+                
+                e.preventDefault();
+                currentX = (e.type === 'mousemove' ? e.clientX : e.touches[0].clientX) - startX;
+                
+                const rotation = currentX * 0.1;
+                const opacity = 1 - Math.abs(currentX) / 300;
+                
+                card.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
+                card.style.opacity = opacity;
+            }
+
+            function endDrag() {
+                if (!cardBeingDragged) return;
+                
+                cardBeingDragged = false;
+                card.classList.remove('dragging');
+                
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('touchmove', drag);
+                document.removeEventListener('mouseup', endDrag);
+                document.removeEventListener('touchend', endDrag);
+
+                if (Math.abs(currentX) > 100) {
+                    const direction = currentX > 0 ? 'right' : 'left';
+                    completeSwipe(card, profile, direction);
+                } else {
+                    // Snap back
+                    card.style.transform = '';
+                    card.style.opacity = '';
+                }
+                
+                currentX = 0;
+            }
+        }
+
+        function swipeCard(direction) {
+            const topCard = document.querySelector('.swipe-card:last-child');
+            if (!topCard) return;
+            
+            const profile = sampleProfiles[currentCardIndex];
+            completeSwipe(topCard, profile, direction);
+        }
+
+        function completeSwipe(card, profile, direction) {
+            card.classList.add(direction === 'left' ? 'swiped-left' : 'swiped-right');
+            
+            if (direction === 'right') {
+                // It's a match!
+                addMatch(profile);
+                showNotification(`💖 It's a Match mit ${profile.name}!`, 'success');
+            }
+            
+            setTimeout(() => {
+                card.remove();
+                currentCardIndex++;
+                
+                // Load next card if available
+                if (currentCardIndex + 2 < sampleProfiles.length) {
+                    createSwipeCard(sampleProfiles[currentCardIndex + 2], 2);
+                }
+                
+                // Update remaining cards positions
+                const remainingCards = document.querySelectorAll('.swipe-card');
+                remainingCards.forEach((card, index) => {
+                    card.style.zIndex = remainingCards.length - index;
+                    card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 5}px)`;
+                });
+                
+                if (remainingCards.length === 0) {
+                    showNotification('🎉 Alle Profile durchgeschaut! Neue kommen bald.', 'success');
+                }
+            }, 300);
+        }
+
+        function addMatch(profile) {
+            if (!matches.find(m => m.id === profile.id)) {
+                matches.push({
+                    ...profile,
+                    matchedAt: new Date().toISOString(),
+                    messages: [
+                        {
+                            text: `Hey! Schön, dass wir gematcht haben! 😊`,
+                            sender: 'system',
+                            timestamp: new Date().toISOString()
+                        }
+                    ]
+                });
+                localStorage.setItem('matches', JSON.stringify(matches));
+            }
+        }
+
+        // Chat Functions
+        function showMatchesList() {
+            document.getElementById('matchesList').style.display = 'block';
+            document.getElementById('individualChat').style.display = 'none';
+            loadMatches();
+        }
+
+        function loadMatches() {
+            const container = document.getElementById('matchesListContent');
+            
+            if (matches.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #666; margin-top: 50px;">
+                        <h3>💔 Noch keine Matches</h3>
+                        <p>Swipe nach rechts, um Matches zu finden!</p>
+                        <button class="action-btn btn-primary" onclick="showSwipeCards()">
+                            💖 Jetzt swipen
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = matches.map(match => `
+                <div class="match-item" onclick="openChat(${match.id})">
+                    <img src="${match.image}" alt="${match.name}" class="match-avatar">
+                    <div class="match-info">
+                        <h4>${match.name}</h4>
+                        <p>Letztes Match: ${new Date(match.matchedAt).toLocaleDateString('de-DE')}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openChat(matchId) {
+            currentChatUser = matches.find(m => m.id === matchId);
+            if (!currentChatUser) return;
+            
+            document.getElementById('matchesList').style.display = 'none';
+            document.getElementById('individualChat').style.display = 'block';
+            
+            document.getElementById('chatUserAvatar').src = currentChatUser.image;
+            document.getElementById('chatUserName').textContent = currentChatUser.name;
+            
+            loadChatMessages();
+        }
+
+        function loadChatMessages() {
+            const container = document.getElementById('chatMessages');
+            
+            if (!currentChatUser.messages || currentChatUser.messages.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #666; margin-top: 50px;">
+                        <p>👋 Sag Hallo zu ${currentChatUser.name}!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = currentChatUser.messages.map(message => {
+                const messageClass = message.sender === 'me' ? 'sent' : 'received';
+                return `
+                    <div class="message ${messageClass}">
+                        <div class="message-bubble">${message.text}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if (!text || !currentChatUser) return;
+            
+            // Add message
+            if (!currentChatUser.messages) {
+                currentChatUser.messages = [];
+            }
+            
+            currentChatUser.messages.push({
+                text: text,
+                sender: 'me',
+                timestamp: new Date().toISOString()
+            });
+            
+            // Simulate response after delay
+            setTimeout(() => {
+                const responses = [
+                    "Das klingt toll! 😊",
+                    "Erzähl mir mehr davon!",
+                    "Das würde ich auch gerne machen!",
+                    "Wann hättest du Zeit?",
+                    "Ich freue mich darauf! 💕"
+                ];
+                
+                currentChatUser.messages.push({
+                    text: responses[Math.floor(Math.random() * responses.length)],
+                    sender: 'other',
+                    timestamp: new Date().toISOString()
+                });
+                
+                localStorage.setItem('matches', JSON.stringify(matches));
+                loadChatMessages();
+            }, 1000 + Math.random() * 2000);
+            
+            localStorage.setItem('matches', JSON.stringify(matches));
+            input.value = '';
+            loadChatMessages();
+        }
+
+        function suggestBench() {
+            if (!currentChatUser) return;
+            
+            // Add system message
+            if (!currentChatUser.messages) {
+                currentChatUser.messages = [];
+            }
+            
+            currentChatUser.messages.push({
+                text: "💡 Lass uns eine schöne Bank zum Treffen finden!",
+                sender: 'me',
+                timestamp: new Date().toISOString()
+            });
+            
+            localStorage.setItem('matches', JSON.stringify(matches));
+            
+            // Redirect to map with special parameter
+            const mapUrl = `index.html?match=${currentChatUser.id}&suggest=true`;
+            window.open(mapUrl, '_blank');
+            
+            showNotification('🗺️ Du wirst zur Bank-Karte weitergeleitet...', 'success');
+        }
+
+        // Utility Functions
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+
+        function showAbout() {
+            showNotification('ℹ️ One-T-Meet: Finde die Liebe auf den schönsten Bänken der Welt! 💕🪑', 'success');
+            closeSidebar();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', e => { 
+            if (e.key === 'Escape') { 
+                closeLogin();
+                if (sidebarOpen) closeSidebar();
+            }
+            
+            // Swipe shortcuts
+            if (document.getElementById('swipeContainer').style.display === 'block') {
+                if (e.key === 'ArrowLeft') swipeCard('left');
+                if (e.key === 'ArrowRight') swipeCard('right');
+            }
+        });
+
+        // Enter key for message input
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && document.activeElement.id === 'messageInput') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
