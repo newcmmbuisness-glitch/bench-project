@@ -1498,38 +1498,37 @@
 		}		
 		
 		async function loadProfiles() {
-			try {
-				// Schritt 1: Benutzer-ID sicher vom Server abrufen
-				const userResponse = await fetch('/.netlify/functions/get_session_user');
-				const userData = await userResponse.json();
-
-				if (!userData.success || !userData.userId) {
-					console.error('Fehler: Benutzer-ID konnte nicht sicher abgerufen werden. Anmeldung erforderlich.');
-					return; // Beendet die Funktion, wenn die ID fehlt
-				}
-
-				const userId = userData.userId;
-
-				// Schritt 2: Profile mit der abgerufenen userId laden
-				const response = await fetch('/.netlify/functions/get_profiles', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ userId: userId })
-				});
-
-				const result = await response.json();
-
-				if (result.success) {
-					currentProfiles = result.profiles;
-					currentIndex = 0;
-					showNextCard();
-				} else {
-					console.error('Fehler beim Laden der Profile:', result.error);
-				}
-			} catch (error) {
-				console.error('Ein Fehler ist aufgetreten:', error);
-			}
-		}	
+		    try {
+		        // Schritt 1: Benutzer-ID aus sessionStorage abrufen
+		        const userId = sessionStorage.getItem('userId');
+		
+		        if (!userId) {
+		            console.error('Fehler: Benutzer-ID konnte nicht gefunden werden. Anmeldung erforderlich.');
+		            // Leitet den Benutzer zur Anmeldeseite zurück, falls keine ID gefunden wird
+		            window.location.href = 'index.html'; 
+		            return;
+		        }
+		
+		        // Schritt 2: Profile mit der abgerufenen userId laden
+		        const response = await fetch('/.netlify/functions/get_profiles', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ userId: userId })
+		        });
+		
+		        const result = await response.json();
+		
+		        if (result.success) {
+		            currentProfiles = result.profiles;
+		            currentIndex = 0;
+		            showNextCard();
+		        } else {
+		            console.error('Fehler beim Laden der Profile:', result.error);
+		        }
+		    } catch (error) {
+		        console.error('Ein Fehler ist aufgetreten:', error);
+		    }
+		}
 
         function completeSwipe(card, profile, direction) {
             card.classList.add(direction === 'left' ? 'swiped-left' : 'swiped-right');
