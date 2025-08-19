@@ -1487,22 +1487,34 @@
 			const authDiv = document.getElementById('authButtons');
 			const addBtn = document.getElementById('addBenchBtn');
 			const adminBtn = document.getElementById('adminBtn');
-			
+			const userEmailDisplay = document.getElementById('user-email-display');
+
 			if (currentUser) {
-				    userEmailDisplay.innerHTML = `´
-					<span style="color: white; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 3px; margin-right: 10px;">
-						👤 ${currentUser.email}
-					</span>
-					<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>
-				`;
-				addBtn.style.display = 'block';
+				// E-Mail in der Sidebar-Footer anzeigen
+				if (userEmailDisplay) {
+					userEmailDisplay.innerHTML = `
+						<span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
+							👤 ${currentUser.email}
+						</span>
+					`;
+				}
+
+				// Zeigt nur den Abmelden-Button an der ursprünglichen Stelle an
+				authDiv.innerHTML = '<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>';
 				
+				addBtn.style.display = 'block';
 				if (currentUser.isAdmin && adminBtn) {
 					adminBtn.style.display = 'block';
 				}
 			} else {
-				authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔒 Anmelden</button>';
-				// *** NEU: Add-Button für nicht angemeldete Benutzer SICHTBAR lassen ***
+				// Wenn nicht angemeldet, Buttons wie gewohnt anzeigen
+				authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
+				
+				// Entfernen Sie die E-Mail-Anzeige aus der Sidebar
+				if (userEmailDisplay) {
+					userEmailDisplay.innerHTML = '';
+				}
+				
 				addBtn.style.display = 'block';
 				if (adminBtn) adminBtn.style.display = 'none';
 			}
