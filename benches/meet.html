@@ -1505,7 +1505,7 @@
 
 				if (!userData.success || !userData.userId) {
 					console.error('Fehler: Benutzer-ID konnte nicht sicher abgerufen werden. Anmeldung erforderlich.');
-					return;
+					return; // Beendet die Funktion, wenn die ID fehlt
 				}
 
 				const userId = userData.userId;
@@ -1529,7 +1529,7 @@
 			} catch (error) {
 				console.error('Ein Fehler ist aufgetreten:', error);
 			}
-		}		
+		}	
 
         function completeSwipe(card, profile, direction) {
             card.classList.add(direction === 'left' ? 'swiped-left' : 'swiped-right');
