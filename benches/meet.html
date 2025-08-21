@@ -1203,6 +1203,7 @@
 					profileImage: profileImageUrl
 				};
 
+				console.log('Sende Profil für userId:', currentUser.uid);
 				const response = await fetch('/.netlify/functions/create_profile', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
