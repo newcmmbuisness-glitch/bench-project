@@ -1378,11 +1378,23 @@
         }
 
 		function hideAllScreens() {
-		    document.getElementById('welcomeScreen').style.display = 'none';
-		    document.getElementById('createProfileModal').style.display = 'none';
-		    document.getElementById('swipeContainer').style.display = 'none';
-		    document.getElementById('chatContainer').style.display = 'none';
-		    document.getElementById('createProfileSection').style.display = 'none';
+		    // Fügen Sie hier alle IDs Ihrer Haupt-Bildschirme hinzu,
+		    // die beim Start ausgeblendet werden sollen.
+		    const screens = [
+		        'welcomeScreen', 
+		        'createProfileSection', 
+		        'createProfileModal', 
+		        'swipeContainer', 
+		        'matchesContainer', 
+		        'profilePopup'
+		    ];
+		    
+		    screens.forEach(id => {
+		        const element = document.getElementById(id);
+		        if (element) { // Wichtige Prüfung, ob das Element existiert
+		            element.style.display = 'none';
+		        }
+		    });
 		}
 
         // Profile Creation Functions
