@@ -1284,42 +1284,45 @@
 		}
 		
 		async function checkAndRenderUI() {
-			if (currentUser && currentUser.uid) {
-				try {
-					// Dies erfordert eine neue Backend-Funktion namens `check_profile`
-					const response = await fetch('/.netlify/functions/check_profile', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ userId: currentUser.uid })
-					});
-					const result = await response.json();
-
-					if (result.hasProfile) {
-						document.getElementById('createProfileSection').style.display = 'none';
-						document.getElementById('swipeContainer').style.display = 'block';
-						document.getElementById('profileButton').classList.remove('hidden');
-						document.getElementById('chatButton').classList.remove('hidden');
-						// Der Aufruf von loadProfiles() ist jetzt hier
-						loadProfiles();
-					} else {
-						document.getElementById('createProfileSection').style.display = 'flex';
-						document.getElementById('swipeContainer').style.display = 'none';
-						document.getElementById('profileButton').classList.add('hidden');
-						document.getElementById('chatButton').classList.add('hidden');
-					}
-				} catch (error) {
-					console.error('Fehler bei der Profilprüfung:', error);
-					document.getElementById('createProfileSection').style.display = 'flex';
-				}
-			} else {
-				// Kein Benutzer angemeldet
-				document.getElementById('createProfileSection').style.display = 'flex';
-				document.getElementById('swipeContainer').style.display = 'none';
-				document.getElementById('profileButton').classList.add('hidden');
-				document.getElementById('chatButton').classList.add('hidden');
-			}
+		    const userId = localStorage.getItem('userId');
+		    const isLoggedIn = !!userId;
+		
+		    if (!isLoggedIn) {
+		        showLogin();
+		        return;
+		    }
+		
+		    try {
+		        const response = await fetch('/.netlify/functions/check_profile', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ userId }),
+		        });
+		        const data = await response.json();
+		
+		        if (response.ok && data.hasProfile) {
+		            // Profil existiert
+		            document.getElementById('createProfileSection').style.display = 'none';
+		            document.getElementById('swipeContainer').style.display = 'block';
+		            document.getElementById('profileButton').classList.remove('hidden');
+		            document.getElementById('chatButton').classList.remove('hidden');
+		            await loadProfilesForSwipe(userId);
+		        } else {
+		            // Kein Profil vorhanden
+		            document.getElementById('createProfileSection').style.display = 'flex';
+		            document.getElementById('swipeContainer').style.display = 'none';
+		            document.getElementById('profileButton').classList.add('hidden');
+		            document.getElementById('chatButton').classList.add('hidden');
+		        }
+		    } catch (error) {
+		        console.error('Fehler bei der Profilprüfung:', error);
+		        // Bei Fehler Annahme: Kein Profil vorhanden, um nicht in einem kaputten Zustand zu bleiben
+		        document.getElementById('createProfileSection').style.display = 'flex';
+		        document.getElementById('swipeContainer').style.display = 'none';
+		        document.getElementById('profileButton').classList.add('hidden');
+		        document.getElementById('chatButton').classList.add('hidden');
+		    }
 		}
-
         function showSwipeCards() {
             if (!currentUser) {
                 showLogin();
