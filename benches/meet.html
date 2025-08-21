@@ -848,6 +848,16 @@
     </div>
     
     <div class="app-container">
+		<div id="welcomeScreen" class="welcome-screen">
+			<h1>One-T-Meet</h1>
+			<p>Finde die Liebe deines Lebens auf der schönsten Bank der Stadt!</p>
+			<div class="action-buttons">
+				<button class="action-btn btn-primary" onclick="checkAndRenderUI()">
+					💖 Jetzt starten
+				</button>
+			</div>
+	    </div>
+		
         <div id="createProfileSection" class="relative z-0 p-4 w-full h-screen flex flex-col items-center justify-center">
             <button onclick="showCreateProfileForm()" class="bg-white text-blue-600 font-bold py-4 px-8 rounded-full shadow-lg hover:bg-gray-200 transition duration-300 transform scale-105 hover:scale-110">
                 <span class="text-xl">Profil erstellen</span>
@@ -1369,12 +1379,13 @@
             showMatchesList();
         }
 
-        function hideAllScreens() {
-            document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('profileCreation').style.display = 'none';
-            document.getElementById('swipeContainer').style.display = 'none';
-            document.getElementById('chatContainer').style.display = 'none';
-        }
+		function hideAllScreens() {
+		    document.getElementById('welcomeScreen').style.display = 'none';
+		    document.getElementById('createProfileModal').style.display = 'none';
+		    document.getElementById('swipeContainer').style.display = 'none';
+		    document.getElementById('chatContainer').style.display = 'none';
+		    document.getElementById('createProfileSection').style.display = 'none';
+		}
 
         // Profile Creation Functions
 		function togglePreference(element, pref) {
