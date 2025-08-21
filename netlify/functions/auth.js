@@ -91,6 +91,7 @@ exports.handler = async (event, context) => {
           success: true,
           email: user.email,
           isAdmin: user.is_admin,
+          userId: user.id  // ← Diese Zeile hinzufügen
         }),
       };
     }
