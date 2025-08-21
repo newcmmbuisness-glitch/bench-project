@@ -153,6 +153,54 @@
             opacity: 1;
         }
 
+		/* New Button Styling */
+		.floating-button {
+			position: fixed;
+			bottom: 2rem;
+			width: 4rem;
+			height: 4rem;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+			transition: transform 0.2s;
+			cursor: pointer;
+			z-index: 1000;
+		}
+
+		.floating-button:hover {
+			transform: scale(1.05);
+		}
+
+		.profile-button {
+			left: 2rem;
+			background-color: #ff5e5e;
+			color: white;
+		}
+
+		.chat-button {
+			right: 2rem;
+			background-color: #007bff;
+			color: white;
+		}
+
+		/* Profile-Popup Styling */
+		.profile-popup {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background-color: white;
+			padding: 2rem;
+			border-radius: 1rem;
+			box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+			z-index: 2000;
+			display: none;
+			width: 90%;
+			max-width: 500px;
+		}
+
         /* Auth buttons - übernommen */
         .auth-buttons {
             position: fixed;
@@ -804,25 +852,17 @@
             </div>
         </div>
     </div>
+	
+	
     
     <!-- Main App Container -->
     <div class="app-container">
         <!-- Welcome Screen -->
-        <div id="welcomeScreen" class="welcome-screen">
-            <h1>💕 One-T-Meet</h1>
-            <p>Finde deine Liebe auf den schönsten Bänken! 🪑✨</p>
-            <div class="action-buttons">
-                <button class="action-btn btn-primary" onclick="showProfileCreation()">
-                    📝 Profil erstellen
-                </button>
-                <button class="action-btn btn-secondary" onclick="showSwipeCards()">
-                    💖 Leute kennenlernen
-                </button>
-                <button class="action-btn btn-secondary" onclick="showChats()">
-                    💬 Meine Matches
-                </button>
-            </div>
-        </div>
+		<div id="createProfileSection" class="relative z-0 p-4 w-full h-screen flex flex-col items-center justify-center">
+			 <button onclick="showCreateProfileForm()" class="bg-white text-blue-600 font-bold py-4 px-8 rounded-full shadow-lg hover:bg-gray-200 transition duration-300 transform scale-105 hover:scale-110">
+				<span class="text-xl">Profil erstellen</span>
+			</button>
+		</div>
 
         <!-- Profile Creation -->
         <div id="profileCreation" class="profile-creation">
@@ -917,6 +957,35 @@
             </div>
         </div>
     </div>
+	
+		<div id="profilePopup" class="profile-popup" style="display: none;">
+			<div class="flex justify-between items-start mb-4">
+				<h2 class="text-2xl font-bold" id="popupProfileName"></h2>
+				<button onclick="closeProfilePopup()" class="text-gray-500 hover:text-gray-700 transition-colors">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+				</button>
+			</div>
+			<div class="flex flex-col items-center">
+				<img id="popupProfileImage" src="" alt="Profilbild" class="w-32 h-32 rounded-full object-cover mb-4">
+				<p id="popupProfileDescription" class="text-gray-600 text-center mb-4"></p>
+				<div class="flex flex-wrap gap-2 justify-center mb-6" id="popupProfileInterests"></div>
+				<div class="flex space-x-4">
+					<button onclick="editProfile()" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-green-600 transition-colors">
+						Profil bearbeiten
+					</button>
+					<button onclick="deleteProfile()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-red-600 transition-colors">
+						Profil löschen
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<button id="profileButton" class="floating-button profile-button hidden" onclick="showProfilePopup()">
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+		</button>
+		<button id="chatButton" class="floating-button chat-button hidden" onclick="showMatches()">
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+		</button>	
 
     <!-- Notification -->
     <div id="notification" class="notification"></div>
@@ -945,7 +1014,8 @@
 			
 			updateAuthButtons();
 			generateSampleProfiles();
-			showWelcome();
+			renderPreferences();
+			checkAndRenderUI();
 			
 			// Falls User bereits angemeldet ist, lade Profile
 			if (currentUser) {
@@ -1133,6 +1203,144 @@
             hideAllScreens();
             document.getElementById('profileCreation').style.display = 'block';
         }
+		
+		function showCreateProfileForm() {
+			closeSidebar();
+			document.getElementById('createProfileSection').style.display = 'none';
+			document.getElementById('createProfileModal').style.display = 'block';
+			document.getElementById('modalOverlay').style.display = 'block';
+			document.getElementById('swipeContainer').style.display = 'none';
+			document.getElementById('matchesContainer').style.style.display = 'none';
+			document.getElementById('profileButton').classList.add('hidden');
+			document.getElementById('chatButton').classList.add('hidden');
+		}
+		
+		async function showMatches() {
+			// Blendet die Swiping-Ansicht aus und zeigt die Matches-Ansicht
+			document.getElementById('swipeContainer').style.display = 'none';
+			document.getElementById('matchesContainer').style.display = 'block';
+			// TODO: Lade Matches von der DB (Ihre bestehende Logik)
+		}
+
+		async function showProfilePopup() {
+			if (!currentUser || !currentUser.uid) {
+				showNotification('❌ Fehler: Bitte melden Sie sich erneut an.', 'error');
+				return;
+			}
+			try {
+				// Dies erfordert eine neue Backend-Funktion namens `get_my_profile`
+				const response = await fetch('/.netlify/functions/get_my_profile', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+
+				const result = await response.json();
+
+				if (response.ok && result.profile) {
+					currentProfile = result.profile;
+					document.getElementById('popupProfileName').textContent = currentProfile.profile_name;
+					document.getElementById('popupProfileImage').src = currentProfile.profile_image;
+					document.getElementById('popupProfileDescription').textContent = currentProfile.description;
+
+					const interestsDiv = document.getElementById('popupProfileInterests');
+					interestsDiv.innerHTML = '';
+					currentProfile.interests.forEach(interest => {
+						const span = document.createElement('span');
+						span.textContent = interest;
+						span.className = 'px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium';
+						interestsDiv.appendChild(span);
+					});
+
+					document.getElementById('profilePopup').style.display = 'block';
+					document.getElementById('modalOverlay').style.display = 'block';
+				} else {
+					showNotification('❌ Fehler beim Laden des Profils: ' + result.error, 'error');
+				}
+			} catch (error) {
+				console.error('Fehler beim Anzeigen des Profil-Popups:', error);
+				showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
+			}
+		}
+
+		function closeProfilePopup() {
+			document.getElementById('profilePopup').style.display = 'none';
+			document.getElementById('modalOverlay').style.display = 'none';
+		}
+
+		function editProfile() {
+			closeProfilePopup();
+			showCreateProfileForm();
+			if (currentProfile) {
+				document.getElementById('profileName').value = currentProfile.profile_name;
+				document.getElementById('profileDescription').value = currentProfile.description;
+				selectedPreferences = currentProfile.interests;
+				renderPreferences();
+			}
+		}
+
+		async function deleteProfile() {
+			if (!confirm("Sind Sie sicher, dass Sie Ihr Profil löschen möchten?")) {
+				return;
+			}
+			try {
+				// Dies erfordert eine neue Backend-Funktion namens `delete_profile`
+				const response = await fetch('/.netlify/functions/delete_profile', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+
+				const result = await response.json();
+
+				if (response.ok && result.success) {
+					showNotification('✅ Profil erfolgreich gelöscht!', 'success');
+					closeProfilePopup();
+					checkAndRenderUI();
+				} else {
+					showNotification('❌ Fehler beim Löschen des Profils: ' + result.error, 'error');
+				}
+			} catch (error) {
+				showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
+			}
+		}
+		
+		async function checkAndRenderUI() {
+			if (currentUser && currentUser.uid) {
+				try {
+					// Dies erfordert eine neue Backend-Funktion namens `check_profile`
+					const response = await fetch('/.netlify/functions/check_profile', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ userId: currentUser.uid })
+					});
+					const result = await response.json();
+
+					if (result.hasProfile) {
+						document.getElementById('createProfileSection').style.display = 'none';
+						document.getElementById('swipeContainer').style.display = 'block';
+						document.getElementById('profileButton').classList.remove('hidden');
+						document.getElementById('chatButton').classList.remove('hidden');
+						// Der Aufruf von loadProfiles() ist jetzt hier
+						loadProfiles();
+					} else {
+						document.getElementById('createProfileSection').style.display = 'flex';
+						document.getElementById('swipeContainer').style.display = 'none';
+						document.getElementById('profileButton').classList.add('hidden');
+						document.getElementById('chatButton').classList.add('hidden');
+					}
+				} catch (error) {
+					console.error('Fehler bei der Profilprüfung:', error);
+					document.getElementById('createProfileSection').style.display = 'flex';
+				}
+			} else {
+				// Kein Benutzer angemeldet
+				document.getElementById('createProfileSection').style.display = 'flex';
+				document.getElementById('swipeContainer').style.display = 'none';
+				document.getElementById('profileButton').classList.add('hidden');
+				document.getElementById('chatButton').classList.add('hidden');
+			}
+		}
 
         function showSwipeCards() {
             if (!currentUser) {
