@@ -1071,7 +1071,7 @@
 					const userIdData = await userIdResponse.json();
 					
 					currentUser = { 
-						userId: user.id  // ← Diese Zeile hinzufügen
+						uid: userIdData.userId || Math.floor(Math.random() * 10000), // Temporäre ID als Fallback
 						email: result.email, 
 						isAdmin: result.isAdmin || false 
 					};
