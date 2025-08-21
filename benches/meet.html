@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+´<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="utf-8" />
@@ -1543,8 +1543,13 @@
 		}		
 		
 		async function loadProfiles() {
+			// Debug: Prüfe currentUser
+			console.log('Current User:', currentUser);
+			
 			if (!currentUser || !currentUser.uid) {
 				console.error('Kein angemeldeter Benutzer gefunden');
+				showNotification('Bitte melden Sie sich zuerst an!', 'error');
+				showLogin();
 				return;
 			}
 
