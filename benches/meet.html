@@ -1527,16 +1527,39 @@
         }
 
         // Swipe Card Functions
-        function loadSwipeCards() {
-            const cardStack = document.getElementById('cardStack');
-            cardStack.innerHTML = '';
-            currentCardIndex = 0;
-            
-            // Load first 3 cards for smooth swiping
-            for (let i = 0; i < Math.min(3, sampleProfiles.length); i++) {
-                createSwipeCard(sampleProfiles[i], i);
-            }
-        }
+		async function loadSwipeCards() {
+			const cardStack = document.getElementById('cardStack');
+			cardStack.innerHTML = '';
+			currentCardIndex = 0;
+
+			try {
+				const response = await fetch('/.netlify/functions/get_profile', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+
+				const result = await response.json();
+
+				let dbProfiles = [];
+				if (result.success && result.profiles && result.profiles.length > 0) {
+					dbProfiles = result.profiles;
+				}
+
+				// 👉 DB + Samples zusammenführen und mischen
+				currentProfiles = shuffle([...dbProfiles, ...sampleProfiles]);
+
+			} catch (error) {
+				console.error("Fehler beim Laden der DB-Profile:", error);
+				// Nur Samples wenn DB-Aufruf fehlschlägt
+				currentProfiles = shuffle([...sampleProfiles]);
+			}
+
+			// Erste Karten anzeigen
+			for (let i = 0; i < Math.min(3, currentProfiles.length); i++) {
+				createSwipeCard(currentProfiles[i], i);
+			}
+		}
 
 		function createSwipeCard(profile, index) {
 			const cardStack = document.getElementById('cardStack');
@@ -1544,28 +1567,37 @@
 			card.className = 'swipe-card';
 			card.style.zIndex = 3 - index;
 			card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 5}px)`;
-			
-			// Die preferences kommen aus dem Profile-Objekt
-			const preferencesHtml = (profile.interests || []).map(pref => {
-				const icon = emojiMap[pref] || ''; // Fallback, falls Icon fehlt
+
+			// Fallbacks für DB- oder Sample-Profil
+			const profileName = profile.profile_name || profile.name || "Unbekannt";
+			const profileImage = profile.profile_image || profile.image || "fallback.png";
+			const profileDescription = profile.description || "";
+			const prefs = profile.interests || profile.preferences || [];
+
+			const preferencesHtml = prefs.map(pref => {
+				const icon = emojiMap[pref] || '';
 				return `<span class="preference-icon" title="${pref}">${icon}</span>`;
 			}).join('');
 
 			card.innerHTML = `
-				<img src="${profile.profile_image}" alt="${profile.profile_name}" class="card-image">
+				<img src="${profileImage}" alt="${profileName}" class="card-image">
 				<div class="card-content">
 					<div>
-						<h3 class="card-name">${profile.profile_name}</h3>
-						<p class="card-description">${profile.description}</p>
+						<h3 class="card-name">${profileName}</h3>
+						<p class="card-description">${profileDescription}</p>
 					</div>
 					<div class="card-preferences">
 						${preferencesHtml}
 					</div>
 				</div>
 			`;
-			
+
 			cardStack.appendChild(card);
 			setupSwipeGestures(card, profile);
+		}
+
+		function shuffle(array) {
+			return array.sort(() => Math.random() - 0.5);
 		}
 
         function setupSwipeGestures(card, profile) {
