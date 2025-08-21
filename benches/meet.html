@@ -847,73 +847,73 @@
         </div>
     </div>
     
-    <div class="app-container">
-		<div id="welcomeScreen" class="welcome-screen">
-			<h1>One-T-Meet</h1>
-			<p>Finde die Liebe deines Lebens auf der schönsten Bank der Stadt!</p>
-			<div class="action-buttons">
-				<button class="action-btn btn-primary" onclick="checkAndRenderUI()">
-					💖 Jetzt starten
-				</button>
-			</div>
+	<div class="app-container">
+	    <div id="welcomeScreen" class="welcome-screen" style="display: none;">
+	        <h1>One-T-Meet</h1>
+	        <p>Finde die Liebe deines Lebens auf der schönsten Bank der Stadt!</p>
+	        <div class="action-buttons">
+	            <button class="action-btn btn-primary" onclick="checkAndRenderUI()">
+	                💖 Jetzt starten
+	            </button>
+	        </div>
 	    </div>
-		
-        <div id="createProfileSection" class="relative z-0 p-4 w-full h-screen flex flex-col items-center justify-center">
-            <button onclick="showCreateProfileForm()" class="bg-white text-blue-600 font-bold py-4 px-8 rounded-full shadow-lg hover:bg-gray-200 transition duration-300 transform scale-105 hover:scale-110">
-                <span class="text-xl">Profil erstellen</span>
-            </button>
-        </div>
-
-        <div id="createProfileModal" class="profile-creation" style="display: none;">
-            <h2>📝 Profil erstellen</h2>
-            <form onsubmit="createProfile(event)">
-                <div class="form-group">
-                    <label>📷 Profilbild:</label>
-                    <input type="file" id="profileImage" accept="image/*" required>
-                </div>
-                <div class="form-group">
-                    <label>👤 Name:</label>
-                    <input type="text" id="profileName" placeholder="Dein Name" required>
-                </div>
-                <div class="form-group">
-                    <label>📝 Kurze Beschreibung:</label>
-                    <textarea id="profileDescription" rows="3" placeholder="Erzähl etwas über dich..." required></textarea>
-                </div>
-                <div class="preferences-section">
-                    <label>Genussmittel:</label>
-                    <div id="preferencesIcons" class="preferences-icons">
-                        </div>
-                </div>
-                <div class="action-buttons">
-                    <button type="submit" class="action-btn btn-primary">
-                        ✅ Profil speichern
-                    </button>
-                    <button type="button" class="action-btn btn-secondary" onclick="closeCreateProfile()">
-                        ↩️ Zurück
-                    </button>
-                </div>
-            </form>
-        </div>
-        
-        <div id="swipeContainer" class="swipe-container" style="display: none;">
-            <div class="card-stack" id="cardStack">
-                </div>
-            <div class="swipe-actions">
-                <button class="swipe-btn dislike" onclick="swipeCard('left')">❌</button>
-                <button class="swipe-btn like" onclick="swipeCard('right')">💖</button>
-            </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="action-btn btn-secondary" onclick="checkAndRenderUI()">↩️ Zurück</button>
-            </div>
-        </div>
-
-        <div id="matchesContainer" class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg mx-auto" style="display: none;">
-            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Deine Matches</h2>
-            <div id="matchesList" class="space-y-4">
-                <p class="text-gray-500 text-center">Keine Matches gefunden.</p>
-            </div>
-        </div>
-    </div>
+	    
+	    <div id="createProfileSection" class="relative z-0 p-4 w-full h-screen flex flex-col items-center justify-center" style="display: none;">
+	        <button onclick="showCreateProfileForm()" class="bg-white text-blue-600 font-bold py-4 px-8 rounded-full shadow-lg hover:bg-gray-200 transition duration-300 transform scale-105 hover:scale-110">
+	            <span class="text-xl">Profil erstellen</span>
+	        </button>
+	    </div>
+	
+	    <div id="createProfileModal" class="profile-creation" style="display: none;">
+	        <h2>📝 Profil erstellen</h2>
+	        <form onsubmit="createProfile(event)">
+	            <div class="form-group">
+	                <label>📷 Profilbild:</label>
+	                <input type="file" id="profileImage" accept="image/*" required>
+	            </div>
+	            <div class="form-group">
+	                <label>👤 Name:</label>
+	                <input type="text" id="profileName" placeholder="Dein Name" required>
+	            </div>
+	            <div class="form-group">
+	                <label>📝 Kurze Beschreibung:</label>
+	                <textarea id="profileDescription" rows="3" placeholder="Erzähl etwas über dich..." required></textarea>
+	            </div>
+	            <div class="preferences-section">
+	                <label>Genussmittel:</label>
+	                <div id="preferencesIcons" class="preferences-icons">
+	                </div>
+	            </div>
+	            <div class="action-buttons">
+	                <button type="submit" class="action-btn btn-primary">
+	                    ✅ Profil speichern
+	                </button>
+	                <button type="button" class="action-btn btn-secondary" onclick="closeCreateProfile()">
+	                    ↩️ Zurück
+	                </button>
+	            </div>
+	        </form>
+	    </div>
+	    
+	    <div id="swipeContainer" class="swipe-container" style="display: none;">
+	        <div class="card-stack" id="cardStack">
+	        </div>
+	        <div class="swipe-actions">
+	            <button class="swipe-btn dislike" onclick="swipeCard('left')">❌</button>
+	            <button class="swipe-btn like" onclick="swipeCard('right')">💖</button>
+	        </div>
+	        <div style="text-align: center; margin-top: 20px;">
+	            <button class="action-btn btn-secondary" onclick="checkAndRenderUI()">↩️ Zurück</button>
+	        </div>
+	    </div>
+	
+	    <div id="matchesContainer" class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg mx-auto" style="display: none;">
+	        <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Deine Matches</h2>
+	        <div id="matchesList" class="space-y-4">
+	            <p class="text-gray-500 text-center">Keine Matches gefunden.</p>
+	        </div>
+	    </div>
+	</div>
 	
     <div id="profilePopup" class="profile-popup" style="display: none;">
         <div class="flex justify-between items-start mb-4">
@@ -937,12 +937,12 @@
         </div>
     </div>
 
-    <button id="profileButton" class="floating-button profile-button hidden" onclick="showProfilePopup()">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-    </button>
-    <button id="chatButton" class="floating-button chat-button hidden" onclick="showMatches()">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-    </button>
+	<button id="profileButton" class="floating-button profile-button hidden" onclick="showProfilePopup()">
+	    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+	</button>
+	<button id="chatButton" class="floating-button chat-button hidden" onclick="showMatches()">
+	    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+	</button>
 </body>
 
     <!-- Notification -->
@@ -961,6 +961,8 @@
 		let currentProfiles = [];
 		let currentIndex = 0;
 		let currentSwipeUser = null;
+		let currentUserId = localStorage.getItem('currentUserId');
+
 		
 		const emojiMap = {
 			'wine': '🍷',
@@ -970,6 +972,9 @@
 			'bike': '🚲'
 		};
 
+	    // Initialer Aufruf, um die richtige UI zu laden
+	    document.addEventListener('DOMContentLoaded', checkAndRenderUI);
+			
         // Initialize App
 		document.addEventListener('DOMContentLoaded', function() {
 			// Lade User aus localStorage (gleich wie index.html)
@@ -1318,45 +1323,38 @@
 		}
 		
 		async function checkAndRenderUI() {
-		    const userId = localStorage.getItem('userId');
-		    const isLoggedIn = !!userId;
+		    hideAllScreens();
+		    const userId = localStorage.getItem('currentUserId');
 		
-		    if (!isLoggedIn) {
-		        showLogin();
+		    if (!userId) {
+		        document.getElementById('welcomeScreen').style.display = 'block';
 		        return;
 		    }
 		
 		    try {
-		        const response = await fetch('/.netlify/functions/check_profile', {
+		        const response = await fetch('/.netlify/functions/get_my_profile', {
 		            method: 'POST',
 		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ userId }),
+		            body: JSON.stringify({ userId: parseInt(userId) }),
 		        });
-		        const data = await response.json();
 		
-		        if (response.ok && data.hasProfile) {
-		            // Profil existiert
-		            document.getElementById('createProfileSection').style.display = 'none';
-		            document.getElementById('swipeContainer').style.display = 'block';
-		            document.getElementById('profileButton').classList.remove('hidden');
-		            document.getElementById('chatButton').classList.remove('hidden');
-		            await loadProfilesForSwipe(userId);
+		        if (response.ok) {
+		            // Profil gefunden, zeige Swipe-Menü
+		            showSwipeMenu();
+		        } else if (response.status === 404) {
+		            // Profil nicht gefunden, zeige "Profil erstellen"-Bereich
+		            showCreateProfileSection();
 		        } else {
-		            // Kein Profil vorhanden
-		            document.getElementById('createProfileSection').style.display = 'flex';
-		            document.getElementById('swipeContainer').style.display = 'none';
-		            document.getElementById('profileButton').classList.add('hidden');
-		            document.getElementById('chatButton').classList.add('hidden');
+		            showNotification(`❌ Fehler: ${response.statusText}`, 'error');
+		            showWelcomeScreen();
 		        }
 		    } catch (error) {
-		        console.error('Fehler bei der Profilprüfung:', error);
-		        // Bei Fehler Annahme: Kein Profil vorhanden, um nicht in einem kaputten Zustand zu bleiben
-		        document.getElementById('createProfileSection').style.display = 'flex';
-		        document.getElementById('swipeContainer').style.display = 'none';
-		        document.getElementById('profileButton').classList.add('hidden');
-		        document.getElementById('chatButton').classList.add('hidden');
+		        console.error('Fehler beim Abrufen des Profils:', error);
+		        showNotification('❌ Netzwerkfehler. Bitte versuche es erneut.', 'error');
+		        showWelcomeScreen();
 		    }
 		}
+		
         function showSwipeCards() {
             if (!currentUser) {
                 showLogin();
@@ -1449,7 +1447,7 @@
 					localStorage.setItem('currentProfile', JSON.stringify(currentProfile));
 					
 					showNotification('✅ Profil erfolgreich erstellt!', 'success');
-					showWelcome();
+					checkAndRenderUI();
 				} else {
 					showNotification('❌ Fehler beim Speichern des Profils: ' + result.error, 'error');
 				}
