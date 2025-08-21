@@ -937,15 +937,21 @@
 
 
         // Initialize App
-        document.addEventListener('DOMContentLoaded', function() {
-            currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-            matches = JSON.parse(localStorage.getItem('matches') || '[]');
-            currentProfile = JSON.parse(localStorage.getItem('currentProfile') || 'null');
-            
-            updateAuthButtons();
-            generateSampleProfiles();
-            showWelcome();
-        });
+		document.addEventListener('DOMContentLoaded', function() {
+			// Lade User aus localStorage (gleich wie index.html)
+			currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+			matches = JSON.parse(localStorage.getItem('matches') || '[]');
+			currentProfile = JSON.parse(localStorage.getItem('currentProfile') || 'null');
+			
+			updateAuthButtons();
+			generateSampleProfiles();
+			showWelcome();
+			
+			// Falls User bereits angemeldet ist, lade Profile
+			if (currentUser) {
+				console.log('User bereits angemeldet:', currentUser.email);
+			}
+		});
 
         // Sidebar Functions
         function toggleSidebar() {
@@ -1015,17 +1021,21 @@
 			}
 
 			try {
-				// Use your existing auth function for registration
+				// Verwende deine bestehende auth.js Funktion (gleich wie index.html)
 				const response = await fetch('/.netlify/functions/auth', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ action: 'register', email, password })
+					body: JSON.stringify({ 
+						action: 'register', 
+						email: email, 
+						password: password 
+					})
 				});
 
 				const result = await response.json();
 
 				if (result.success) {
-					showNotification('✅ Registrierung erfolgreich! Sie können sich jetzt anmelden.', 'success');
+					showNotification('✅ ' + result.message, 'success');
 					showTab('login');
 				} else {
 					showNotification('❌ ' + result.error, 'error');
@@ -1042,22 +1052,28 @@
 			const password = document.getElementById('loginPassword').value;
 
 			try {
-				// Use your existing login function
-				const response = await fetch('/.netlify/functions/login_user', {
+				// Verwende deine bestehende auth.js Funktion (gleich wie index.html)
+				const response = await fetch('/.netlify/functions/auth', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ email, password })
+					body: JSON.stringify({ 
+						action: 'login', 
+						email: email, 
+						password: password 
+					})
 				});
 
 				const result = await response.json();
 
 				if (result.success) {
-					// Store user data from your existing system
+					// Hole User-ID aus der Datenbank
+					const userIdResponse = await fetch('/.netlify/functions/get_all_users?email=' + encodeURIComponent(email));
+					const userIdData = await userIdResponse.json();
+					
 					currentUser = { 
-						uid: result.id,  // Use the actual user ID from database
+						uid: userIdData.userId || Math.floor(Math.random() * 10000), // Temporäre ID als Fallback
 						email: result.email, 
-						name: result.name,
-						isAdmin: false 
+						isAdmin: result.isAdmin || false 
 					};
 					
 					localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -1066,9 +1082,9 @@
 					updateAuthButtons();
 					showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
 					
-					// Clear form
 					document.getElementById('loginEmail').value = '';
 					document.getElementById('loginPassword').value = '';
+					
 				} else {
 					showNotification('❌ ' + result.error, 'error');
 				}
