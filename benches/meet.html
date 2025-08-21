@@ -1324,18 +1324,30 @@
 		
 		async function checkAndRenderUI() {
 		    hideAllScreens();
-		    const userId = localStorage.getItem('currentUserId');
+		    
+		    const userString = localStorage.getItem('currentUser');
+		    
+		    // Prüfen Sie, ob der Benutzer im localStorage gespeichert ist
+		    if (!userString) {
+		        document.getElementById('welcomeScreen').style.display = 'block';
+		        return;
+		    }
 		
-		    if (!userId) {
+		    // Wandeln Sie den String wieder in ein JavaScript-Objekt um
+		    const user = JSON.parse(userString);
+		
+		    if (!user || !user.uid) {
+		        // Fehlerhafte oder unvollständige Benutzerdaten
 		        document.getElementById('welcomeScreen').style.display = 'block';
 		        return;
 		    }
 		
 		    try {
+		        // Verwenden Sie die Benutzer-ID aus dem `currentUser`-Objekt
 		        const response = await fetch('/.netlify/functions/get_my_profile', {
 		            method: 'POST',
 		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ userId: parseInt(userId) }),
+		            body: JSON.stringify({ userId: user.uid }),
 		        });
 		
 		        if (response.ok) {
@@ -1346,12 +1358,12 @@
 		            showCreateProfileSection();
 		        } else {
 		            showNotification(`❌ Fehler: ${response.statusText}`, 'error');
-		            showWelcomeScreen();
+		            document.getElementById('welcomeScreen').style.display = 'block';
 		        }
 		    } catch (error) {
 		        console.error('Fehler beim Abrufen des Profils:', error);
 		        showNotification('❌ Netzwerkfehler. Bitte versuche es erneut.', 'error');
-		        showWelcomeScreen();
+		        document.getElementById('welcomeScreen').style.display = 'block';
 		    }
 		}
 		
