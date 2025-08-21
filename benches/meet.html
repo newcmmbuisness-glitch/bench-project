@@ -1160,16 +1160,17 @@
         }
 		
 		function showCreateProfileForm() {
-			closeSidebar();
-			document.getElementById('createProfileSection').style.display = 'none';
-			document.getElementById('createProfileModal').style.display = 'block';
-			document.getElementById('modalOverlay').style.display = 'block';
-			document.getElementById('swipeContainer').style.display = 'none';
-			document.getElementById('matchesContainer').style.style.display = 'none';
-			document.getElementById('profileButton').classList.add('hidden');
-			document.getElementById('chatButton').classList.add('hidden');
+		    closeProfilePopup(); // Stellt sicher, dass das Popup geschlossen ist
+		    document.getElementById('createProfileSection').style.display = 'none';
+		    document.getElementById('createProfileModal').style.display = 'block';
+		    // Optional: Leeren Sie hier das Formular, falls nötig
 		}
-		
+
+		function closeCreateProfile() {
+		    document.getElementById('createProfileSection').style.display = 'flex';
+		    document.getElementById('createProfileModal').style.display = 'none';
+		}
+				
 		async function showMatches() {
 			// Blendet die Swiping-Ansicht aus und zeigt die Matches-Ansicht
 			document.getElementById('swipeContainer').style.display = 'none';
@@ -1223,15 +1224,38 @@
 			document.getElementById('modalOverlay').style.display = 'none';
 		}
 
-		function editProfile() {
-			closeProfilePopup();
-			showCreateProfileForm();
-			if (currentProfile) {
-				document.getElementById('profileName').value = currentProfile.profile_name;
-				document.getElementById('profileDescription').value = currentProfile.description;
-				selectedPreferences = currentProfile.interests;
-				renderPreferences();
-			}
+		async function editProfile() {
+		    const userId = localStorage.getItem('userId');
+		    if (!userId) {
+		        showNotification('Bitte melden Sie sich an, um Ihr Profil zu bearbeiten.', 'error');
+		        return;
+		    }
+		
+		    try {
+		        const response = await fetch('/.netlify/functions/get_my_profile', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ userId }),
+		        });
+		        const data = await response.json();
+		
+		        if (data.success && data.profile) {
+		            const profile = data.profile;
+		            // Füllen Sie die Formularfelder mit den Profilinformationen
+		            document.getElementById('profileName').value = profile.profile_name;
+		            document.getElementById('profileDescription').value = profile.description;
+		            // Setzen Sie die Interessen
+		            selectedPreferences = profile.interests || [];
+		            renderPreferences(); // Diese Funktion muss das Formular mit den gespeicherten Präferenzen füllen
+		            
+		            showCreateProfileForm();
+		        } else {
+		            showNotification('Fehler beim Laden des Profils. Versuchen Sie es erneut.', 'error');
+		        }
+		    } catch (error) {
+		        console.error('Fehler beim Bearbeiten des Profils:', error);
+		        showNotification('Serverfehler beim Laden des Profils.', 'error');
+		    }
 		}
 		
 		function renderPreferences() {
