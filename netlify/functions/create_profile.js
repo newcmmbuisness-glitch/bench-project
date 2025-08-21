@@ -43,7 +43,7 @@ exports.handler = async (event, context) => {
 
         const result = await sql`
             INSERT INTO meet_profiles (user_id, profile_name, description, interests, profile_image)
-            VALUES (${userId}, ${name}, ${description}, ${JSON.stringify(interests)}, ${profileImage})
+            VALUES (${userId}, ${name}, ${description}, ${interests}, ${profileImage})
             ON CONFLICT (user_id) DO UPDATE SET
                 profile_name = EXCLUDED.profile_name,
                 description = EXCLUDED.description,
