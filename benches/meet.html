@@ -1052,7 +1052,6 @@
 			const password = document.getElementById('loginPassword').value;
 
 			try {
-				// Verwende deine bestehende auth.js Funktion (gleich wie index.html)
 				const response = await fetch('/.netlify/functions/auth', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -1066,12 +1065,8 @@
 				const result = await response.json();
 
 				if (result.success) {
-					// Hole User-ID aus der Datenbank
-					const userIdResponse = await fetch('/.netlify/functions/get_all_users?email=' + encodeURIComponent(email));
-					const userIdData = await userIdResponse.json();
-					
 					currentUser = { 
-						uid: userIdData.userId || Math.floor(Math.random() * 10000), // Temporäre ID als Fallback
+						uid: result.userId,  // ← Jetzt kommt die echte DB-ID
 						email: result.email, 
 						isAdmin: result.isAdmin || false 
 					};
