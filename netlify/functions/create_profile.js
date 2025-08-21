@@ -18,6 +18,7 @@ exports.handler = async (event, context) => {
 
     try {
         const { userId, name, description, interests, profileImage } = JSON.parse(event.body);
+        console.log('Empfangene userId:', userId);
 
         if (!userId || !name || !profileImage) {
             return { 
