@@ -1570,36 +1570,19 @@
             ];
         }
 
-        // Swipe Card Functions
+		        // Swipe Card Functions
 		async function loadSwipeCards() {
 		    console.log('🔄 loadSwipeCards aufgerufen');
 		    
-		    // Stelle sicher, dass swipeContainer sichtbar ist
-		    const swipeContainer = document.getElementById('swipeContainer');
-		    if (!swipeContainer) {
-		        console.error('❌ swipeContainer nicht gefunden');
+		    const cardStack = document.getElementById('cardStack');
+		    if (!cardStack) {
+		        console.error('❌ cardStack nicht gefunden - HTML Struktur prüfen!');
+		        showNotification('⚠️ Swipe-Bereich nicht gefunden. Seite neu laden.', 'error');
 		        return;
 		    }
 		    
-		    const cardStack = document.getElementById('cardStack');
-		    if (!cardStack) {
-		        console.error('❌ cardStack nicht gefunden');
-		        // Versuche cardStack zu erstellen falls es fehlt
-		        const newCardStack = document.createElement('div');
-		        newCardStack.id = 'cardStack';
-		        newCardStack.className = 'card-stack';
-		        
-		        const actionsDiv = swipeContainer.querySelector('.swipe-actions');
-		        if (actionsDiv) {
-		            swipeContainer.insertBefore(newCardStack, actionsDiv);
-		        } else {
-		            swipeContainer.appendChild(newCardStack);
-		        }
-		        console.log('✅ cardStack neu erstellt');
-		    }
-		    
 		    // Leere vorherige Karten
-		    document.getElementById('cardStack').innerHTML = '';
+		    cardStack.innerHTML = '';
 		    currentCardIndex = 0;
 		
 		    try {
@@ -1623,8 +1606,8 @@
 		        console.log('🎯 Gesamt Profile zum Swipen:', currentProfiles.length);
 		
 		        if (currentProfiles.length === 0) {
-		            document.getElementById('cardStack').innerHTML = `
-		                <div style="text-align: center; padding: 40px; color: #666;">
+		            cardStack.innerHTML = `
+		                <div style="text-align: center; padding: 40px; color: #666; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
 		                    <h3>🎉 Keine neuen Profile</h3>
 		                    <p>Schauen Sie später wieder vorbei!</p>
 		                </div>
@@ -1651,113 +1634,50 @@
 		    }
 		}
 
-function createSwipeCard(profile, index) {
-    return new Promise((resolve) => {
-        const cardStack = document.getElementById('cardStack');
-        
-        if (!cardStack) {
-            console.error('❌ cardStack nicht verfügbar in createSwipeCard');
-            resolve();
-            return;
-        }
-        
-        const card = document.createElement('div');
-        card.className = 'swipe-card';
-        card.style.zIndex = 3 - index;
-        card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 5}px)`;
-        
-        // Profil am DOM-Element speichern
-        card.__profile = profile;
-        
-        const profileName = profile.profile_name || profile.name || "Unbekannt";
-        const profileImage = profile.profile_image || profile.image || "https://via.placeholder.com/400x300?text=Kein+Bild";
-        const profileDescription = profile.description || "Keine Beschreibung verfügbar";
-        const prefs = profile.interests || profile.preferences || [];
-        
-        const preferencesHtml = prefs.map(pref => {
-            const icon = emojiMap[pref] || '❓';
-            return `<span class="preference-icon" title="${pref}">${icon}</span>`;
-        }).join('');
-        
-        card.innerHTML = `
-            <img src="${profileImage}" alt="${profileName}" class="card-image" onerror="this.src='https://via.placeholder.com/400x300?text=Bild+nicht+verfügbar'">
-            <div class="card-content">
-                <div>
-                    <h3 class="card-name">${profileName}</h3>
-                    <p class="card-description">${profileDescription}</p>
-                </div>
-                <div class="card-preferences">${preferencesHtml}</div>
-            </div>
-        `;
-        
-        // Klick-Handler für Profil-Details
-        card.addEventListener('click', function(e) {
-            // Nur wenn nicht gerade geswiped wird
-            if (!card.classList.contains('dragging')) {
-                showProfileDetails(profile);
-            }
-        });
-        
-        // Verhindere Klick während Drag
-        card.addEventListener('mousedown', function(e) {
-            setTimeout(() => {
-                if (card) card.classList.add('dragging');
-            }, 50);
-        });
-        
-        card.addEventListener('mouseup', function(e) {
-            setTimeout(() => {
-                if (card) card.classList.remove('dragging');
-            }, 100);
-        });
-        
-        try {
-            cardStack.appendChild(card);
-            setupSwipeGestures(card, profile);
-            console.log(`✅ Karte ${index + 1} erstellt für ${profileName}`);
-        } catch (error) {
-            console.error('❌ Fehler beim Hinzufügen der Karte:', error);
-        }
-        
-        resolve();
-    });
-}
-
 		// Neue Funktion für Profil-Details
 		function showProfileDetails(profile) {
 		    const profileName = profile.profile_name || profile.name || "Unbekannt";
-		    const profileImage = profile.profile_image || profile.image || "https://via.placeholder.com/400x300";
 		    const profileDescription = profile.description || "Keine Beschreibung verfügbar";
 		    const prefs = profile.interests || profile.preferences || [];
+		    
+		    // Bessere Bild-Behandlung
+		    let profileImage = profile.profile_image || profile.image;
+		    
+		    if (!profileImage) {
+		        profileImage = 'data:image/svg+xml;base64,' + btoa(`
+		            <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+		                <rect width="400" height="300" fill="#f0f0f0"/>
+		                <text x="200" y="120" text-anchor="middle" fill="#999" font-size="40">📷</text>
+		                <text x="200" y="160" text-anchor="middle" fill="#999" font-size="18" font-family="Arial">Kein Bild</text>
+		                <text x="200" y="180" text-anchor="middle" fill="#999" font-size="14" font-family="Arial">verfügbar</text>
+		            </svg>
+		        `);
+		    }
 		    
 		    const preferencesHtml = prefs.map(pref => {
 		        const icon = emojiMap[pref] || '❓';
 		        return `<span style="display: inline-block; margin: 5px; padding: 5px 10px; background: #f0f0f0; border-radius: 15px;">${icon} ${pref}</span>`;
 		    }).join('');
 		    
-		    // Zeige Details in einem Modal/Popup
-		    const detailsHtml = `
-		        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
-		            <div style="background: white; border-radius: 15px; padding: 20px; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
-		                <div style="text-align: right; margin-bottom: 10px;">
-		                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-		                </div>
-		                <img src="${profileImage}" alt="${profileName}" style="width: 100%; height: 300px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;">
-		                <h2 style="margin: 0 0 10px 0; color: #333;">${profileName}</h2>
-		                <p style="color: #666; line-height: 1.5; margin-bottom: 15px;">${profileDescription}</p>
-		                <div style="margin-bottom: 20px;">
-		                    <h4 style="margin: 0 0 10px 0; color: #333;">Interessen:</h4>
-		                    ${preferencesHtml || '<span style="color: #999;">Keine Interessen angegeben</span>'}
-		                </div>
-		                <div style="display: flex; gap: 15px; justify-content: center;">
-		                    <button onclick="swipeCard('left'); this.parentElement.parentElement.parentElement.remove();" style="background: #ff6b6b; color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 16px;">❌ Nein</button>
-		                    <button onclick="swipeCard('right'); this.parentElement.parentElement.parentElement.remove();" style="background: #4caf50; color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 16px;">💖 Ja</button>
-		                </div>
-		            </div>
-		        </div>
-		    `;
+
+
+		    // Entferne vorherige Modals
+		    const existingModal = document.querySelector('[data-profile-modal]');
+		    if (existingModal) {
+		        existingModal.remove();
+		    }
 		    
-		    document.body.insertAdjacentHTML('beforeend', detailsHtml);
+		    const modalDiv = document.createElement('div');
+		    modalDiv.setAttribute('data-profile-modal', 'true');
+		    modalDiv.innerHTML = detailsHtml;
+		    document.body.appendChild(modalDiv);
+		}
+		
+		function closeProfileModal() {
+		    const modal = document.querySelector('[data-profile-modal]');
+		    if (modal) {
+		        modal.remove();
+		    }
 		}
 
 		function shuffle(array) {
@@ -1786,42 +1706,42 @@ function createSwipeCard(profile, index) {
                 document.addEventListener('touchend', endDrag);
             }
 
-            function drag(e) {
-                if (!cardBeingDragged) return;
-                
-                e.preventDefault();
-                currentX = (e.type === 'mousemove' ? e.clientX : e.touches[0].clientX) - startX;
-                
-                const rotation = currentX * 0.1;
-                const opacity = 1 - Math.abs(currentX) / 300;
-                
-                card.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
-                card.style.opacity = opacity;
-            }
+		function drag(e) {
+			if (!cardBeingDragged) return;
+			
+			e.preventDefault();
+			currentX = (e.type === 'mousemove' ? e.clientX : e.touches[0].clientX) - startX;
+			
+			const rotation = currentX * 0.1;
+			const opacity = 1 - Math.abs(currentX) / 300;
+			
+			card.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
+			card.style.opacity = opacity;
+		}
 
-            function endDrag() {
-                if (!cardBeingDragged) return;
-                
-                cardBeingDragged = false;
-                card.classList.remove('dragging');
-                
-                document.removeEventListener('mousemove', drag);
-                document.removeEventListener('touchmove', drag);
-                document.removeEventListener('mouseup', endDrag);
-                document.removeEventListener('touchend', endDrag);
+		function endDrag() {
+			if (!cardBeingDragged) return;
+			
+			cardBeingDragged = false;
+			card.classList.remove('dragging');
+			
+			document.removeEventListener('mousemove', drag);
+			document.removeEventListener('touchmove', drag);
+			document.removeEventListener('mouseup', endDrag);
+			document.removeEventListener('touchend', endDrag);
 
-                if (Math.abs(currentX) > 100) {
-                    const direction = currentX > 0 ? 'right' : 'left';
-                    completeSwipe(card, profile, direction);
-                } else {
-                    // Snap back
-                    card.style.transform = '';
-                    card.style.opacity = '';
-                }
-                
-                currentX = 0;
-            }
-        }
+			if (Math.abs(currentX) > 100) {
+				const direction = currentX > 0 ? 'right' : 'left';
+				completeSwipe(card, profile, direction);
+			} else {
+				// Snap back
+				card.style.transform = '';
+				card.style.opacity = '';
+			}
+			
+			currentX = 0;
+		}
+	}
 
 		// Funktion zum Anzeigen des nächsten Profils
 		function showNextCard() {
