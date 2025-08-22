@@ -1628,7 +1628,7 @@
 					currentIndex = 0; // Setze den Index zurück
 					
 					// Finde das eigene Profil im Array und entferne es
-					const myProfileIndex = currentProfiles.findIndex(p => p.userId === currentUserId);
+					const myProfileIndex = currentProfiles.findIndex(p => parseInt(p.user_id) === parseInt(currentUserId));
 					if (myProfileIndex !== -1) {
 						currentProfiles.splice(myProfileIndex, 1);
 					}
