@@ -1401,28 +1401,41 @@
 		}
 		
 		function showSwipeCards() {
-		    if (!currentUser) {
-		        showLogin();
-		        showNotification('🔒 Sie müssen sich anmelden, um Leute kennenzulernen!', 'error');
-		        return;
-		    }
-		    
-		    console.log('📱 showSwipeCards aufgerufen');
-		    hideAllScreens();
-		    
-		    const swipeContainer = document.getElementById('swipeContainer');
-		    if (!swipeContainer) {
-		        console.error('❌ swipeContainer Element nicht gefunden');
-		        return;
-		    }
-		    
-		    // Container sichtbar machen
-		    swipeContainer.style.display = 'block';
-		    
-		    // Kurze Verzögerung damit DOM ready ist
-		    setTimeout(() => {
-		        loadSwipeCards();
-		    }, 100);
+			// 1. Zuerst die Anmelde-Prüfung
+			if (!currentUser) {
+				showLogin();
+				showNotification('🔒 Sie müssen sich anmelden, um Leute kennenzulernen!', 'error');
+				return;
+			}
+
+			// 2. Alle anderen Bildschirme ausblenden
+			hideAllScreens();
+
+			// 3. Den Container suchen
+			const swipeContainer = document.getElementById('swipeContainer');
+			if (!swipeContainer) {
+				console.error('❌ swipeContainer Element nicht gefunden');
+				return;
+			}
+
+			// 4. Den Container sichtbar machen
+			swipeContainer.style.display = 'block';
+
+			// 5. Den MutationObserver für das Laden der Karten einrichten
+			const observer = new MutationObserver((mutationsList, observer) => {
+				for (const mutation of mutationsList) {
+					if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+						if (swipeContainer.style.display === 'block') {
+							loadSwipeCards();
+							observer.disconnect(); // Stoppt die Überwachung nach dem ersten Aufruf
+						}
+					}
+				}
+			});
+			observer.observe(swipeContainer, { attributes: true });
+
+			// 6. Optional: Logging
+			console.log('📱 showSwipeCards aufgerufen');
 		}
 
         function showChats() {
