@@ -1572,77 +1572,78 @@
 
 		// Swipe Functions
 		function createSwipeCardFromData(profile) {
-		    const cardHtml = `
-		        <div class="swipe-card" data-user-id="${profile.userId}">
-		            <img src="${profile.profileImage}" alt="${profile.profileName}" class="card-image" onerror="this.src = 'data:image/svg+xml;base64,' + btoa('<svg width=\\"400\\" height=\\"250\\" xmlns=\\"http://www.w3.org/2000/svg\\"><rect width=\\"400\\" height=\\"250\\" fill=\\"#f0f0f0\\"/><text x=\\"200\\" y=\\"110\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"30\\">📷</text><text x=\\"200\\" y=\\"140\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"14\\" font-family=\\"Arial\\">Bild nicht verfügbar</text></svg>')" >
-		            <div class="card-content">
-		                <div>
-		                    <h3 class="card-name">${profile.profileName}</h3>
-		                    <p class="card-description">${profile.description}</p>
-		                </div>
-		                <div class="card-preferences">
-		                    ${profile.interests.map(interest => `<span class="preference-icon">${emojiMap[interest] || ''}</span>`).join('')}
-		                </div>
-		            </div>
-		        </div>
-		    `;
-		    return cardHtml;
+			const cardHtml = `
+				<div class="swipe-card" data-user-id="${profile.userId}">
+					<img src="${profile.profileImage}" alt="${profile.profileName}" class="card-image" onerror="this.src = 'data:image/svg+xml;base64,' + btoa('<svg width=\\"400\\" height=\\"250\\" xmlns=\\"http://www.w3.org/2000/svg\\"><rect width=\\"400\\" height=\\"250\\" fill=\\"#f0f0f0\\"/><text x=\\"200\\" y=\\"110\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"30\\">📷</text><text x=\\"200\\" y=\\"140\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"14\\" font-family=\\"Arial\\">Bild nicht verfügbar</text></svg>')" >
+					<div class="card-content">
+						<div>
+							<h3 class="card-name">${profile.profileName}</h3>
+							<p class="card-description">${profile.description}</p>
+						</div>
+						<div class="card-preferences">
+							${profile.interests.map(interest => `<span class="preference-icon">${emojiMap[interest] || ''}</span>`).join('')}
+						</div>
+					</div>
+				</div>
+			`;
+			return cardHtml;
 		}
-		
+
 		async function loadSwipeCards() {
-		    console.log('🔄 loadSwipeCards aufgerufen');
-		    const cardStack = document.getElementById('cardStack');
-		    if (!cardStack) {
-		        console.error('❌ cardStack nicht gefunden - HTML Struktur prüfen!');
-		        return;
-		    }
-		
-		    cardStack.innerHTML = '';
-		    
-		    try {
-		        const response = await fetch('/.netlify/functions/get_profiles', {
-		            method: 'POST',
-		            headers: {
-		                'Content-Type': 'application/json'
-		            },
-		            body: JSON.stringify({ userId: currentUserId }) // Filtere das eigene Profil heraus
-		        });
-		
-		        const result = await response.json();
-		
-		        if (response.ok && result.profiles) {
-		            currentProfiles = result.profiles; // Speichere die geladenen Profile
-		            currentIndex = 0; // Setze den Index zurück
-		            
-		            // Finde das eigene Profil im Array und entferne es
-		            const myProfileIndex = currentProfiles.findIndex(p => p.userId === currentUserId);
-		            if (myProfileIndex !== -1) {
-		                currentProfiles.splice(myProfileIndex, 1);
-		            }
-		            
-		            console.log(`🎯 Gesamt Profile zum Swipen: ${currentProfiles.length}`);
-		            
-		            if (currentProfiles.length > 0) {
-		                const profilesToShow = currentProfiles.slice(0, 3); // Lade die ersten 3 Profile
-		                profilesToShow.reverse().forEach(profile => {
-		                    const card = document.createElement('div');
-		                    card.innerHTML = createSwipeCardFromData(profile);
-		                    cardStack.appendChild(card.firstElementChild);
-		                });
-		                
-		                // Setze das oberste Profil als das aktuelle
-		                currentSwipeUser = profilesToShow[0];
-		            } else {
-		                cardStack.innerHTML = '<p class="text-center text-gray-500">Keine weiteren Profile gefunden.</p>';
-		            }
-		
-		        } else {
-		            console.error('❌ Fehler beim Laden der DB-Profile:', result.error);
-		        }
-		    } catch (error) {
-		        console.error('❌ Fehler beim Laden der DB-Profile:', error);
-		    }
+			console.log('🔄 loadSwipeCards aufgerufen');
+			const cardStack = document.getElementById('cardStack');
+			if (!cardStack) {
+				console.error('❌ cardStack nicht gefunden - HTML Struktur prüfen!');
+				return;
+			}
+
+			cardStack.innerHTML = '';
+			
+			try {
+				const response = await fetch('/.netlify/functions/get_profiles', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ userId: currentUserId }) // Filtere das eigene Profil heraus
+				});
+
+				const result = await response.json();
+
+				if (response.ok && result.profiles) {
+					currentProfiles = result.profiles; // Speichere die geladenen Profile
+					currentIndex = 0; // Setze den Index zurück
+					
+					// Finde das eigene Profil im Array und entferne es
+					const myProfileIndex = currentProfiles.findIndex(p => p.userId === currentUserId);
+					if (myProfileIndex !== -1) {
+						currentProfiles.splice(myProfileIndex, 1);
+					}
+					
+					console.log(`🎯 Gesamt Profile zum Swipen: ${currentProfiles.length}`);
+					
+					if (currentProfiles.length > 0) {
+						const profilesToShow = currentProfiles.slice(0, 3); // Lade die ersten 3 Profile
+						profilesToShow.reverse().forEach(profile => {
+							const card = document.createElement('div');
+							card.innerHTML = createSwipeCardFromData(profile);
+							cardStack.appendChild(card.firstElementChild);
+						});
+						
+						// Setze das oberste Profil als das aktuelle
+						currentSwipeUser = profilesToShow[0];
+					} else {
+						cardStack.innerHTML = '<p class="text-center text-gray-500">Keine weiteren Profile gefunden.</p>';
+					}
+
+				} else {
+					console.error('❌ Fehler beim Laden der DB-Profile:', result.error);
+				}
+			} catch (error) {
+				console.error('❌ Fehler beim Laden der DB-Profile:', error);
+			}
 		}
+
 		// Neue Funktion für Profil-Details
 		function showProfileDetails(profile) {
 		    const profileName = profile.profile_name || profile.name || "Unbekannt";
