@@ -1666,16 +1666,16 @@
 		                <div style="text-align: right; margin-bottom: 10px;">
 		                    <button onclick="closeProfileModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">&times;</button>
 		                </div>
-		                <img src="${profileImage}" 
-		                     alt="${profileName}" 
-		                     style="width: 100%; height: 250px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;"
-		                     onerror="this.src='data:image/svg+xml;base64,${btoa(`
-		                        <svg width="400" height="250" xmlns="http://www.w3.org/2000/svg">
-		                            <rect width="400" height="250" fill="#f0f0f0"/>
-		                            <text x="200" y="110" text-anchor="middle" fill="#999" font-size="30">📷</text>
-		                            <text x="200" y="140" text-anchor="middle" fill="#999" font-size="14" font-family="Arial">Bild nicht verfügbar</text>
-		                        </svg>
-		                     ')}'">
+						<img src="${profileImage}" 
+						     alt="${profileName}" 
+						     style="width: 100%; height: 250px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;"
+						     onerror="this.src = `data:image/svg+xml;base64,${btoa(`
+						        <svg width="400" height="250" xmlns="http://www.w3.org/2000/svg">
+						            <rect width="400" height="250" fill="#f0f0f0"/>
+						            <text x="200" y="110" text-anchor="middle" fill="#999" font-size="30">📷</text>
+						            <text x="200" y="140" text-anchor="middle" fill="#999" font-size="14" font-family="Arial">Bild nicht verfügbar</text>
+						        </svg>
+						    `)}`">
 		                <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">${profileName}</h2>
 		                <p style="color: #666; line-height: 1.5; margin-bottom: 15px; font-size: 16px;">${profileDescription}</p>
 		                <div style="margin-bottom: 20px;">
