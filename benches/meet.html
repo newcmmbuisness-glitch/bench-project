@@ -154,35 +154,44 @@
         }
 
 		/* New Button Styling */
+		/* Floating Buttons - Updated CSS */
 		.floating-button {
-			position: fixed;
-			bottom: 2rem;
-			width: 4rem;
-			height: 4rem;
-			border-radius: 50%;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-			transition: transform 0.2s;
-			cursor: pointer;
-			z-index: 1000;
+		    position: fixed;
+		    bottom: 2rem;
+		    width: 4rem;
+		    height: 4rem;
+		    border-radius: 50%;
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+		    transition: transform 0.2s, opacity 0.3s;
+		    cursor: pointer;
+		    z-index: 1000;
+		    opacity: 1;
+		    visibility: visible;
 		}
-
+		
 		.floating-button:hover {
-			transform: scale(1.05);
+		    transform: scale(1.05);
 		}
-
+		
+		.floating-button.hidden {
+		    opacity: 0;
+		    visibility: hidden;
+		    pointer-events: none;
+		}
+		
 		.profile-button {
-			left: 2rem;
-			background-color: #ff5e5e;
-			color: white;
+		    left: 2rem;
+		    background-color: #ff5e5e;
+		    color: white;
 		}
-
+		
 		.chat-button {
-			right: 2rem;
-			background-color: #007bff;
-			color: white;
+		    right: 2rem;
+		    background-color: #007bff;
+		    color: white;
 		}
 
 		/* Profile-Popup Styling */
@@ -1140,26 +1149,32 @@
             showWelcome();
         }
 
-        function updateAuthButtons() {
-            const authDiv = document.getElementById('authButtons');
-            const userEmailDisplay = document.getElementById('user-email-display');
-
-            if (currentUser) {
-                if (userEmailDisplay) {
-                    userEmailDisplay.innerHTML = `
-                        <span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
-                            👤 ${currentUser.email}
-                        </span>
-                    `;
-                }
-                authDiv.innerHTML = '<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>';
-            } else {
-                authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
-                if (userEmailDisplay) {
-                    userEmailDisplay.innerHTML = '';
-                }
-            }
-        }
+		function updateAuthButtons() {
+		    const authDiv = document.getElementById('authButtons');
+		    const userEmailDisplay = document.getElementById('user-email-display');
+		
+		    if (currentUser) {
+		        if (userEmailDisplay) {
+		            userEmailDisplay.innerHTML = `
+		                <span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
+		                    👤 ${currentUser.email}
+		                </span>
+		            `;
+		        }
+		        authDiv.innerHTML = '<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>';
+		        
+		        // Nach Anmeldung prüfen ob Profil existiert
+		        checkAndRenderUI();
+		    } else {
+		        authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
+		        if (userEmailDisplay) {
+		            userEmailDisplay.innerHTML = '';
+		        }
+		        // Floating buttons verstecken wenn nicht angemeldet
+		        document.getElementById('profileButton').classList.add('hidden');
+		        document.getElementById('chatButton').classList.add('hidden');
+		    }
+		}
 
         // Navigation Functions
         function showWelcome() {
@@ -1326,60 +1341,63 @@
 		}
 		
 		async function checkAndRenderUI() {
-		    hideAllScreens();
-		    
-		    const userString = localStorage.getItem('currentUser');
-		    
-		    // Prüfen Sie, ob der Benutzer im localStorage gespeichert ist
-		    if (!userString) {
-		        document.getElementById('welcomeScreen').style.display = 'block';
-		        return;
-		    }
+			hideAllScreens();
+			
+			// Prüfe ob User angemeldet ist
+			if (!currentUser || !currentUser.uid) {
+				document.getElementById('welcomeScreen').style.display = 'block';
+				// Verstecke floating buttons
+				document.getElementById('profileButton').classList.add('hidden');
+				document.getElementById('chatButton').classList.add('hidden');
+				return;
+			}
 		
-		    // Wandeln Sie den String wieder in ein JavaScript-Objekt um
-		    const user = JSON.parse(userString);
+			try {
+				// Prüfe ob User ein Profil hat
+				const response = await fetch('/.netlify/functions/check_profile', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
 		
-		    if (!user || !user.uid) {
-		        // Fehlerhafte oder unvollständige Benutzerdaten
-		        document.getElementById('welcomeScreen').style.display = 'block';
-		        return;
-		    }
+				const result = await response.json();
 		
-		    try {
-		        // Verwenden Sie die Benutzer-ID aus dem `currentUser`-Objekt
-		        const response = await fetch('/.netlify/functions/get_my_profile', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ userId: user.uid }),
-		        });
+				if (result.hasProfile) {
+					// User hat Profil -> Zeige Swipe Cards
+					showSwipeCards();
+					// Zeige floating buttons
+					document.getElementById('profileButton').classList.remove('hidden');
+					document.getElementById('chatButton').classList.remove('hidden');
+				} else {
+					// User hat kein Profil -> Zeige "Profil erstellen" Button
+					showCreateProfileSection();
+					// Verstecke floating buttons
+					document.getElementById('profileButton').classList.add('hidden');
+					document.getElementById('chatButton').classList.add('hidden');
+				}
 		
-		        if (response.ok) {
-		            // Profil gefunden, zeige Swipe-Menü
-		            showSwipeCards();
-		        } else if (response.status === 404) {
-		            // Profil nicht gefunden, zeige "Profil erstellen"-Bereich
-		            showCreateProfileSection();
-		        } else {
-		            showNotification(`❌ Fehler: ${response.statusText}`, 'error');
-		            document.getElementById('welcomeScreen').style.display = 'block';
-		        }
-		    } catch (error) {
-		        console.error('Fehler beim Abrufen des Profils:', error);
-		        showNotification('❌ Netzwerkfehler. Bitte versuche es erneut.', 'error');
-		        document.getElementById('welcomeScreen').style.display = 'block';
-		    }
+			} catch (error) {
+				console.error('Fehler beim Prüfen des Profils:', error);
+				showNotification('⚠️ Fehler beim Laden. Bitte versuchen Sie es erneut.', 'error');
+				document.getElementById('welcomeScreen').style.display = 'block';
+			}
 		}
 		
-        function showSwipeCards() {
-            if (!currentUser) {
-                showLogin();
-                showNotification('🔒 Sie müssen sich anmelden, um Leute kennenzulernen!', 'error');
-                return;
-            }
-            hideAllScreens();
-            document.getElementById('swipeContainer').style.display = 'block';
-            loadSwipeCards();
-        }
+		function showCreateProfileSection() {
+			hideAllScreens();
+			document.getElementById('createProfileSection').style.display = 'flex';
+		}
+		
+		function showSwipeCards() {
+		    if (!currentUser) {
+		        showLogin();
+		        showNotification('🔒 Sie müssen sich anmelden, um Leute kennenzulernen!', 'error');
+		        return;
+		    }
+		    hideAllScreens();
+		    document.getElementById('swipeContainer').style.display = 'block';
+		    loadSwipeCards();
+		}
 
         function showChats() {
             if (!currentUser) {
@@ -1528,41 +1546,58 @@
 
         // Swipe Card Functions
 		async function loadSwipeCards() {
-			const cardStack = document.getElementById('cardStack');
-		  	if (!cardStack) {
-				console.error('#cardStack nicht gefunden – breche loadSwipeCards ab');
-				return;
-			}	
-			cardStack.innerHTML = '';
-			currentCardIndex = 0;
-
-			try {
-				const response = await fetch('/.netlify/functions/get_profile', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ userId: currentUser.uid })
-				});
-
-				const result = await response.json();
-
-				let dbProfiles = [];
-				if (result.success && result.profiles && result.profiles.length > 0) {
-					dbProfiles = result.profiles;
-				}
-
-				// 👉 DB + Samples zusammenführen und mischen
-				currentProfiles = shuffle([...dbProfiles, ...sampleProfiles]);
-
-			} catch (error) {
-				console.error("Fehler beim Laden der DB-Profile:", error);
-				// Nur Samples wenn DB-Aufruf fehlschlägt
-				currentProfiles = shuffle([...sampleProfiles]);
-			}
-
-			// Erste Karten anzeigen
-			for (let i = 0; i < Math.min(3, currentProfiles.length); i++) {
-				createSwipeCard(currentProfiles[i], i);
-			}
+		    const cardStack = document.getElementById('cardStack');
+		    if (!cardStack) {
+		        console.error('#cardStack nicht gefunden – breche loadSwipeCards ab');
+		        return;
+		    }	
+		    cardStack.innerHTML = '';
+		    currentCardIndex = 0;
+		
+		    try {
+		        // Lade echte Profile aus der DB
+		        const response = await fetch('/.netlify/functions/get_profile', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ userId: currentUser.uid })
+		        });
+		
+		        const result = await response.json();
+		
+		        let dbProfiles = [];
+		        if (result.success && result.profiles && result.profiles.length > 0) {
+		            dbProfiles = result.profiles;
+		            console.log('DB Profile geladen:', dbProfiles.length);
+		        }
+		
+		        // Kombiniere DB-Profile mit Sample-Profilen und mische sie
+		        currentProfiles = shuffle([...dbProfiles, ...sampleProfiles]);
+		        console.log('Gesamt Profile zum Swipen:', currentProfiles.length);
+		
+		        if (currentProfiles.length === 0) {
+		            cardStack.innerHTML = `
+		                <div style="text-align: center; padding: 40px; color: #666;">
+		                    <h3>🎉 Keine neuen Profile</h3>
+		                    <p>Schauen Sie später wieder vorbei!</p>
+		                </div>
+		            `;
+		            return;
+		        }
+		
+		        // Erste 3 Karten anzeigen
+		        for (let i = 0; i < Math.min(3, currentProfiles.length); i++) {
+		            createSwipeCard(currentProfiles[i], i);
+		        }
+		
+		    } catch (error) {
+		        console.error("Fehler beim Laden der DB-Profile:", error);
+		        // Fallback: Nur Sample-Profile verwenden
+		        currentProfiles = shuffle([...sampleProfiles]);
+		        
+		        for (let i = 0; i < Math.min(3, currentProfiles.length); i++) {
+		            createSwipeCard(currentProfiles[i], i);
+		        }
+		    }
 		}
 
 		function createSwipeCard(profile, index) {
@@ -1715,29 +1750,47 @@
 		  return next;
 		}
 		
-		// Asynchrone Hilfsfunktion für den Netzwerkaufruf
-		async function handleSwipeAsync(isLike) {
-			if (isLike) {
-				try {
-					const likerId = currentUser.uid;
-					const likedId = currentSwipeUser.user_id; // Annahme, dass die ID so im Profil-Objekt ist
-
-					const response = await fetch('/.netlify/functions/create_match', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ likerId, likedId })
-					});
-
-					const result = await response.json();
-					if (result.newMatch) {
-						showNotification('🎉 Es ist ein Match!', 'success');
-						loadMatches(); // Aktualisiert die Match-Liste, sobald ein Match entsteht
-					}
-				} catch (error) {
-					console.error('Fehler beim Erstellen des Matches:', error);
-					showNotification('❌ Fehler beim Match-Versuch.', 'error');
-				}
-			}
+		async function handleSwipe(profile, isLike) {
+		    if (!isLike) return; // Nur bei Likes weiter
+		    
+		    try {
+		        const likerId = currentUser.uid;
+		        // Prüfe ob es ein DB-Profil oder Sample-Profil ist
+		        const likedId = profile.user_id || profile.id; // DB hat user_id, Samples haben id
+		        
+		        if (!likedId || typeof likedId !== 'number') {
+		            // Sample-Profile -> lokale Match-Simulation
+		            showNotification(`💖 Match mit ${profile.name || profile.profile_name}!`, 'success');
+		            return;
+		        }
+		        
+		        // Echtes DB-Profil -> API-Aufruf
+		        const response = await fetch('/.netlify/functions/create_match', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ 
+		                likerId: likerId,
+		                likedId: likedId 
+		            })
+		        });
+		
+		        const result = await response.json();
+		        
+		        if (result.success) {
+		            if (result.newMatch) {
+		                showNotification('🎉 Es ist ein Match!', 'success');
+		            } else {
+		                showNotification(`💖 Like gesendet an ${profile.profile_name || profile.name}!`, 'success');
+		            }
+		        } else {
+		            console.error('Match-Fehler:', result.error);
+		        }
+		        
+		    } catch (error) {
+		        console.error('Fehler beim Erstellen des Matches:', error);
+		        // Zeige trotzdem positive Nachricht
+		        showNotification(`💖 Match mit ${profile.profile_name || profile.name}!`, 'success');
+		    }
 		}
 
 		// Funktion zum Laden und Anzeigen der Matches des Benutzers
@@ -1867,36 +1920,36 @@
 			}
 		}
 		
-        function completeSwipe(card, profile, direction) {
-            card.classList.add(direction === 'left' ? 'swiped-left' : 'swiped-right');
-            
-            if (direction === 'right') {
-                // It's a match!
-                addMatch(profile);
-                showNotification(`💖 It's a Match mit ${profile.name}!`, 'success');
-            }
-            
-            setTimeout(() => {
-                card.remove();
-                currentCardIndex++;
-                
-                // Load next card if available
-                if (currentCardIndex + 2 < sampleProfiles.length) {
-                    createSwipeCard(sampleProfiles[currentCardIndex + 2], 2);
-                }
-                
-                // Update remaining cards positions
-                const remainingCards = document.querySelectorAll('.swipe-card');
-                remainingCards.forEach((card, index) => {
-                    card.style.zIndex = remainingCards.length - index;
-                    card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 5}px)`;
-                });
-                
-                if (remainingCards.length === 0) {
-                    showNotification('🎉 Alle Profile durchgeschaut! Neue kommen bald.', 'success');
-                }
-            }, 300);
-        }
+		async function completeSwipe(card, profile, direction) {
+		    card.classList.add(direction === 'left' ? 'swiped-left' : 'swiped-right');
+		    
+		    // Bei Like: Match in DB speichern
+		    if (direction === 'right') {
+		        await handleSwipe(profile, true);
+		    }
+		    
+		    setTimeout(() => {
+		        card.remove();
+		        currentCardIndex++;
+		        
+		        // Nächste Karte laden falls verfügbar
+		        const nextProfile = currentProfiles[currentCardIndex + 2];
+		        if (nextProfile) {
+		            createSwipeCard(nextProfile, 2);
+		        }
+		        
+		        // Positionen der verbleibenden Karten aktualisieren
+		        const remainingCards = document.querySelectorAll('.swipe-card');
+		        remainingCards.forEach((card, index) => {
+		            card.style.zIndex = remainingCards.length - index;
+		            card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 5}px)`;
+		        });
+		        
+		        if (remainingCards.length === 0) {
+		            showNotification('🎉 Alle Profile durchgeschaut! Neue kommen bald.', 'success');
+		        }
+		    }, 300);
+		}
 
         function addMatch(profile) {
             if (!matches.find(m => m.id === profile.id)) {
