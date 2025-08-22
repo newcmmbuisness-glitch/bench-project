@@ -1529,6 +1529,10 @@
         // Swipe Card Functions
 		async function loadSwipeCards() {
 			const cardStack = document.getElementById('cardStack');
+		  	if (!cardStack) {
+				console.error('#cardStack nicht gefunden – breche loadSwipeCards ab');
+				return;
+			}	
 			cardStack.innerHTML = '';
 			currentCardIndex = 0;
 
@@ -1562,39 +1566,40 @@
 		}
 
 		function createSwipeCard(profile, index) {
-			const cardStack = document.getElementById('cardStack');
-			const card = document.createElement('div');
-			card.className = 'swipe-card';
-			card.style.zIndex = 3 - index;
-			card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 5}px)`;
-
-			// Fallbacks für DB- oder Sample-Profil
-			const profileName = profile.profile_name || profile.name || "Unbekannt";
-			const profileImage = profile.profile_image || profile.image || "fallback.png";
-			const profileDescription = profile.description || "";
-			const prefs = profile.interests || profile.preferences || [];
-
-			const preferencesHtml = prefs.map(pref => {
-				const icon = emojiMap[pref] || '';
-				return `<span class="preference-icon" title="${pref}">${icon}</span>`;
-			}).join('');
-
-			card.innerHTML = `
-				<img src="${profileImage}" alt="${profileName}" class="card-image">
-				<div class="card-content">
-					<div>
-						<h3 class="card-name">${profileName}</h3>
-						<p class="card-description">${profileDescription}</p>
-					</div>
-					<div class="card-preferences">
-						${preferencesHtml}
-					</div>
-				</div>
-			`;
-
-			cardStack.appendChild(card);
-			setupSwipeGestures(card, profile);
+		  const cardStack = document.getElementById('cardStack');
+		  const card = document.createElement('div');
+		  card.className = 'swipe-card';
+		  card.style.zIndex = 3 - index;
+		  card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 5}px)`;
+		
+		  // Profil am DOM-Element speichern -> Buttons können es greifen
+		  card.__profile = profile;
+		
+		  const profileName = profile.profile_name || profile.name || "Unbekannt";
+		  const profileImage = profile.profile_image || profile.image || "fallback.png";
+		  const profileDescription = profile.description || "";
+		  const prefs = profile.interests || profile.preferences || [];
+		
+		  const preferencesHtml = prefs.map(pref => {
+		    const icon = emojiMap[pref] || '';
+		    return `<span class="preference-icon" title="${pref}">${icon}</span>`;
+		  }).join('');
+		
+		  card.innerHTML = `
+		    <img src="${profileImage}" alt="${profileName}" class="card-image">
+		    <div class="card-content">
+		      <div>
+		        <h3 class="card-name">${profileName}</h3>
+		        <p class="card-description">${profileDescription}</p>
+		      </div>
+		      <div class="card-preferences">${preferencesHtml}</div>
+		    </div>
+		  `;
+		
+		  cardStack.appendChild(card);
+		  setupSwipeGestures(card, profile);
 		}
+
 
 		function shuffle(array) {
 			return array.sort(() => Math.random() - 0.5);
@@ -1690,30 +1695,26 @@
 			}
 		}
 
-		// Funktion für die Swipe-Logik (synchrone Funktion)
 		function swipeCard(direction) {
-			const isLike = direction === 'right';
-			const swipeContainer = document.getElementById('swipeContainer');
-			const activeCard = swipeContainer.querySelector('.swipe-card');
-			
-			if (!activeCard || !currentSwipeUser) return;
-
-			if (isLike) {
-				activeCard.classList.add('swiped-right');
-				// Starte den asynchronen Prozess im Hintergrund
-				handleSwipeAsync(isLike);
-			} else {
-				activeCard.classList.add('swiped-left');
-				handleSwipeAsync(isLike);
-			}
-
-			// Entferne die Karte nach der Animation und zeige die nächste
-			setTimeout(() => {
-				activeCard.remove();
-				showNextCard();
-			}, 300);
+		  const stack = document.getElementById('cardStack');
+		  if (!stack) return;
+		  // letzte Karte (oberste)
+		  const activeCard = stack.querySelector('.swipe-card:last-child');
+		  if (!activeCard) return;
+		
+		  const profile = activeCard.__profile;
+		  if (!profile) return;
+		
+		  completeSwipe(activeCard, profile, direction);
 		}
 
+		function nextProfileFromDeck() {
+		  // einfache Nachlade-Strategie: nimm das nächste Profil, wenn vorhanden
+		  const next = currentProfiles[currentCardIndex + 2];
+		  currentCardIndex++;
+		  return next;
+		}
+		
 		// Asynchrone Hilfsfunktion für den Netzwerkaufruf
 		async function handleSwipeAsync(isLike) {
 			if (isLike) {
@@ -1751,7 +1752,7 @@
 					body: JSON.stringify({ userId: currentUser.uid })
 				});
 				const result = await response.json();
-
+	
 				if (result.success) {
 					matchesList.innerHTML = '';
 					result.matches.forEach(match => {
