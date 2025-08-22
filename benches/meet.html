@@ -1659,8 +1659,37 @@
 		        return `<span style="display: inline-block; margin: 5px; padding: 5px 10px; background: #f0f0f0; border-radius: 15px;">${icon} ${pref}</span>`;
 		    }).join('');
 		    
-
-
+		    // Zeige Details in einem Modal/Popup
+		    const detailsHtml = `
+		        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px;" onclick="closeProfileModal()">
+		            <div style="background: white; border-radius: 15px; padding: 20px; max-width: 400px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;" onclick="event.stopPropagation()">
+		                <div style="text-align: right; margin-bottom: 10px;">
+		                    <button onclick="closeProfileModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">&times;</button>
+		                </div>
+		                <img src="${profileImage}" 
+		                     alt="${profileName}" 
+		                     style="width: 100%; height: 250px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;"
+		                     onerror="this.src='data:image/svg+xml;base64,${btoa(`
+		                        <svg width="400" height="250" xmlns="http://www.w3.org/2000/svg">
+		                            <rect width="400" height="250" fill="#f0f0f0"/>
+		                            <text x="200" y="110" text-anchor="middle" fill="#999" font-size="30">📷</text>
+		                            <text x="200" y="140" text-anchor="middle" fill="#999" font-size="14" font-family="Arial">Bild nicht verfügbar</text>
+		                        </svg>
+		                     ')}'">
+		                <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">${profileName}</h2>
+		                <p style="color: #666; line-height: 1.5; margin-bottom: 15px; font-size: 16px;">${profileDescription}</p>
+		                <div style="margin-bottom: 20px;">
+		                    <h4 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">Interessen:</h4>
+		                    ${preferencesHtml || '<span style="color: #999;">Keine Interessen angegeben</span>'}
+		                </div>
+		                <div style="display: flex; gap: 15px; justify-content: center;">
+		                    <button onclick="swipeCard('left'); closeProfileModal();" style="background: #ff6b6b; color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 16px; min-width: 80px;">❌ Nein</button>
+		                    <button onclick="swipeCard('right'); closeProfileModal();" style="background: #4caf50; color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 16px; min-width: 80px;">💖 Ja</button>
+		                </div>
+		            </div>
+		        </div>
+		    `;
+		    
 		    // Entferne vorherige Modals
 		    const existingModal = document.querySelector('[data-profile-modal]');
 		    if (existingModal) {
