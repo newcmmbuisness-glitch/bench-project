@@ -1618,7 +1618,7 @@
 					headers: {
 						'Content-Type': 'application/json'
 					},
-					body: JSON.stringify({ userId: currentUserId }) // Filtere das eigene Profil heraus
+					body: JSON.stringify({ userId: currentUser.uid })
 				});
 
 				const result = await response.json();
