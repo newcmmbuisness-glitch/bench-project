@@ -916,16 +916,19 @@
 	    </div>
 	    
 		<div id="swipeContainer" class="swipe-container" style="display: none;">
-		    <div class="card-stack" id="cardStack">
-				</div>
-		    </div>
-		    <div class="swipe-actions">
-		        <button class="swipe-btn dislike" onclick="swipeCard('left')">❌</button>
-		        <button class="swipe-btn like" onclick="swipeCard('right')">💖</button>
-		    </div>
-		    <div style="text-align: center; margin-top: 20px;">
-		        <button class="action-btn btn-secondary" onclick="checkAndRenderUI()">↩️ Zurück</button>
-		    </div>
+			<div class="card-stack" id="cardStack">
+			</div>
+			<div id="noMoreProfiles" style="text-align: center; color: white; display: none;">
+				<h2 class="text-2xl font-bold">Keine weiteren Profile gefunden 😢</h2>
+				<p class="mt-2">Versuch es später noch einmal oder passe deine Sucheinstellungen an.</p>
+			</div>
+			<div class="swipe-actions">
+				<button class="swipe-btn dislike" onclick="swipeCard('left')">❌</button>
+				<button class="swipe-btn like" onclick="swipeCard('right')">💖</button>
+			</div>
+			<div style="text-align: center; margin-top: 20px;">
+				<button class="action-btn btn-secondary" onclick="checkAndRenderUI()">↩️ Zurück</button>
+			</div>
 		</div>
 	
 	    <div id="matchesContainer" class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg mx-auto" style="display: none;">
