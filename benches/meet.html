@@ -1581,7 +1581,7 @@
 			// Wenn das Element gefunden wurde, lade die Profile
 			try {
 				const result = await safeApiCall('/.netlify/functions/get_profile', {
-				const profiles = await response.json();
+				const profile = await response.json();
 				
 				currentProfiles = profiles.filter(p => p.uid !== currentUser.uid);
 				
