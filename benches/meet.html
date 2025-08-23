@@ -983,6 +983,9 @@
 		let currentIndex = 0;
 		let currentSwipeUser = null;
 		let currentUserId = localStorage.getItem('currentUserId');
+		let currentProfiles = [];
+		let isSwipeInProgress = false;
+
 
 		
 		const emojiMap = {
@@ -1217,11 +1220,91 @@
 		}
 				
 		async function showMatches() {
-			// Blendet die Swiping-Ansicht aus und zeigt die Matches-Ansicht
-			document.getElementById('swipeContainer').style.display = 'none';
-			document.getElementById('matchesContainer').style.display = 'block';
-			// TODO: Lade Matches von der DB (Ihre bestehende Logik)
+		    if (!currentUser) {
+		        showLogin();
+		        showNotification('🔒 Bitte melden Sie sich an!', 'error');
+		        return;
+		    }
+		    
+		    hideAllScreens();
+		    document.getElementById('matchesContainer').style.display = 'block';
+		    
+		    // Floating buttons verstecken
+		    updateFloatingButtons();
+		    
+		    await loadUserMatches();
 		}
+
+		async function loadUserMatches() {
+		    const matchesList = document.getElementById('matchesList');
+		    
+		    try {
+		        const response = await fetch('/.netlify/functions/get_matches', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ userId: currentUser.uid })
+		        });
+		        
+		        const result = await response.json();
+		        
+		        if (result.success && result.matches && result.matches.length > 0) {
+		            matchesList.innerHTML = result.matches.map(match => `
+		                <div class="match-item p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors" 
+		                     onclick="openMatchChat(${match.matched_user_id}, '${match.profile_name}')">
+		                    <div class="flex items-center space-x-3">
+		                        <img src="${match.profile_image}" 
+		                             alt="${match.profile_name}" 
+		                             class="w-16 h-16 rounded-full object-cover"
+		                             onerror="this.src='data:image/svg+xml;base64,' + btoa('<svg width=\\"64\\" height=\\"64\\" xmlns=\\"http://www.w3.org/2000/svg\\"><circle cx=\\"32\\" cy=\\"32\\" r=\\"32\\" fill=\\"#f0f0f0\\"/><text x=\\"32\\" y=\\"38\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"24\\">👤</text></svg>')">
+		                        <div class="flex-1">
+		                            <h4 class="font-semibold text-lg text-gray-800">${match.profile_name}</h4>
+		                            <p class="text-sm text-gray-500 truncate">${match.description || 'Neues Match!'}</p>
+		                            <div class="flex mt-2 space-x-1">
+		                                ${(match.interests || []).slice(0, 3).map(interest => 
+		                                    `<span class="text-sm">${emojiMap[interest] || '❓'}</span>`
+		                                ).join('')}
+		                            </div>
+		                        </div>
+		                        <div class="text-right">
+		                            <span class="text-xs text-gray-400">💕</span>
+		                        </div>
+		                    </div>
+		                </div>
+		            `).join('');
+		        } else {
+		            matchesList.innerHTML = `
+		                <div class="text-center py-12">
+		                    <div class="text-6xl mb-4">💔</div>
+		                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Noch keine Matches</h3>
+		                    <p class="text-gray-500 mb-6">Swipe nach rechts, um deine erste große Liebe zu finden!</p>
+		                    <button onclick="showSwipeCards()" class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-6 py-3 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors">
+		                        💖 Jetzt swipen
+		                    </button>
+		                </div>
+		            `;
+		        }
+		    } catch (error) {
+		        console.error('Fehler beim Laden der Matches:', error);
+		        matchesList.innerHTML = `
+		            <div class="text-center py-12">
+		                <div class="text-4xl mb-4">⚠️</div>
+		                <p class="text-gray-500">Fehler beim Laden der Matches</p>
+		                <button onclick="loadUserMatches()" class="mt-4 text-blue-500 hover:text-blue-700">
+		                    🔄 Erneut versuchen
+		                </button>
+		            </div>
+		        `;
+		    }
+		}	
+
+		function openMatchChat(matchUserId, matchName) {
+		    // Hier kannst du später ein Chat-System implementieren
+		    showNotification(`💬 Chat mit ${matchName} wird bald verfügbar sein!`, 'success');
+		    console.log('Chat öffnen mit User:', matchUserId, matchName);
+		    
+		    // Placeholder für zukünftige Chat-Implementierung
+		    // Du könntest hier zu einer Chat-Seite weiterleiten oder ein Chat-Modal öffnen
+		}		
 
 		async function showProfilePopup() {
 			if (!currentUser || !currentUser.uid) {
@@ -1353,46 +1436,36 @@
 		}
 		
 		async function checkAndRenderUI() {
-			hideAllScreens();
-			
-			// Prüfe ob User angemeldet ist
-			if (!currentUser || !currentUser.uid) {
-				document.getElementById('welcomeScreen').style.display = 'block';
-				// Verstecke floating buttons
-				document.getElementById('profileButton').classList.add('hidden');
-				document.getElementById('chatButton').classList.add('hidden');
-				return;
-			}
+		    hideAllScreens();
+		    
+		    if (!currentUser || !currentUser.uid) {
+		        document.getElementById('welcomeScreen').style.display = 'block';
+		        updateFloatingButtons();
+		        return;
+		    }
 		
-			try {
-				// Prüfe ob User ein Profil hat
-				const response = await fetch('/.netlify/functions/check_profile', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ userId: currentUser.uid })
-				});
+		    try {
+		        const response = await fetch('/.netlify/functions/check_profile', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ userId: currentUser.uid })
+		        });
 		
-				const result = await response.json();
+		        const result = await response.json();
 		
-				if (result.hasProfile) {
-					// User hat Profil -> Zeige Swipe Cards
-					showSwipeCards();
-					// Zeige floating buttons
-					document.getElementById('profileButton').classList.remove('hidden');
-					document.getElementById('chatButton').classList.remove('hidden');
-				} else {
-					// User hat kein Profil -> Zeige "Profil erstellen" Button
-					showCreateProfileSection();
-					// Verstecke floating buttons
-					document.getElementById('profileButton').classList.add('hidden');
-					document.getElementById('chatButton').classList.add('hidden');
-				}
+		        if (result.hasProfile) {
+		            showSwipeCards();
+		        } else {
+		            showCreateProfileSection();
+		            updateFloatingButtons();
+		        }
 		
-			} catch (error) {
-				console.error('Fehler beim Prüfen des Profils:', error);
-				showNotification('⚠️ Fehler beim Laden. Bitte versuchen Sie es erneut.', 'error');
-				document.getElementById('welcomeScreen').style.display = 'block';
-			}
+		    } catch (error) {
+		        console.error('Fehler beim Prüfen des Profils:', error);
+		        showNotification('⚠️ Fehler beim Laden. Bitte versuchen Sie es erneut.', 'error');
+		        document.getElementById('welcomeScreen').style.display = 'block';
+		        updateFloatingButtons();
+		    }
 		}
 		
 		function showCreateProfileSection() {
@@ -1401,41 +1474,20 @@
 		}
 		
 		function showSwipeCards() {
-			// 1. Zuerst die Anmelde-Prüfung
-			if (!currentUser) {
-				showLogin();
-				showNotification('🔒 Sie müssen sich anmelden, um Leute kennenzulernen!', 'error');
-				return;
-			}
-
-			// 2. Alle anderen Bildschirme ausblenden
-			hideAllScreens();
-
-			// 3. Den Container suchen
-			const swipeContainer = document.getElementById('swipeContainer');
-			if (!swipeContainer) {
-				console.error('❌ swipeContainer Element nicht gefunden');
-				return;
-			}
-
-			// 4. Den Container sichtbar machen
-			swipeContainer.style.display = 'block';
-
-			// 5. Den MutationObserver für das Laden der Karten einrichten
-			const observer = new MutationObserver((mutationsList, observer) => {
-				for (const mutation of mutationsList) {
-					if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-						if (swipeContainer.style.display === 'block') {
-							loadSwipeCards();
-							observer.disconnect(); // Stoppt die Überwachung nach dem ersten Aufruf
-						}
-					}
-				}
-			});
-			observer.observe(swipeContainer, { attributes: true });
-
-			// 6. Optional: Logging
-			console.log('📱 showSwipeCards aufgerufen');
+		    if (!currentUser) {
+		        showLogin();
+		        showNotification('🔒 Bitte melden Sie sich an!', 'error');
+		        return;
+		    }
+		
+		    hideAllScreens();
+		    document.getElementById('swipeContainer').style.display = 'block';
+		    
+		    // Floating buttons anzeigen
+		    updateFloatingButtons();
+		    
+		    // Cards laden
+		    loadSwipeCards();
 		}
 
         function showChats() {
@@ -1601,66 +1653,123 @@
 		    return cardHtml;
 		}
 		
+		// Hauptfunktion zum Laden der Swipe Cards
 		async function loadSwipeCards() {
 		    console.log('🔄 loadSwipeCards aufgerufen');
 		    const cardStack = document.getElementById('cardStack');
 		    if (!cardStack) {
-		        console.error('❌ cardStack nicht gefunden - HTML Struktur prüfen!');
+		        console.error('❌ cardStack nicht gefunden');
 		        return;
 		    }
 		
-		    cardStack.innerHTML = '';
+		    // Loading anzeigen
+		    cardStack.innerHTML = '<div class="text-center p-4">Lade Profile... 🔄</div>';
 		    
 		    try {
 		        const response = await fetch('/.netlify/functions/get_profile', {
 		            method: 'POST',
-		            headers: {
-		                'Content-Type': 'application/json'
-		            },
+		            headers: { 'Content-Type': 'application/json' },
 		            body: JSON.stringify({ userId: currentUser.uid })
 		        });
 		
 		        const result = await response.json();
 		
-		        if (response.ok && result.profiles) {
-		            currentProfiles = result.profiles;
+		        if (response.ok && result.profiles && result.profiles.length > 0) {
+		            currentProfiles = result.profiles.filter(p => p.user_id !== currentUser.uid);
 		            currentIndex = 0;
 		            
-		            // Finde das eigene Profil im Array und entferne es
-		            const myProfileIndex = currentProfiles.findIndex(p => p.user_id === currentUser.uid);
-		            if (myProfileIndex !== -1) {
-		                currentProfiles.splice(myProfileIndex, 1);
-		            }
-		            
-		            console.log(`🎯 Gesamt Profile zum Swipen: ${currentProfiles.length}`);
+		            console.log(`🎯 ${currentProfiles.length} Profile geladen`);
 		            
 		            if (currentProfiles.length > 0) {
-		                const profilesToShow = currentProfiles.slice(0, 3);
-		                profilesToShow.reverse().forEach(profile => {
-		                    const card = document.createElement('div');
-		                    card.innerHTML = createSwipeCardFromData(profile);
-		                    const cardElement = card.firstElementChild;
-		                    
-		                    // WICHTIG: 1. Binde das Profil-Objekt an die Karte
-		                    cardElement.__profile = profile; 
-		                    
-		                    // WICHTIG: 2. Aktiviere die Gesten-Logik
-		                    setupSwipeGestures(cardElement, profile);
-		                    
-		                    cardStack.appendChild(cardElement);
-		                });
-		                
-		                currentSwipeUser = profilesToShow[0];
+		                renderSwipeCards();
 		            } else {
-		                cardStack.innerHTML = '<p class="text-center text-gray-500">Keine weiteren Profile gefunden.</p>';
+		                cardStack.innerHTML = '<div class="text-center p-8 text-gray-500">Keine neuen Profile verfügbar 😊</div>';
 		            }
-		
 		        } else {
-		            console.error('❌ Fehler beim Laden der DB-Profile:', result.error);
+		            cardStack.innerHTML = '<div class="text-center p-8 text-gray-500">Keine Profile gefunden 🤷‍♀️</div>';
 		        }
+		
 		    } catch (error) {
-		        console.error('❌ Fehler beim Laden der DB-Profile:', error);
+		        console.error('❌ Fehler beim Laden der Profile:', error);
+		        cardStack.innerHTML = '<div class="text-center p-8 text-red-500">Fehler beim Laden 😞</div>';
 		    }
+		}
+
+		// Karten im Stack rendern
+		function renderSwipeCards() {
+		    const cardStack = document.getElementById('cardStack');
+		    cardStack.innerHTML = '';
+		    
+		    // Zeige maximal 3 Karten im Stack
+		    const maxCards = Math.min(3, currentProfiles.length - currentIndex);
+		    
+		    for (let i = maxCards - 1; i >= 0; i--) {
+		        const profileIndex = currentIndex + i;
+		        if (profileIndex < currentProfiles.length) {
+		            const profile = currentProfiles[profileIndex];
+		            createSwipeCard(profile, i);
+		        }
+		    }
+		}
+
+		// Einzelne Swipe Card erstellen
+		function createSwipeCard(profile, stackIndex) {
+		    const cardStack = document.getElementById('cardStack');
+		    
+		    const card = document.createElement('div');
+		    card.className = 'swipe-card';
+		    card.style.zIndex = 10 - stackIndex;
+		    card.style.transform = `scale(${1 - stackIndex * 0.03}) translateY(${stackIndex * 4}px)`;
+		    card.dataset.userId = profile.user_id;
+		    card.dataset.stackIndex = stackIndex;
+		    
+		    // Fallback für fehlendes Bild
+		    const imageUrl = profile.profile_image || 'data:image/svg+xml;base64,' + btoa(`
+		        <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+		            <rect width="400" height="300" fill="#f0f0f0"/>
+		            <text x="200" y="120" text-anchor="middle" fill="#999" font-size="40">📷</text>
+		            <text x="200" y="160" text-anchor="middle" fill="#999" font-size="18">Kein Bild</text>
+		        </svg>
+		    `);
+		    
+		    // Interessen formatieren
+		    const interests = (profile.interests || []).map(interest => 
+		        `<span class="preference-icon">${emojiMap[interest] || '❓'}</span>`
+		    ).join('');
+		    
+		    card.innerHTML = `
+		        <img src="${imageUrl}" 
+		             alt="${profile.profile_name}" 
+		             class="card-image"
+		             onerror="this.src='data:image/svg+xml;base64,' + btoa('<svg width=\\"400\\" height=\\"300\\" xmlns=\\"http://www.w3.org/2000/svg\\"><rect width=\\"400\\" height=\\"300\\" fill=\\"#f0f0f0\\"/><text x=\\"200\\" y=\\"120\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"40\\">📷</text><text x=\\"200\\" y=\\"160\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"18\\">Kein Bild</text></svg>')"
+		        >
+		        <div class="card-content">
+		            <div>
+		                <h3 class="card-name">${profile.profile_name}</h3>
+		                <p class="card-description">${profile.description || 'Keine Beschreibung verfügbar'}</p>
+		            </div>
+		            <div class="card-preferences">
+		                ${interests}
+		            </div>
+		        </div>
+		    `;
+		    
+		    // Profil-Daten an Card binden
+		    card.__profile = profile;
+		    
+		    // Event Listeners nur für die oberste Karte
+		    if (stackIndex === 0) {
+		        setupSwipeGestures(card);
+		        
+		        // Klick für Profil-Details (nur auf Bild)
+		        const cardImage = card.querySelector('.card-image');
+		        cardImage.addEventListener('click', (e) => {
+		            e.stopPropagation();
+		            showProfileDetails(profile);
+		        });
+		    }
+		    
+		    cardStack.appendChild(card);
 		}
 		
 		// Neue Funktion für Profil-Details
@@ -1669,7 +1778,6 @@
 		    const profileDescription = profile.description || "Keine Beschreibung verfügbar";
 		    const prefs = profile.interests || profile.preferences || [];
 		    
-		    // Bessere Bild-Behandlung
 		    let profileImage = profile.profile_image || profile.image;
 		    
 		    if (!profileImage) {
@@ -1677,38 +1785,55 @@
 		            <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
 		                <rect width="400" height="300" fill="#f0f0f0"/>
 		                <text x="200" y="120" text-anchor="middle" fill="#999" font-size="40">📷</text>
-		                <text x="200" y="160" text-anchor="middle" fill="#999" font-size="18" font-family="Arial">Kein Bild</text>
-		                <text x="200" y="180" text-anchor="middle" fill="#999" font-size="14" font-family="Arial">verfügbar</text>
+		                <text x="200" y="160" text-anchor="middle" fill="#999" font-size="18">Kein Bild</text>
+		                <text x="200" y="180" text-anchor="middle" fill="#999" font-size="14">verfügbar</text>
 		            </svg>
 		        `);
 		    }
 		    
 		    const preferencesHtml = prefs.map(pref => {
 		        const icon = emojiMap[pref] || '❓';
-		        return `<span style="display: inline-block; margin: 5px; padding: 5px 10px; background: #f0f0f0; border-radius: 15px;">${icon} ${pref}</span>`;
+		        return `<span class="inline-block m-1 px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">${icon} ${pref}</span>`;
 		    }).join('');
 		    
-		    // Zeige Details in einem Modal/Popup
 		    const detailsHtml = `
-		        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px;" onclick="closeProfileModal()">
-		            <div style="background: white; border-radius: 15px; padding: 20px; max-width: 400px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;" onclick="event.stopPropagation()">
-		                <div style="text-align: right; margin-bottom: 10px;">
-		                    <button onclick="closeProfileModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">&times;</button>
+		        <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" 
+		             onclick="closeProfileModal()">
+		            <div class="bg-white rounded-2xl max-w-md w-full max-h-90vh overflow-y-auto" 
+		                 onclick="event.stopPropagation()">
+		                <div class="relative">
+		                    <img src="${profileImage}" 
+		                         alt="${profileName}" 
+		                         class="w-full h-64 object-cover rounded-t-2xl"
+		                         onerror="this.src='${profileImage}'">
+		                    <button onclick="closeProfileModal()" 
+		                            class="absolute top-4 right-4 w-8 h-8 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center hover:bg-opacity-70">
+		                        ✕
+		                    </button>
 		                </div>
-						<img src="${profileImage}" 
-						     alt="${profileName}" 
-						     style="width: 100%; height: 250px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;"
-						     onerror="this.src = 'data:image/svg+xml;base64,' + btoa('<svg width=\"400\" height=\"250\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"400\" height=\"250\" fill=\"#f0f0f0\"/><text x=\"200\" y=\"110\" text-anchor=\"middle\" fill=\"#999\" font-size=\"30\">📷</text><text x=\"200\" y=\"140\" text-anchor=\"middle\" fill=\"#999\" font-size=\"14\" font-family=\"Arial\">Bild nicht verfügbar</text></svg>')"
-						>
-		                <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">${profileName}</h2>
-		                <p style="color: #666; line-height: 1.5; margin-bottom: 15px; font-size: 16px;">${profileDescription}</p>
-		                <div style="margin-bottom: 20px;">
-		                    <h4 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">Interessen:</h4>
-		                    ${preferencesHtml || '<span style="color: #999;">Keine Interessen angegeben</span>'}
-		                </div>
-		                <div style="display: flex; gap: 15px; justify-content: center;">
-		                    <button onclick="swipeCard('left'); closeProfileModal();" style="background: #ff6b6b; color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 16px; min-width: 80px;">❌ Nein</button>
-		                    <button onclick="swipeCard('right'); closeProfileModal();" style="background: #4caf50; color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 16px; min-width: 80px;">💖 Ja</button>
+		                <div class="p-6">
+		                    <h2 class="text-2xl font-bold text-gray-800 mb-2">${profileName}</h2>
+		                    <p class="text-gray-600 mb-4 leading-relaxed">${profileDescription}</p>
+		                    
+		                    ${prefs.length > 0 ? `
+		                        <div class="mb-6">
+		                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Interessen</h4>
+		                            <div class="flex flex-wrap">
+		                                ${preferencesHtml}
+		                            </div>
+		                        </div>
+		                    ` : ''}
+		                    
+		                    <div class="flex space-x-3">
+		                        <button onclick="swipeCard('left'); closeProfileModal();" 
+		                                class="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-6 rounded-full hover:from-red-600 hover:to-red-700 transition-colors font-semibold">
+		                            ❌ Nein
+		                        </button>
+		                        <button onclick="swipeCard('right'); closeProfileModal();" 
+		                                class="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-full hover:from-green-600 hover:to-green-700 transition-colors font-semibold">
+		                            💖 Ja
+		                        </button>
+		                    </div>
 		                </div>
 		            </div>
 		        </div>
@@ -1726,6 +1851,37 @@
 		    document.body.appendChild(modalDiv);
 		}
 		
+		// Event Listeners für Keyboard Shortcuts (aktualisiert)
+		document.addEventListener('keydown', (e) => {
+		    // Escape für Modals
+		    if (e.key === 'Escape') {
+		        closeLogin();
+		        closeProfileModal();
+		        closeProfilePopup();
+		        if (sidebarOpen) closeSidebar();
+		    }
+		    
+		    // Swipe shortcuts nur wenn Swipe-Container sichtbar
+		    const swipeContainer = document.getElementById('swipeContainer');
+		    if (swipeContainer && swipeContainer.style.display === 'block') {
+		        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+		            e.preventDefault();
+		            swipeCard('left');
+		        }
+		        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+		            e.preventDefault();
+		            swipeCard('right');
+		        }
+		        if (e.key === ' ') { // Spacebar für Details
+		            e.preventDefault();
+		            const activeCard = document.querySelector('.swipe-card[data-stack-index="0"]');
+		            if (activeCard && activeCard.__profile) {
+		                showProfileDetails(activeCard.__profile);
+		            }
+		        }
+		    }
+		});
+		
 		function closeProfileModal() {
 		    const modal = document.querySelector('[data-profile-modal]');
 		    if (modal) {
@@ -1737,27 +1893,97 @@
 			return array.sort(() => Math.random() - 0.5);
 		}
 
-        function setupSwipeGestures(card, profile) {
-            let startX = 0;
-            let currentX = 0;
-            let cardBeingDragged = false;
+		     // Swipe Gesten Setup
+		function setupSwipeGestures(card) {
+		    let startX = 0, startY = 0;
+		    let currentX = 0, currentY = 0;
+		    let isDragging = false;
+		    
+		    // Mouse Events
+		    card.addEventListener('mousedown', handleStart);
+		    document.addEventListener('mousemove', handleMove);
+		    document.addEventListener('mouseup', handleEnd);
+		    
+		    // Touch Events
+		    card.addEventListener('touchstart', handleStart, { passive: true });
+		    document.addEventListener('touchmove', handleMove, { passive: false });
+		    document.addEventListener('touchend', handleEnd);
+		            function startDrag(e) {
+		                if (card !== document.querySelector('.swipe-card:last-child')) return;
+		                
+		                cardBeingDragged = true;
+		                card.classList.add('dragging');
+		                
+		                startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+		                
+		                document.addEventListener('mousemove', drag);
+		                document.addEventListener('touchmove', drag);
+		                document.addEventListener('mouseup', endDrag);
+		                document.addEventListener('touchend', endDrag);
+		            }
 
-            card.addEventListener('mousedown', startDrag);
-            card.addEventListener('touchstart', startDrag);
-
-            function startDrag(e) {
-                if (card !== document.querySelector('.swipe-card:last-child')) return;
-                
-                cardBeingDragged = true;
-                card.classList.add('dragging');
-                
-                startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-                
-                document.addEventListener('mousemove', drag);
-                document.addEventListener('touchmove', drag);
-                document.addEventListener('mouseup', endDrag);
-                document.addEventListener('touchend', endDrag);
-            }
+		    function handleStart(e) {
+		        if (isSwipeInProgress) return;
+		        
+		        const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+		        const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+		        
+		        startX = clientX;
+		        startY = clientY;
+		        isDragging = true;
+		        
+		        card.style.transition = '';
+		        card.style.cursor = 'grabbing';
+		    }
+		    
+		    function handleMove(e) {
+		        if (!isDragging || isSwipeInProgress) return;
+		        
+		        e.preventDefault();
+		        
+		        const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+		        const clientY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
+		        
+		        currentX = clientX - startX;
+		        currentY = clientY - startY;
+		        
+		        // Rotation und Opacity basierend auf X-Position
+		        const rotation = currentX * 0.1;
+		        const opacity = Math.max(0.3, 1 - Math.abs(currentX) / 300);
+		        
+		        card.style.transform = `translateX(${currentX}px) translateY(${currentY}px) rotate(${rotation}deg)`;
+		        card.style.opacity = opacity;
+		        
+		        // Visuelle Hinweise
+		        if (Math.abs(currentX) > 50) {
+		            card.style.boxShadow = currentX > 0 ? 
+		                '0 0 20px rgba(76, 175, 80, 0.5)' : 
+		                '0 0 20px rgba(255, 107, 107, 0.5)';
+		        }
+		    }
+		    
+		    function handleEnd(e) {
+		        if (!isDragging) return;
+		        
+		        isDragging = false;
+		        card.style.cursor = 'grab';
+		        card.style.boxShadow = '';
+		        
+		        // Entscheidung basierend auf Swipe-Distanz
+		        if (Math.abs(currentX) > 100) {
+		            const direction = currentX > 0 ? 'right' : 'left';
+		            completeSwipe(direction);
+		        } else {
+		            // Zurück zur ursprünglichen Position
+		            card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+		            card.style.transform = '';
+		            card.style.opacity = '';
+		        }
+		        
+		        currentX = 0;
+		        currentY = 0;
+		    }
+		}	
 
 		function drag(e) {
 			if (!cardBeingDragged) return;
@@ -1827,18 +2053,19 @@
 			}
 		}
 
+		// Swipe über Buttons
 		function swipeCard(direction) {
-		  const stack = document.getElementById('cardStack');
-		  if (!stack) return;
-		  // letzte Karte (oberste)
-		  const activeCard = stack.querySelector('.swipe-card:last-child');
-		  if (!activeCard) return;
-		
-		  const profile = activeCard.__profile;
-		  if (!profile) return;
-		
-		  completeSwipe(activeCard, profile, direction);
+		    if (isSwipeInProgress) return;
+		    
+		    const activeCard = document.querySelector('.swipe-card[data-stack-index="0"]');
+		    if (!activeCard) {
+		        console.log('Keine aktive Karte gefunden');
+		        return;
+		    }
+		    
+		    completeSwipe(direction);
 		}
+
 
 		function nextProfileFromDeck() {
 		  // einfache Nachlade-Strategie: nimm das nächste Profil, wenn vorhanden
@@ -2017,35 +2244,219 @@
 			}
 		}
 		
-		async function completeSwipe(card, profile, direction) {
-		    card.classList.add(direction === 'left' ? 'swiped-left' : 'swiped-right');
+		// Swipe abschließen
+		async function completeSwipe(direction) {
+		    if (isSwipeInProgress) return;
 		    
-		    // Bei Like: Match in DB speichern
-		    if (direction === 'right') {
-		        await handleSwipe(profile, true);
+		    isSwipeInProgress = true;
+		    
+		    const activeCard = document.querySelector('.swipe-card[data-stack-index="0"]');
+		    if (!activeCard || !activeCard.__profile) {
+		        isSwipeInProgress = false;
+		        return;
 		    }
 		    
+		    const profile = activeCard.__profile;
+		    const isLike = direction === 'right';
+		    
+		    // Animation
+		    activeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+		    const moveX = direction === 'right' ? 400 : -400;
+		    const rotation = direction === 'right' ? 30 : -30;
+		    
+		    activeCard.style.transform = `translateX(${moveX}px) rotate(${rotation}deg)`;
+		    activeCard.style.opacity = '0';
+		    
+		    // Like/Dislike verarbeiten
+		    if (isLike) {
+		        await handleLike(profile);
+		    } else {
+		        console.log('👎 Dislike:', profile.profile_name);
+		    }
+		    
+		    // Karte nach Animation entfernen
 		    setTimeout(() => {
-		        card.remove();
-		        currentCardIndex++;
+		        activeCard.remove();
+		        currentIndex++;
 		        
-		        // Nächste Karte laden falls verfügbar
-		        const nextProfile = currentProfiles[currentCardIndex + 2];
-		        if (nextProfile) {
-		            createSwipeCard(nextProfile, 2);
+		        // Verbleibende Karten neu positionieren
+		        updateCardStack();
+		        
+		        // Neue Karte laden falls verfügbar
+		        if (currentIndex + 2 < currentProfiles.length) {
+		            const newProfile = currentProfiles[currentIndex + 2];
+		            createSwipeCard(newProfile, 2);
 		        }
 		        
-		        // Positionen der verbleibenden Karten aktualisieren
-		        const remainingCards = document.querySelectorAll('.swipe-card');
-		        remainingCards.forEach((card, index) => {
-		            card.style.zIndex = remainingCards.length - index;
-		            card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 5}px)`;
-		        });
-		        
-		        if (remainingCards.length === 0) {
-		            showNotification('🎉 Alle Profile durchgeschaut! Neue kommen bald.', 'success');
+		        // Prüfen ob mehr Karten vorhanden
+		        if (currentIndex >= currentProfiles.length) {
+		            showNoMoreCards();
 		        }
+		        
+		        isSwipeInProgress = false;
 		    }, 300);
+		}
+
+		// Verbleibende Karten im Stack aktualisieren
+		function updateCardStack() {
+		    const cards = document.querySelectorAll('.swipe-card');
+		    cards.forEach((card, index) => {
+		        card.dataset.stackIndex = index;
+		        card.style.zIndex = 10 - index;
+		        card.style.transform = `scale(${1 - index * 0.03}) translateY(${index * 4}px)`;
+		        
+		        // Event Listeners nur für neue oberste Karte
+		        if (index === 0 && !card.hasAttribute('data-gestures-setup')) {
+		            setupSwipeGestures(card);
+		            card.setAttribute('data-gestures-setup', 'true');
+		            
+		            // Klick für Profil-Details
+		            const cardImage = card.querySelector('.card-image');
+		            if (cardImage) {
+		                cardImage.addEventListener('click', (e) => {
+		                    e.stopPropagation();
+		                    showProfileDetails(card.__profile);
+		                });
+		            }
+		        }
+		    });
+		}
+
+		// Like verarbeiten
+		async function handleLike(profile) {
+		    try {
+		        console.log('💖 Like für:', profile.profile_name);
+		        
+		        const response = await fetch('/.netlify/functions/create_match', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ 
+		                likerId: currentUser.uid,
+		                likedId: profile.user_id 
+		            })
+		        });
+		
+		        const result = await response.json();
+		        
+		        if (result.success) {
+		            if (result.newMatch) {
+		                showNotification('🎉 Es ist ein Match! 💕', 'success');
+		                // Optional: Match-Animation oder Popup
+		                showMatchAnimation(profile);
+		            } else {
+		                showNotification(`💖 Like gesendet an ${profile.profile_name}!`, 'success');
+		            }
+		        } else {
+		            console.error('Match-Fehler:', result.error);
+		            showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
+		        }
+		        
+		    } catch (error) {
+		        console.error('Fehler beim Like:', error);
+		        showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
+		    }
+		}
+
+		// Keine Karten mehr vorhanden
+		function showNoMoreCards() {
+		    const cardStack = document.getElementById('cardStack');
+		    cardStack.innerHTML = `
+		        <div style="text-align: center; padding: 40px 20px; color: #666;">
+		            <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
+		            <h3 style="margin-bottom: 15px; color: #333;">Das war's für heute!</h3>
+		            <p style="margin-bottom: 25px;">Du hast alle verfügbaren Profile durchgeschaut.</p>
+		            <button onclick="loadSwipeCards()" class="action-btn btn-primary">
+		                🔄 Erneut versuchen
+		            </button>
+		        </div>
+		    `;
+		}
+		
+		// Match Animation
+		function showMatchAnimation(profile) {
+		    const overlay = document.createElement('div');
+		    overlay.style.cssText = `
+		        position: fixed;
+		        top: 0;
+		        left: 0;
+		        right: 0;
+		        bottom: 0;
+		        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+		        display: flex;
+		        align-items: center;
+		        justify-content: center;
+		        z-index: 3000;
+		        opacity: 0;
+		        transition: opacity 0.3s ease;
+		    `;
+		    
+		    overlay.innerHTML = `
+		        <div style="text-align: center; color: white;">
+		            <div style="font-size: 6rem; margin-bottom: 20px; animation: pulse 1s infinite;">💕</div>
+		            <h2 style="font-size: 2.5rem; margin-bottom: 10px;">It's a Match!</h2>
+		            <p style="font-size: 1.2rem; opacity: 0.9;">Du und ${profile.profile_name} habt euch geliked!</p>
+		            <button onclick="this.parentElement.parentElement.remove()" 
+		                    style="margin-top: 30px; padding: 15px 30px; background: white; color: #333; border: none; border-radius: 25px; font-size: 1.1rem; cursor: pointer;">
+		                Weiter swipen
+		            </button>
+		        </div>
+		    `;
+		    
+		    document.body.appendChild(overlay);
+		    
+		    // Animation starten
+		    setTimeout(() => overlay.style.opacity = '1', 10);
+		    
+		    // Auto-remove nach 4 Sekunden
+		    setTimeout(() => {
+		        if (overlay.parentElement) {
+		            overlay.remove();
+		        }
+		    }, 4000);
+		}		
+
+		// Floating Buttons korrekt anzeigen/verstecken
+		function updateFloatingButtons() {
+		    const profileBtn = document.getElementById('profileButton');
+		    const chatBtn = document.getElementById('chatButton');
+		    
+		    if (currentUser && profileBtn && chatBtn) {
+		        // Buttons nur in der Swipe-Ansicht anzeigen
+		        const swipeContainer = document.getElementById('swipeContainer');
+		        const isSwipeView = swipeContainer && swipeContainer.style.display === 'block';
+		        
+		        if (isSwipeView) {
+		            profileBtn.classList.remove('hidden');
+		            chatBtn.classList.remove('hidden');
+		        } else {
+		            profileBtn.classList.add('hidden');
+		            chatBtn.classList.add('hidden');
+		        }
+		    }
+		}
+		
+		// CSS für Pulse Animation hinzufügen
+		if (!document.querySelector('#match-animation-styles')) {
+		    const style = document.createElement('style');
+		    style.id = 'match-animation-styles';
+		    style.textContent = `
+		        @keyframes pulse {
+		            0% { transform: scale(1); }
+		            50% { transform: scale(1.1); }
+		            100% { transform: scale(1); }
+		        }
+		        
+		        .swipe-card {
+		            touch-action: none;
+		            user-select: none;
+		            cursor: grab;
+		        }
+		        
+		        .swipe-card.dragging {
+		            cursor: grabbing;
+		        }
+		    `;
+		    document.head.appendChild(style);
 		}
 
         function addMatch(profile) {
