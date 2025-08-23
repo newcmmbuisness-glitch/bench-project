@@ -1573,23 +1573,27 @@
 		    
 		    if (!cardStack) {
 		        console.log('cardStack noch nicht bereit, versuche erneut...');
-		        // Versuche es nach 100ms erneut
 		        setTimeout(loadProfiles, 100);
 		        return;
 		    }
 		
-		    // Wenn das Element gefunden wurde, lade die Profile
 		    try {
-		        const result = await safeApiCall('/.netlify/functions/get_profile');
-		        const profiles = result.profiles; // Annahme: Die Profile sind im 'profiles'-Feld der Antwort
-		        
-		        currentProfiles = profiles.filter(p => p.uid !== currentUser.uid);
-		        
-		        if (currentProfiles.length > 0) {
-		            // Hier sollte das erste Profil an die renderCard-Funktion übergeben werden
-		            renderCard(currentProfiles[0]);
+		        const result = await safeApiCall('/.netlify/functions/get_profiles', {
+		            method: 'POST',
+		            body: { userId: currentUser.uid }
+		        });
+		
+		        if (result && result.profiles) {
+		            currentProfiles = result.profiles.filter(p => p.uid !== currentUser.uid);
+		            
+		            if (currentProfiles.length > 0) {
+		                renderCard(currentProfiles[0]);
+		            } else {
+		                console.log('Keine neuen Profile gefunden.');
+		                document.getElementById('noMoreProfiles').style.display = 'block';
+		            }
 		        } else {
-		            console.log('Keine neuen Profile gefunden.');
+		            console.log('Keine Profile vom Server erhalten.');
 		            document.getElementById('noMoreProfiles').style.display = 'block';
 		        }
 		    } catch (error) {
