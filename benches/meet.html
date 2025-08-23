@@ -1580,25 +1580,31 @@
 		    try {
 		        const response = await fetch('/.netlify/functions/get_profile', {
 		            method: 'POST',
-		            body: { userId: currentUser.uid }
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ userId: currentUser.uid })
 		        });
 		
-		        if (result && result.profiles) {
-		            currentProfiles = result.profiles.filter(p => p.uid !== currentUser.uid);
+		        const result = await response.json(); // <-- Das war das Problem!
+		
+		        if (response.ok && result.success && result.profiles) {
+		            currentProfiles = result.profiles.filter(p => p.user_id !== currentUser.uid);
 		            
 		            if (currentProfiles.length > 0) {
-		                renderCard(currentProfiles[0]);
+		                console.log(`🎯 ${currentProfiles.length} Profile geladen`);
+		                currentIndex = 0;
+		                renderSwipeCards();
 		            } else {
 		                console.log('Keine neuen Profile gefunden.');
 		                document.getElementById('noMoreProfiles').style.display = 'block';
 		            }
 		        } else {
-		            console.log('Keine Profile vom Server erhalten.');
+		            console.log('Keine Profile vom Server erhalten:', result.error);
 		            document.getElementById('noMoreProfiles').style.display = 'block';
 		        }
 		    } catch (error) {
 		        console.error('Fehler beim Laden der Profile:', error);
 		        showNotification('⚠️ Fehler beim Laden der Profile.', 'error');
+		        document.getElementById('noMoreProfiles').style.display = 'block';
 		    }
 		}
 		
@@ -1778,10 +1784,10 @@
 
 		function renderSwipeCards() {
 		    const cardStack = document.getElementById('cardStack');
-			if (!cardStack) {
-			    console.error("❌ cardStack Element nicht gefunden!");
-			     return;
-			 }
+		    if (!cardStack) {
+		        console.error("❌ cardStack Element nicht gefunden!");
+		        return;
+		    }
 		    cardStack.innerHTML = ''; // Alte Karten leeren
 		
 		    if (!currentProfiles || currentProfiles.length === 0) {
@@ -1799,20 +1805,12 @@
 		    const maxCards = Math.min(3, currentProfiles.length - currentIndex);
 		    for (let i = 0; i < maxCards; i++) {
 		        const profile = currentProfiles[currentIndex + i];
-		        const cardHtml = createSwipeCardFromData(profile);
-		
-		        const cardWrapper = document.createElement('div');
-		        cardWrapper.innerHTML = cardHtml.trim();
-		
-		        // Karten stapeln
-		        const card = cardWrapper.firstChild;
-		        card.style.zIndex = 10 - i;
-		        card.style.transform = `scale(${1 - i * 0.05}) translateY(${i * 8}px)`;
-		
-		        cardStack.appendChild(card);
+		        createSwipeCard(profile, i);
 		    }
+		    
+		    // Floating buttons anzeigen nach dem Rendern
+		    updateFloatingButtons();
 		}
-
 		
 		// Verbesserte loadSwipeCards mit Error Handling
 		async function loadSwipeCards() {
