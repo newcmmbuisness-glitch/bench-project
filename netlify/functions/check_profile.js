@@ -19,7 +19,6 @@ exports.handler = async (event, context) => {
 
     try {
         const { userId } = JSON.parse(event.body);
-        console.log('Empfangene Benutzer-ID:', userId);
 
         if (!userId) {
             return {
@@ -32,8 +31,6 @@ exports.handler = async (event, context) => {
         const profile = await sql`
             SELECT user_id FROM meet_profiles WHERE user_id = ${userId}
         `;
-
-        console.log('Abfrageergebnis:', profile);
 
         const hasProfile = profile.length > 0;
 
