@@ -1529,38 +1529,70 @@
 		}
 		
 		async function checkAndRenderUI() {
-		    hideAllScreens();
-		    
-		    if (!currentUser || !currentUser.uid) {
-		        document.getElementById('welcomeScreen').style.display = 'block';
-		        updateFloatingButtons();
-		        return;
-		    }
-		
-		    try {
-		        const response = await fetch('/.netlify/functions/check_profile', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ userId: currentUser.uid })
-		        });
-		
-		        const result = await response.json();
-		
-		        if (result.hasProfile) {
-					loadProfiles(); 
-		            showSwipeCards();
-		        } else {
-		            showCreateProfileSection();
-		            updateFloatingButtons();
-		        }
-		
-		    } catch (error) {
-		        console.error('Fehler beim Prüfen des Profils:', error);
-		        showNotification('⚠️ Fehler beim Laden. Bitte versuchen Sie es erneut.', 'error');
-		        document.getElementById('welcomeScreen').style.display = 'block';
-		        updateFloatingButtons();
-		    }
+			hideAllScreens();
+			
+			if (!currentUser || !currentUser.uid) {
+				document.getElementById('welcomeScreen').style.display = 'block';
+				updateFloatingButtons();
+				return;
+			}
+
+			try {
+				const response = await fetch('/.netlify/functions/check_profile', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+
+				const result = await response.json();
+
+				if (result.hasProfile) {
+					// Zeige den Swipe-Container an
+					showSwipeCards();
+					// Starte danach das Laden der Profile
+					await loadProfiles();
+				} else {
+					showCreateProfileSection();
+					updateFloatingButtons();
+				}
+
+			} catch (error) {
+				console.error('Fehler beim Prüfen des Profils:', error);
+				showNotification('⚠️ Fehler beim Laden. Bitte versuchen Sie es erneut.', 'error');
+				document.getElementById('welcomeScreen').style.display = 'block';
+				updateFloatingButtons();
+			}
 		}
+		
+		async function loadProfiles() {
+			console.log('🔄 Profile werden geladen...');
+			const cardStack = document.getElementById('cardStack');
+			
+			if (!cardStack) {
+				console.log('cardStack noch nicht bereit, versuche erneut...');
+				// Versuche es nach 100ms erneut
+				setTimeout(loadProfiles, 100);
+				return;
+			}
+
+			// Wenn das Element gefunden wurde, lade die Profile
+			try {
+				const response = await fetch(`${apiUrl}/get-profiles?userId=${currentUser.uid}`);
+				const profiles = await response.json();
+				
+				currentProfiles = profiles.filter(p => p.uid !== currentUser.uid);
+				
+				if (currentProfiles.length > 0) {
+					renderSwipeCards();
+				} else {
+					console.log('Keine neuen Profile gefunden.');
+					document.getElementById('noMoreProfiles').style.display = 'block';
+				}
+			} catch (error) {
+				console.error('Fehler beim Laden der Profile:', error);
+				showNotification('⚠️ Fehler beim Laden der Profile.', 'error');
+			}
+		}		
 		
 		function showCreateProfileSection() {
 			hideAllScreens();
@@ -1568,20 +1600,9 @@
 		}
 		
 		function showSwipeCards() {
-		    if (!currentUser) {
-		        showLogin();
-		        showNotification('🔒 Bitte melden Sie sich an!', 'error');
-		        return;
-		    }
-		
-		    hideAllScreens();
-		    document.getElementById('swipeContainer').style.display = 'block';
-		    
-		    // Floating buttons anzeigen
-		    updateFloatingButtons();
-		    
-		    // Cards laden
-		    loadSwipeCards();
+			hideAllScreens();
+			document.getElementById('swipeContainer').style.display = 'block';
+			document.getElementById('noMoreProfiles').style.display = 'none';
 		}
 
         function showChats() {
@@ -2341,34 +2362,6 @@
 			}
 		}		
 		
-		async function loadProfiles() {
-			if (!currentUser || !currentUser.uid) {
-				console.error('Kein angemeldeter Benutzer gefunden');
-				return;
-			}
-
-			try {
-				const response = await fetch('/.netlify/functions/get_profile', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ userId: currentUser.uid })
-				});
-
-				const result = await response.json();
-
-				if (result.success && result.profiles) {
-					currentProfiles = result.profiles;
-					currentIndex = 0;
-					showNextCard();
-				} else {
-					console.error('Fehler beim Laden der Profile:', result.error);
-					showNotification('Keine neuen Profile gefunden', 'info');
-				}
-			} catch (error) {
-				console.error('Fehler beim Laden der Profile:', error);
-				showNotification('Fehler beim Laden der Profile', 'error');
-			}
-		}
 		
 		// Swipe abschließen
 		async function completeSwipe(direction) {
