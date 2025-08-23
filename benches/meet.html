@@ -1238,6 +1238,13 @@
 		async function loadUserMatches() {
 		    const matchesList = document.getElementById('matchesList');
 		    
+		    if (!matchesList) {
+		        console.error('matchesList Element nicht gefunden');
+		        return;
+		    }
+		    
+		    matchesList.innerHTML = '<div class="text-center p-4">Lade Matches... 🔄</div>';
+		    
 		    try {
 		        const response = await fetch('/.netlify/functions/get_matches', {
 		            method: 'POST',
@@ -1247,104 +1254,204 @@
 		        
 		        const result = await response.json();
 		        
-		        if (result.success && result.matches && result.matches.length > 0) {
-		            matchesList.innerHTML = result.matches.map(match => `
-		                <div class="match-item p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors" 
-		                     onclick="openMatchChat(${match.matched_user_id}, '${match.profile_name}')">
-		                    <div class="flex items-center space-x-3">
-		                        <img src="${match.profile_image}" 
-		                             alt="${match.profile_name}" 
-		                             class="w-16 h-16 rounded-full object-cover"
-		                             onerror="this.src='data:image/svg+xml;base64,' + btoa('<svg width=\\"64\\" height=\\"64\\" xmlns=\\"http://www.w3.org/2000/svg\\"><circle cx=\\"32\\" cy=\\"32\\" r=\\"32\\" fill=\\"#f0f0f0\\"/><text x=\\"32\\" y=\\"38\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"24\\">👤</text></svg>')">
-		                        <div class="flex-1">
-		                            <h4 class="font-semibold text-lg text-gray-800">${match.profile_name}</h4>
-		                            <p class="text-sm text-gray-500 truncate">${match.description || 'Neues Match!'}</p>
-		                            <div class="flex mt-2 space-x-1">
-		                                ${(match.interests || []).slice(0, 3).map(interest => 
-		                                    `<span class="text-sm">${emojiMap[interest] || '❓'}</span>`
-		                                ).join('')}
+		        if (response.ok && result.success) {
+		            if (result.matches && result.matches.length > 0) {
+		                matchesList.innerHTML = result.matches.map(match => {
+		                    const interests = Array.isArray(match.interests) ? match.interests : [];
+		                    const interestEmojis = interests.slice(0, 3).map(i => emojiMap[i] || '❓').join(' ');
+		                    
+		                    return `
+		                        <div class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3" 
+		                             onclick="openMatchChat(${match.matched_user_id}, '${match.profile_name}', '${match.profile_image}')">
+		                            <div class="flex items-center space-x-4">
+		                                <div class="flex-shrink-0">
+		                                    <img src="${match.profile_image}" 
+		                                         alt="${match.profile_name}" 
+		                                         class="w-16 h-16 rounded-full object-cover border-2 border-pink-200"
+		                                         onerror="this.src='data:image/svg+xml;base64,' + btoa('<svg width=\\"64\\" height=\\"64\\" xmlns=\\"http://www.w3.org/2000/svg\\"><circle cx=\\"32\\" cy=\\"32\\" r=\\"32\\" fill=\\"#f0f0f0\\"/><text x=\\"32\\" y=\\"38\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"24\\">👤</text></svg>')">
+		                                    <div class="w-4 h-4 bg-green-400 border-2 border-white rounded-full absolute -mt-3 ml-12"></div>
+		                                </div>
+		                                <div class="flex-1 min-w-0">
+		                                    <h4 class="font-semibold text-lg text-gray-900 truncate">${match.profile_name}</h4>
+		                                    <p class="text-sm text-gray-600 truncate mb-1">${match.description || 'Neues Match!'}</p>
+		                                    <div class="flex items-center justify-between">
+		                                        <div class="flex space-x-1 text-lg">
+		                                            ${interestEmojis}
+		                                        </div>
+		                                        <span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full">💕 Match</span>
+		                                    </div>
+		                                </div>
+		                                <div class="flex-shrink-0">
+		                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+		                                    </svg>
+		                                </div>
 		                            </div>
 		                        </div>
-		                        <div class="text-right">
-		                            <span class="text-xs text-gray-400">💕</span>
-		                        </div>
+		                    `;
+		                }).join('');
+		                
+		                // Zurück-Button hinzufügen
+		                matchesList.innerHTML += `
+		                    <div class="mt-6 text-center">
+		                        <button onclick="showSwipeCards()" 
+		                                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
+		                            ← Zurück zum Swipen
+		                        </button>
 		                    </div>
-		                </div>
-		            `).join('');
+		                `;
+		            } else {
+		                matchesList.innerHTML = `
+		                    <div class="text-center py-16">
+		                        <div class="text-8xl mb-6">💔</div>
+		                        <h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
+		                        <p class="text-gray-500 mb-8 max-w-sm mx-auto">
+		                            Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
+		                        </p>
+		                        <button onclick="showSwipeCards()" 
+		                                class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors font-semibold text-lg">
+		                            💖 Jetzt swipen
+		                        </button>
+		                    </div>
+		                `;
+		            }
 		        } else {
-		            matchesList.innerHTML = `
-		                <div class="text-center py-12">
-		                    <div class="text-6xl mb-4">💔</div>
-		                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Noch keine Matches</h3>
-		                    <p class="text-gray-500 mb-6">Swipe nach rechts, um deine erste große Liebe zu finden!</p>
-		                    <button onclick="showSwipeCards()" class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-6 py-3 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors">
-		                        💖 Jetzt swipen
-		                    </button>
-		                </div>
-		            `;
+		            throw new Error(result.error || 'Fehler beim Laden der Matches');
 		        }
 		    } catch (error) {
 		        console.error('Fehler beim Laden der Matches:', error);
 		        matchesList.innerHTML = `
-		            <div class="text-center py-12">
-		                <div class="text-4xl mb-4">⚠️</div>
-		                <p class="text-gray-500">Fehler beim Laden der Matches</p>
-		                <button onclick="loadUserMatches()" class="mt-4 text-blue-500 hover:text-blue-700">
+		            <div class="text-center py-16">
+		                <div class="text-6xl mb-4">⚠️</div>
+		                <h3 class="text-xl font-semibold text-gray-700 mb-2">Verbindungsfehler</h3>
+		                <p class="text-gray-500 mb-6">Matches konnten nicht geladen werden</p>
+		                <button onclick="loadUserMatches()" 
+		                        class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
 		                    🔄 Erneut versuchen
 		                </button>
 		            </div>
 		        `;
 		    }
+		}
+
+		function openMatchChat(matchUserId, matchName, matchImage) {
+		    console.log('🚀 Chat öffnen:', { matchUserId, matchName, matchImage });
+		    
+		    // Hier könntest du später ein vollständiges Chat-System implementieren
+		    // Für jetzt zeigen wir eine "Coming Soon" Nachricht
+		    
+		    const chatPreview = `
+		        <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeChatPreview()">
+		            <div class="bg-white rounded-2xl max-w-md w-full p-6" onclick="event.stopPropagation()">
+		                <div class="text-center">
+		                    <img src="${matchImage}" alt="${matchName}" class="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-pink-200">
+		                    <h3 class="text-xl font-bold mb-2">${matchName}</h3>
+		                    <p class="text-gray-600 mb-6">💬 Chat-System wird bald verfügbar sein!</p>
+		                    
+		                    <div class="space-y-3">
+		                        <button onclick="suggestBenchMeeting('${matchName}')" 
+		                                class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-full hover:from-green-600 hover:to-green-700 transition-colors font-semibold">
+		                            🏞️ Bank-Treffen vorschlagen
+		                        </button>
+		                        <button onclick="closeChatPreview()" 
+		                                class="w-full bg-gray-200 text-gray-700 py-3 rounded-full hover:bg-gray-300 transition-colors">
+		                            Später
+		                        </button>
+		                    </div>
+		                </div>
+		            </div>
+		        </div>
+		    `;
+		    
+		    const chatDiv = document.createElement('div');
+		    chatDiv.setAttribute('data-chat-preview', 'true');
+		    chatDiv.innerHTML = chatPreview;
+		    document.body.appendChild(chatDiv);
 		}	
 
-		function openMatchChat(matchUserId, matchName) {
-		    // Hier kannst du später ein Chat-System implementieren
-		    showNotification(`💬 Chat mit ${matchName} wird bald verfügbar sein!`, 'success');
-		    console.log('Chat öffnen mit User:', matchUserId, matchName);
+		function closeChatPreview() {
+		    const preview = document.querySelector('[data-chat-preview]');
+		    if (preview) {
+		        preview.remove();
+		    }
+		}
+
+		function suggestBenchMeeting(matchName) {
+		    closeChatPreview();
+		    showNotification(`🏞️ Weiterleitung zur Bank-Karte für Treffen mit ${matchName}...`, 'success');
 		    
-		    // Placeholder für zukünftige Chat-Implementierung
-		    // Du könntest hier zu einer Chat-Seite weiterleiten oder ein Chat-Modal öffnen
-		}		
+		    // Weiterleitung zur Haupt-Karte mit Match-Parameter
+		    setTimeout(() => {
+		        window.location.href = `index.html?match=${encodeURIComponent(matchName)}&suggest=true`;
+		    }, 1000);
+		}
+
+		// Verbesserte Error-Behandlung für alle API-Calls
+		async function safeApiCall(url, options, fallbackMessage) {
+		    try {
+		        const response = await fetch(url, options);
+		        
+		        if (!response.ok) {
+		            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		        }
+		        
+		        const result = await response.json();
+		        return { success: true, data: result };
+		        
+		    } catch (error) {
+		        console.error('API Call failed:', error);
+		        showNotification(fallbackMessage || 'Ein Fehler ist aufgetreten', 'error');
+		        return { success: false, error: error.message };
+		    }
+		}
 
 		async function showProfilePopup() {
-			if (!currentUser || !currentUser.uid) {
-				showNotification('❌ Fehler: Bitte melden Sie sich erneut an.', 'error');
-				return;
-			}
-			try {
-				// Dies erfordert eine neue Backend-Funktion namens `get_my_profile`
-				const response = await fetch('/.netlify/functions/get_my_profile', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ userId: currentUser.uid })
-				});
-
-				const result = await response.json();
-
-				if (response.ok && result.profile) {
-					currentProfile = result.profile;
-					document.getElementById('popupProfileName').textContent = currentProfile.profile_name;
-					document.getElementById('popupProfileImage').src = currentProfile.profile_image;
-					document.getElementById('popupProfileDescription').textContent = currentProfile.description;
-
-					const interestsDiv = document.getElementById('popupProfileInterests');
-					interestsDiv.innerHTML = '';
-					currentProfile.interests.forEach(interest => {
-						const span = document.createElement('span');
-						span.textContent = interest;
-						span.className = 'px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium';
-						interestsDiv.appendChild(span);
-					});
-
-					document.getElementById('profilePopup').style.display = 'block';
-					document.getElementById('modalOverlay').style.display = 'block';
-				} else {
-					showNotification('❌ Fehler beim Laden des Profils: ' + result.error, 'error');
-				}
-			} catch (error) {
-				console.error('Fehler beim Anzeigen des Profil-Popups:', error);
-				showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
-			}
+		    if (!currentUser || !currentUser.uid) {
+		        showNotification('❌ Bitte melden Sie sich erneut an.', 'error');
+		        return;
+		    }
+		    
+		    try {
+		        const response = await fetch('/.netlify/functions/get_my_profile', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ userId: currentUser.uid })
+		        });
+		
+		        const result = await response.json();
+		
+		        if (response.ok && result.profile) {
+		            currentProfile = result.profile;
+		            
+		            // Interests als Array behandeln
+		            const interests = Array.isArray(currentProfile.interests) 
+		                ? currentProfile.interests 
+		                : (currentProfile.interests ? [currentProfile.interests] : []);
+		                
+		            document.getElementById('popupProfileName').textContent = currentProfile.profile_name;
+		            document.getElementById('popupProfileImage').src = currentProfile.profile_image;
+		            document.getElementById('popupProfileDescription').textContent = currentProfile.description;
+		
+		            const interestsDiv = document.getElementById('popupProfileInterests');
+		            interestsDiv.innerHTML = '';
+		            
+		            interests.forEach(interest => {
+		                const span = document.createElement('span');
+		                const emoji = emojiMap[interest] || '❓';
+		                span.textContent = `${emoji} ${interest}`;
+		                span.className = 'px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium mr-2 mb-2 inline-block';
+		                interestsDiv.appendChild(span);
+		            });
+		
+		            document.getElementById('profilePopup').style.display = 'block';
+		            document.getElementById('modalOverlay').style.display = 'block';
+		        } else {
+		            showNotification('❌ Fehler beim Laden des Profils: ' + (result.error || 'Unbekannter Fehler'), 'error');
+		        }
+		    } catch (error) {
+		        console.error('Fehler beim Anzeigen des Profil-Popups:', error);
+		        showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
+		    }
 		}
 
 		function closeProfilePopup() {
@@ -1353,38 +1460,46 @@
 		}
 
 		async function editProfile() {
-		    const userId = localStorage.getItem('userId');
-		    if (!userId) {
-		        showNotification('Bitte melden Sie sich an, um Ihr Profil zu bearbeiten.', 'error');
+		    if (!currentProfile) {
+		        showNotification('❌ Profil-Daten nicht verfügbar', 'error');
 		        return;
 		    }
-		
+		    
 		    try {
-		        const response = await fetch('/.netlify/functions/get_my_profile', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ userId }),
-		        });
-		        const data = await response.json();
-		
-		        if (data.success && data.profile) {
-		            const profile = data.profile;
-		            // Füllen Sie die Formularfelder mit den Profilinformationen
-		            document.getElementById('profileName').value = profile.profile_name;
-		            document.getElementById('profileDescription').value = profile.description;
-		            // Setzen Sie die Interessen
-		            selectedPreferences = profile.interests || [];
-		            renderPreferences(); // Diese Funktion muss das Formular mit den gespeicherten Präferenzen füllen
+		        // Formular mit aktuellen Daten vorausfüllen
+		        document.getElementById('profileName').value = currentProfile.profile_name || '';
+		        document.getElementById('profileDescription').value = currentProfile.description || '';
+		        
+		        // Interessen setzen
+		        const interests = Array.isArray(currentProfile.interests) 
+		            ? currentProfile.interests 
+		            : (currentProfile.interests ? [currentProfile.interests] : []);
 		            
-		            showCreateProfileForm();
-		        } else {
-		            showNotification('Fehler beim Laden des Profils. Versuchen Sie es erneut.', 'error');
+		        selectedPreferences = [...interests];
+		        renderPreferences();
+		        
+		        // Profile Popup schließen und Edit-Form anzeigen
+		        closeProfilePopup();
+		        showCreateProfileForm();
+		        
+		        // Formular-Titel ändern
+		        const formTitle = document.querySelector('#createProfileModal h2');
+		        if (formTitle) {
+		            formTitle.textContent = '✏️ Profil bearbeiten';
 		        }
+		        
+		        // Submit-Button Text ändern
+		        const submitBtn = document.querySelector('#createProfileModal button[type="submit"]');
+		        if (submitBtn) {
+		            submitBtn.innerHTML = '💾 Änderungen speichern';
+		        }
+		        
 		    } catch (error) {
-		        console.error('Fehler beim Bearbeiten des Profils:', error);
-		        showNotification('Serverfehler beim Laden des Profils.', 'error');
+		        console.error('Fehler beim Bearbeiten:', error);
+		        showNotification('Fehler beim Laden der Profil-Daten', 'error');
 		    }
 		}
+
 		
 		function renderPreferences() {
 			const preferencesDiv = document.getElementById('preferencesIcons');
@@ -1653,64 +1768,94 @@
 		    return cardHtml;
 		}
 		
-		// Hauptfunktion zum Laden der Swipe Cards
+		// Verbesserte loadSwipeCards mit Error Handling
 		async function loadSwipeCards() {
 		    console.log('🔄 loadSwipeCards aufgerufen');
 		    const cardStack = document.getElementById('cardStack');
+		    
 		    if (!cardStack) {
 		        console.error('❌ cardStack nicht gefunden');
 		        return;
 		    }
 		
-		    // Loading anzeigen
-		    cardStack.innerHTML = '<div class="text-center p-4">Lade Profile... 🔄</div>';
+		    cardStack.innerHTML = '<div class="text-center p-8"><div class="text-4xl mb-4">🔄</div><p>Lade Profile...</p></div>';
 		    
-		    try {
-		        const response = await fetch('/.netlify/functions/get_profile', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ userId: currentUser.uid })
-		        });
+		    const result = await safeApiCall('/.netlify/functions/get_profile', {
+		        method: 'POST',
+		        headers: { 'Content-Type': 'application/json' },
+		        body: JSON.stringify({ userId: currentUser.uid })
+		    }, 'Fehler beim Laden der Profile');
 		
-		        const result = await response.json();
-		
-		        if (response.ok && result.profiles && result.profiles.length > 0) {
-		            currentProfiles = result.profiles.filter(p => p.user_id !== currentUser.uid);
-		            currentIndex = 0;
-		            
-		            console.log(`🎯 ${currentProfiles.length} Profile geladen`);
-		            
-		            if (currentProfiles.length > 0) {
-		                renderSwipeCards();
-		            } else {
-		                cardStack.innerHTML = '<div class="text-center p-8 text-gray-500">Keine neuen Profile verfügbar 😊</div>';
-		            }
+		    if (result.success && result.data.profiles) {
+		        currentProfiles = result.data.profiles.filter(p => p.user_id !== currentUser.uid);
+		        currentIndex = 0;
+		        
+		        console.log(`🎯 ${currentProfiles.length} Profile geladen`);
+		        
+		        if (currentProfiles.length > 0) {
+		            renderSwipeCards();
 		        } else {
-		            cardStack.innerHTML = '<div class="text-center p-8 text-gray-500">Keine Profile gefunden 🤷‍♀️</div>';
+		            cardStack.innerHTML = `
+		                <div class="text-center p-12">
+		                    <div class="text-8xl mb-4">🎉</div>
+		                    <h3 class="text-xl font-bold text-gray-700 mb-2">Alle Profile durchgeschaut!</h3>
+		                    <p class="text-gray-500 mb-6">Schau später wieder vorbei für neue Profile.</p>
+		                    <button onclick="loadSwipeCards()" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600">
+		                        🔄 Erneut laden
+		                    </button>
+		                </div>
+		            `;
 		        }
-		
-		    } catch (error) {
-		        console.error('❌ Fehler beim Laden der Profile:', error);
-		        cardStack.innerHTML = '<div class="text-center p-8 text-red-500">Fehler beim Laden 😞</div>';
+		    } else {
+		        cardStack.innerHTML = `
+		            <div class="text-center p-12">
+		                <div class="text-6xl mb-4">😞</div>
+		                <h3 class="text-xl font-bold text-gray-700 mb-2">Laden fehlgeschlagen</h3>
+		                <p class="text-gray-500 mb-6">Profile konnten nicht geladen werden.</p>
+		                <button onclick="loadSwipeCards()" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600">
+		                    🔄 Erneut versuchen
+		                </button>
+		            </div>
+		        `;
 		    }
 		}
 
-		// Karten im Stack rendern
-		function renderSwipeCards() {
-		    const cardStack = document.getElementById('cardStack');
-		    cardStack.innerHTML = '';
+		// Vollständige App-Initialisierung
+		document.addEventListener('DOMContentLoaded', function() {
+		    console.log('🚀 App wird initialisiert...');
 		    
-		    // Zeige maximal 3 Karten im Stack
-		    const maxCards = Math.min(3, currentProfiles.length - currentIndex);
+		    // User aus localStorage laden
+		    currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
 		    
-		    for (let i = maxCards - 1; i >= 0; i--) {
-		        const profileIndex = currentIndex + i;
-		        if (profileIndex < currentProfiles.length) {
-		            const profile = currentProfiles[profileIndex];
-		            createSwipeCard(profile, i);
-		        }
+		    // UI aktualisieren
+		    updateAuthButtons();
+		    renderPreferences();
+		    
+		    // Initiale UI-Entscheidung
+		    checkAndRenderUI();
+		    
+		    // Event Listeners für Floating Buttons sicherstellen
+		    const profileBtn = document.getElementById('profileButton');
+		    const chatBtn = document.getElementById('chatButton');
+		    
+		    if (profileBtn) {
+		        profileBtn.addEventListener('click', showProfilePopup);
 		    }
-		}
+		    
+		    if (chatBtn) {
+		        chatBtn.addEventListener('click', showMatches);
+		    }
+		    
+		    console.log('✅ App initialisiert');
+		    
+		    // Debug Info
+		    if (currentUser) {
+		        console.log('👤 User angemeldet:', currentUser.email);
+		    } else {
+		        console.log('👤 Kein User angemeldet');
+		    }
+		});		
+
 
 		// Einzelne Swipe Card erstellen
 		function createSwipeCard(profile, stackIndex) {
@@ -2326,34 +2471,54 @@
 		async function handleLike(profile) {
 		    try {
 		        console.log('💖 Like für:', profile.profile_name);
+		        console.log('Liker ID:', currentUser.uid, 'Liked ID:', profile.user_id);
 		        
 		        const response = await fetch('/.netlify/functions/create_match', {
 		            method: 'POST',
 		            headers: { 'Content-Type': 'application/json' },
 		            body: JSON.stringify({ 
-		                likerId: currentUser.uid,
-		                likedId: profile.user_id 
+		                likerId: parseInt(currentUser.uid),
+		                likedId: parseInt(profile.user_id)
 		            })
 		        });
 		
 		        const result = await response.json();
 		        
-		        if (result.success) {
+		        if (response.ok && result.success) {
 		            if (result.newMatch) {
+		                // Beidseitiges Match -> Echter Match!
 		                showNotification('🎉 Es ist ein Match! 💕', 'success');
-		                // Optional: Match-Animation oder Popup
 		                showMatchAnimation(profile);
+		                
+		                // Optional: Match in lokaler Liste speichern
+		                addToLocalMatches(profile);
 		            } else {
+		                // Einseitiger Like
 		                showNotification(`💖 Like gesendet an ${profile.profile_name}!`, 'success');
 		            }
 		        } else {
-		            console.error('Match-Fehler:', result.error);
+		            console.error('Match-Fehler:', result.error || result);
 		            showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
 		        }
 		        
 		    } catch (error) {
 		        console.error('Fehler beim Like:', error);
 		        showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
+		    }
+		}
+		
+		// Match zu lokaler Liste hinzufügen
+		function addToLocalMatches(profile) {
+		    let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+		    
+		    // Prüfen ob bereits vorhanden
+		    const exists = localMatches.some(m => m.user_id === profile.user_id);
+		    if (!exists) {
+		        localMatches.push({
+		            ...profile,
+		            matchedAt: new Date().toISOString()
+		        });
+		        localStorage.setItem('userMatches', JSON.stringify(localMatches));
 		    }
 		}
 
@@ -2420,43 +2585,65 @@
 		    const profileBtn = document.getElementById('profileButton');
 		    const chatBtn = document.getElementById('chatButton');
 		    
-		    if (currentUser && profileBtn && chatBtn) {
-		        // Buttons nur in der Swipe-Ansicht anzeigen
+		    if (!profileBtn || !chatBtn) {
+		        console.error('Floating buttons nicht gefunden');
+		        return;
+		    }
+		    
+		    if (currentUser && currentUser.uid) {
 		        const swipeContainer = document.getElementById('swipeContainer');
-		        const isSwipeView = swipeContainer && swipeContainer.style.display === 'block';
+		        const isSwipeView = swipeContainer && window.getComputedStyle(swipeContainer).display === 'block';
 		        
 		        if (isSwipeView) {
 		            profileBtn.classList.remove('hidden');
 		            chatBtn.classList.remove('hidden');
+		            
+		            // Position sicherstellen
+		            profileBtn.style.cssText = `
+		                position: fixed;
+		                bottom: 2rem;
+		                left: 2rem;
+		                width: 4rem;
+		                height: 4rem;
+		                border-radius: 50%;
+		                background-color: #ff5e5e;
+		                color: white;
+		                display: flex;
+		                align-items: center;
+		                justify-content: center;
+		                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+		                cursor: pointer;
+		                z-index: 1000;
+		                border: none;
+		                transition: transform 0.2s ease;
+		            `;
+		            
+		            chatBtn.style.cssText = `
+		                position: fixed;
+		                bottom: 2rem;
+		                right: 2rem;
+		                width: 4rem;
+		                height: 4rem;
+		                border-radius: 50%;
+		                background-color: #007bff;
+		                color: white;
+		                display: flex;
+		                align-items: center;
+		                justify-content: center;
+		                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+		                cursor: pointer;
+		                z-index: 1000;
+		                border: none;
+		                transition: transform 0.2s ease;
+		            `;
 		        } else {
 		            profileBtn.classList.add('hidden');
 		            chatBtn.classList.add('hidden');
 		        }
+		    } else {
+		        profileBtn.classList.add('hidden');
+		        chatBtn.classList.add('hidden');
 		    }
-		}
-		
-		// CSS für Pulse Animation hinzufügen
-		if (!document.querySelector('#match-animation-styles')) {
-		    const style = document.createElement('style');
-		    style.id = 'match-animation-styles';
-		    style.textContent = `
-		        @keyframes pulse {
-		            0% { transform: scale(1); }
-		            50% { transform: scale(1.1); }
-		            100% { transform: scale(1); }
-		        }
-		        
-		        .swipe-card {
-		            touch-action: none;
-		            user-select: none;
-		            cursor: grab;
-		        }
-		        
-		        .swipe-card.dragging {
-		            cursor: grabbing;
-		        }
-		    `;
-		    document.head.appendChild(style);
 		}
 
         function addMatch(profile) {
