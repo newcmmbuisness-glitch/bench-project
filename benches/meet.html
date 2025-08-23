@@ -1769,6 +1769,10 @@
 
 		function renderSwipeCards() {
 		    const cardStack = document.getElementById('cardStack');
+			if (!cardStack) {
+			    console.error("❌ cardStack Element nicht gefunden!");
+			     return;
+			 }
 		    cardStack.innerHTML = ''; // Alte Karten leeren
 		
 		    if (!currentProfiles || currentProfiles.length === 0) {
