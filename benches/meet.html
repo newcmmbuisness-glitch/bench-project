@@ -1810,8 +1810,10 @@
 		    console.log('🔄 loadSwipeCards aufgerufen');
 		    const cardStack = document.getElementById('cardStack');
 		    
+		    let cardStack = document.getElementById('cardStack');
 		    if (!cardStack) {
-		        console.error('❌ cardStack nicht gefunden');
+		        console.warn('⚠️ cardStack noch nicht bereit, versuche erneut...');
+		        setTimeout(loadSwipeCards, 100); // versuch’s nach 100ms nochmal
 		        return;
 		    }
 		
@@ -1830,7 +1832,7 @@
 		        console.log(`🎯 ${currentProfiles.length} Profile geladen`);
 		        
 		        if (currentProfiles.length > 0) {
-		            renderSwipeCards();
+		            requestAnimationFrame(() => renderSwipeCards());
 		        } else {
 		            cardStack.innerHTML = `
 		                <div class="text-center p-12">
