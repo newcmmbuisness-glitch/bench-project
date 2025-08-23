@@ -998,27 +998,6 @@
 		const apiUrl = 'https://onebenches.dpdns.org'; 
 
 
-	    // Initialer Aufruf, um die richtige UI zu laden
-	    document.addEventListener('DOMContentLoaded', checkAndRenderUI);
-			
-        // Initialize App
-		document.addEventListener('DOMContentLoaded', function() {
-			// Lade User aus localStorage (gleich wie index.html)
-			currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-			matches = JSON.parse(localStorage.getItem('matches') || '[]');
-			currentProfile = JSON.parse(localStorage.getItem('currentProfile') || 'null');
-			
-			updateAuthButtons();
-			generateSampleProfiles();
-			renderPreferences();
-			checkAndRenderUI();
-			
-			// Falls User bereits angemeldet ist, lade Profile
-			if (currentUser) {
-				console.log('User bereits angemeldet:', currentUser.email);
-			}
-		});
-
         // Sidebar Functions
         function toggleSidebar() {
             if (sidebarOpen) {
@@ -1857,42 +1836,6 @@
 		        `;
 		    }
 		}
-
-		// Vollständige App-Initialisierung
-		document.addEventListener('DOMContentLoaded', function() {
-		    console.log('🚀 App wird initialisiert...');
-		    
-		    // User aus localStorage laden
-		    currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-		    
-		    // UI aktualisieren
-		    updateAuthButtons();
-		    renderPreferences();
-		    
-		    // Initiale UI-Entscheidung
-		    checkAndRenderUI();
-		    
-		    // Event Listeners für Floating Buttons sicherstellen
-		    const profileBtn = document.getElementById('profileButton');
-		    const chatBtn = document.getElementById('chatButton');
-		    
-		    if (profileBtn) {
-		        profileBtn.addEventListener('click', showProfilePopup);
-		    }
-		    
-		    if (chatBtn) {
-		        chatBtn.addEventListener('click', showMatches);
-		    }
-		    
-		    console.log('✅ App initialisiert');
-		    
-		    // Debug Info
-		    if (currentUser) {
-		        console.log('👤 User angemeldet:', currentUser.email);
-		    } else {
-		        console.log('👤 Kein User angemeldet');
-		    }
-		});		
 
 
 		// Einzelne Swipe Card erstellen
@@ -2885,9 +2828,6 @@
         }
 		
 
-		// Rufen Sie diese Funktion beim Laden der Seite auf
-		document.addEventListener('DOMContentLoaded', loadProfiles);
-
         function suggestBench() {
             if (!currentChatUser) return;
             
@@ -2948,6 +2888,43 @@
                 sendMessage();
             }
         });
+
+		document.addEventListener('DOMContentLoaded', function() {
+		    console.log('🚀 App wird initialisiert...');
+		    
+		    // Globale Variablen (falls sie hier initialisiert werden)
+		    currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+		    matches = JSON.parse(localStorage.getItem('matches') || '[]');
+		    currentProfile = JSON.parse(localStorage.getItem('currentProfile') || 'null');
+		    
+		    // UI-Aktualisierungen
+		    updateAuthButtons();
+		    generateSampleProfiles();
+		    renderPreferences();
+		    checkAndRenderUI(); // Diese Funktion sollte alle weiteren Schritte auslösen
+		    loadProfiles(); // Diese Funktion sollte in checkAndRenderUI aufgerufen werden
+		    
+		    // Event-Listener für Buttons
+		    const profileBtn = document.getElementById('profileButton');
+		    const chatBtn = document.getElementById('chatButton');
+		    
+		    if (profileBtn) {
+		        profileBtn.addEventListener('click', showProfilePopup);
+		    }
+		    
+		    if (chatBtn) {
+		        chatBtn.addEventListener('click', showMatches);
+		    }
+		    
+		    console.log('✅ App initialisiert');
+		    
+		    // Debug Info
+		    if (currentUser) {
+		        console.log('👤 User angemeldet:', currentUser.email);
+		    } else {
+		        console.log('👤 Kein User angemeldet');
+		    }
+		});
     </script>
 </body>
 </html>
