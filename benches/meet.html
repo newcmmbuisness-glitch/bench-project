@@ -1547,6 +1547,7 @@
 		        const result = await response.json();
 		
 		        if (result.hasProfile) {
+					loadProfiles(); 
 		            showSwipeCards();
 		        } else {
 		            showCreateProfileSection();
@@ -2902,8 +2903,7 @@
 		    generateSampleProfiles();
 		    renderPreferences();
 		    checkAndRenderUI(); // Diese Funktion sollte alle weiteren Schritte auslösen
-		    loadProfiles(); // Diese Funktion sollte in checkAndRenderUI aufgerufen werden
-		    
+			
 		    // Event-Listener für Buttons
 		    const profileBtn = document.getElementById('profileButton');
 		    const chatBtn = document.getElementById('chatButton');
