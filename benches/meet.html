@@ -1578,7 +1578,7 @@
 		    }
 		
 		    try {
-		        const result = await safeApiCall('/.netlify/functions/get_profiles', {
+		        const response = await fetch('/.netlify/functions/get_profile', {
 		            method: 'POST',
 		            body: { userId: currentUser.uid }
 		        });
@@ -1827,7 +1827,7 @@
 		
 		    cardStack.innerHTML = '<div class="text-center p-8"><div class="text-4xl mb-4">🔄</div><p>Lade Profile...</p></div>';
 		    
-		    const result = await safeApiCall('/.netlify/functions/get_profile', {
+		    const response = await fetch('/.netlify/functions/get_profile', {
 		        method: 'POST',
 		        headers: { 'Content-Type': 'application/json' },
 		        body: JSON.stringify({ userId: currentUser.uid })
