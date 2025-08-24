@@ -22,19 +22,22 @@ exports.handler = async (event, context) => {
         `;
 
         if (existingMatch.length > 0) {
-            // Match existiert bereits (entweder neu oder umgekehrt)
+            // Match existiert bereits
             return { statusCode: 200, headers, body: JSON.stringify({ success: true, newMatch: false }) };
         }
 
-        await sql`
+        // Fügen Sie das neue Match ein und geben Sie die vollständige Zeile zurück
+        const newMatch = await sql`
             INSERT INTO matches (user_id_1, user_id_2)
-            VALUES (${likerId}, ${likedId});
+            VALUES (${likerId}, ${likedId})
+            RETURNING *;
         `;
-
+        
+        // Geben Sie das neue Match-Objekt mit der ID an das Frontend zurück
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ success: true, newMatch: true }),
+            body: JSON.stringify({ success: true, newMatch: true, match: newMatch[0] }),
         };
 
     } catch (error) {
