@@ -11,8 +11,12 @@ exports.handler = async (event, context) => {
 
     try {
         const { match_id } = JSON.parse(event.body);
-        if (!match_id) { // ✔️ Korrigiert zu match_id
-            return { statusCode: 400, headers, body: 'Fehlende Match-ID' };
+        if (!match_id) {
+            return { 
+                statusCode: 400, 
+                headers, 
+                body: JSON.stringify({ success: false, error: 'Fehlende Match-ID' })
+            };
         }
     
         const messages = await sql`
