@@ -2776,47 +2776,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-            
-            if (!text || !currentChatUser) return;
-            
-            // Add message
-            if (!currentChatUser.messages) {
-                currentChatUser.messages = [];
-            }
-            
-            currentChatUser.messages.push({
-                text: text,
-                sender: 'me',
-                timestamp: new Date().toISOString()
-            });
-            
-            // Simulate response after delay
-            setTimeout(() => {
-                const responses = [
-                    "Das klingt toll! 😊",
-                    "Erzähl mir mehr davon!",
-                    "Das würde ich auch gerne machen!",
-                    "Wann hättest du Zeit?",
-                    "Ich freue mich darauf! 💕"
-                ];
-                
-                currentChatUser.messages.push({
-                    text: responses[Math.floor(Math.random() * responses.length)],
-                    sender: 'other',
-                    timestamp: new Date().toISOString()
-                });
-                
-                localStorage.setItem('matches', JSON.stringify(matches));
-                loadChatMessages();
-            }, 1000 + Math.random() * 2000);
-            
-            localStorage.setItem('matches', JSON.stringify(matches));
-            input.value = '';
-            loadChatMessages();
-        }
 		
 		   async function uploadImageToCloudinary(file) {
             console.log('📄 Starting Cloudinary upload for file:', file.name, file.type, file.size);
