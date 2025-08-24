@@ -1014,6 +1014,9 @@
 		let currentSwipeUser = null;
 		let currentUserId = localStorage.getItem('currentUserId');
 		let isSwipeInProgress = false;
+		let currentChatMatchId;
+		let messageInterval;
+
 
 
 		
@@ -2298,8 +2301,10 @@
 		
 		// Funktion zum Laden der Nachrichten vom Backend
 		async function loadMessages() {
-			if (!currentChatMatchId) {
-				console.error("Fehler beim Laden der Nachrichten: Match-ID ist nicht definiert.");
+			const container = document.getElementById('chatMessages');
+
+			if (!container) {
+				console.error("Fehler: chatMessages-Container nicht gefunden.");
 				return;
 			}
 
@@ -2307,33 +2312,28 @@
 				const response = await fetch('/.netlify/functions/get_messages', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ match_id: currentChatMatchId }),
+					body: JSON.stringify({ matchId: currentChatMatchId })
 				});
 
-				if (!response.ok) {
-					const errorText = await response.text();
-					throw new Error(errorText);
-				}
+				const result = await response.json();
 
-				const data = await response.json();
-				const chatMessages = document.getElementById('chatMessages');
-				chatMessages.innerHTML = ''; // Vorherige Nachrichten leeren
-
-				if (data.messages && data.messages.length > 0) {
-					data.messages.forEach(msg => {
-						const isSent = msg.sender_id.toString() === currentUser.uid.toString();
+				if (response.ok && result.success) {
+					container.innerHTML = '';
+					
+					result.messages.forEach(message => {
+						const messageClass = message.sender_id === currentUser.uid ? 'sent' : 'received';
 						const messageBubble = document.createElement('div');
-						messageBubble.className = `p-3 rounded-lg max-w-[80%] break-words ${isSent ? 'bg-blue-500 text-white self-end' : 'bg-gray-200 self-start'}`;
-						messageBubble.textContent = msg.message_text;
-						chatMessages.appendChild(messageBubble);
+						messageBubble.classList.add('message', messageClass);
+						messageBubble.innerHTML = `<div class="message-bubble">${message.message_text}</div>`;
+						container.appendChild(messageBubble);
 					});
-					chatMessages.scrollTop = chatMessages.scrollHeight; // Zum neuesten scrollen
+					
+					container.scrollTop = container.scrollHeight;
 				} else {
-					chatMessages.innerHTML = '<p class="text-center text-gray-500">Noch keine Nachrichten.</p>';
+					console.error('Fehler beim Laden der Nachrichten:', result.error);
 				}
-
 			} catch (error) {
-				console.error('Fehler beim Laden der Nachrichten:', error.message);
+				console.error('Fehler beim Laden der Nachrichten:', error);
 			}
 		}
 
@@ -2372,7 +2372,7 @@
 			// Entferne alte Chat-Modals und stoppe das Polling
 			closeChat();
 
-			// Setzt die globale Match-ID, die von showMatches übergeben wurde
+			// Setzt die globale Match-ID
 			currentChatMatchId = matchId;
 
 			const chatModalHtml = `
@@ -2401,26 +2401,24 @@
 			chatDiv.innerHTML = chatModalHtml;
 			document.body.appendChild(chatDiv);
 
-			// Laden der Nachrichten und Polling starten
 			loadMessages();
-			messageInterval = setInterval(loadMessages, 3000); // Pollen alle 3 Sekunden
+			messageInterval = setInterval(loadMessages, 3000);
 
-			// Enter-Taste zum Senden der Nachricht
 			document.getElementById('messageInput').addEventListener('keydown', (e) => {
 				if (e.key === 'Enter') {
 					e.preventDefault();
 					sendMessage();
 				}
 			});
-		}		
+		}	
 		
 		// Funktion zum Schließen des Chat-Popups
 		function closeChat() {
 			const chatModal = document.querySelector('[data-chat-modal]');
 			if (chatModal) {
 				chatModal.remove();
-				// Stoppt das Polling, wenn der Chat geschlossen wird
 				clearInterval(messageInterval);
+				currentChatMatchId = null; // Wichtig: Zurücksetzen der Match-ID
 			}
 		}
 				
