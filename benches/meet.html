@@ -2349,47 +2349,56 @@
 			}
 		}
 		
-		// Korrekte Funktion zum Schließen des Chat-Popups
+
+		// Funktion zum Schließen des Chat-Modals
 		function closeChat() {
 			const chatModal = document.querySelector('[data-chat-modal]');
 			if (chatModal) {
 				chatModal.remove();
-				// Stoppt das Polling, wenn der Chat geschlossen wird
-				clearInterval(messageInterval); 
+				if (messageInterval) {
+					clearInterval(messageInterval);
+				}
 			}
 		}
 
-		// Funktion zum Laden und Anzeigen von Nachrichten
+		// Funktion zum Laden der Nachrichten vom Backend
 		async function loadMessages() {
-			const chatMessagesContainer = document.getElementById('chatMessages');
-			chatMessagesContainer.innerHTML = ''; // Leere den Chat-Container
-			
+			if (!currentChatMatchId) {
+				console.error("Fehler beim Laden der Nachrichten: Match-ID ist nicht definiert.");
+				return;
+			}
+
 			try {
 				const response = await fetch('/.netlify/functions/get_messages', {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },	
-					body: JSON.stringify({ match_id: currentChatMatchId })
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ match_id: currentChatMatchId }),
 				});
-				const result = await response.json();
 
-				if (response.ok && result.success) {
-					result.messages.forEach(msg => {
-						const isSender = (msg.sender_id === currentProfile.userId);
-						const messageClass = isSender ? 'self-end bg-blue-500 text-white' : 'self-start bg-gray-200 text-gray-800';
-						
-						const messageDiv = document.createElement('div');
-						messageDiv.className = `max-w-[70%] rounded-xl p-3 mb-2 shadow-sm ${messageClass}`;
-						messageDiv.textContent = msg.message_text;
-						
-						chatMessagesContainer.appendChild(messageDiv);
-					});
-					// Scrolle automatisch zum Ende des Chats
-					chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-				} else {
-					console.error('Fehler beim Laden der Nachrichten:', result.error);
+				if (!response.ok) {
+					const errorText = await response.text();
+					throw new Error(errorText);
 				}
+
+				const data = await response.json();
+				const chatMessages = document.getElementById('chatMessages');
+				chatMessages.innerHTML = ''; // Vorherige Nachrichten leeren
+
+				if (data.messages && data.messages.length > 0) {
+					data.messages.forEach(msg => {
+						const isSent = msg.sender_id.toString() === currentUser.uid.toString();
+						const messageBubble = document.createElement('div');
+						messageBubble.className = `p-3 rounded-lg max-w-[80%] break-words ${isSent ? 'bg-blue-500 text-white self-end' : 'bg-gray-200 self-start'}`;
+						messageBubble.textContent = msg.message_text;
+						chatMessages.appendChild(messageBubble);
+					});
+					chatMessages.scrollTop = chatMessages.scrollHeight; // Zum neuesten scrollen
+				} else {
+					chatMessages.innerHTML = '<p class="text-center text-gray-500">Noch keine Nachrichten.</p>';
+				}
+
 			} catch (error) {
-				console.error('Fehler beim Laden der Nachrichten:', error);
+				console.error('Fehler beim Laden der Nachrichten:', error.message);
 			}
 		}
 
@@ -2397,40 +2406,40 @@
 		async function sendMessage() {
 			const messageInput = document.getElementById('messageInput');
 			const messageText = messageInput.value.trim();
-			if (!messageText) return; // Nachricht leer, nichts senden
+			if (!messageText || !currentChatMatchId || !currentUser.uid) return;
 
 			try {
 				const response = await fetch('/.netlify/functions/send_message', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						matchId: currentChatMatchId,
-						senderId: currentProfile.userId,
-						messageText: messageText
-					})
+						match_id: currentChatMatchId,
+						sender_id: currentUser.uid,
+						message_text: messageText,
+					}),
 				});
-				const result = await response.json();
 
-				if (response.ok && result.success) {
+				if (response.ok) {
 					messageInput.value = ''; // Eingabefeld leeren
-					loadMessages(); // Chat neu laden, um die neue Nachricht anzuzeigen
+					loadMessages(); // Nachrichten neu laden
 				} else {
-					console.error('Fehler beim Senden der Nachricht:', result.error);
+					const errorText = await response.text();
+					console.error('Fehler beim Senden der Nachricht:', errorText);
 				}
 			} catch (error) {
 				console.error('Fehler beim Senden der Nachricht:', error);
 			}
 		}
 
-		// Funktion zum Öffnen des Chat-Fensters
-		function openMatchChat(matchUserId, matchName, matchImage) {
-			// Generiere eine konsistente match_id
-			const sortedUserIds = [currentUser.uid, matchUserId].sort();
-			currentChatMatchId = `${sortedUserIds[0]}-${sortedUserIds[1]}`;
-			
-			// Entferne alte Chat-Modals und stoppe das Polling
+		// Die eigentliche Funktion, die den Chat öffnet
+		// ⚠️ HIER WIRD matchId als erster Parameter übergeben!
+		function openMatchChat(matchId, matchUserId, matchName, matchImage) {
+			// Schließt die Vorschau oder ein anderes Chat-Fenster
 			closeChat(); 
 			
+			// Setzt die globale Match-ID direkt, ohne sie zu generieren
+			currentChatMatchId = matchId;
+
 			const chatModalHtml = `
 				<div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" data-chat-modal>
 					<div class="bg-white rounded-2xl max-w-md w-full h-[90vh] flex flex-col" onclick="event.stopPropagation()">
@@ -2468,7 +2477,7 @@
 					sendMessage();
 				}
 			});
-		}	
+		}
 		
 		
 		// Swipe abschließen
@@ -2551,57 +2560,62 @@
 
 		// Like verarbeiten
 		async function handleLike(profile) {
-		    try {
-		        console.log('💖 Like für:', profile.profile_name);
-		        console.log('Liker ID:', currentUser.uid, 'Liked ID:', profile.user_id);
-		        
-		        const response = await fetch('/.netlify/functions/create_match', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ 
-		                likerId: parseInt(currentUser.uid),
-		                likedId: parseInt(profile.user_id)
-		            })
-		        });
-		
-		        const result = await response.json();
-		        
-		        if (response.ok && result.success) {
-		            if (result.newMatch) {
-		                // Beidseitiges Match -> Echter Match!
-		                showNotification('🎉 Es ist ein Match! 💕', 'success');
-		                showMatchAnimation(profile);
-		                
-		                // Optional: Match in lokaler Liste speichern
-		                addToLocalMatches(profile);
-		            } else {
-		                // Einseitiger Like
-		                showNotification(`💖 Like gesendet an ${profile.profile_name}!`, 'success');
-		            }
-		        } else {
-		            console.error('Match-Fehler:', result.error || result);
-		            showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
-		        }
-		        
-		    } catch (error) {
-		        console.error('Fehler beim Like:', error);
-		        showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
-		    }
+			try {
+				console.log('💖 Like für:', profile.profile_name);
+				console.log('Liker ID:', currentUser.uid, 'Liked ID:', profile.user_id);
+				
+				const response = await fetch('/.netlify/functions/create_match', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ 
+						likerId: parseInt(currentUser.uid),
+						likedId: parseInt(profile.user_id)
+					})
+				});
+
+				const result = await response.json();
+				
+				if (response.ok && result.success) {
+					if (result.newMatch) {
+						// Beidseitiges Match -> Echter Match!
+						showNotification('🎉 Es ist ein Match! 💕', 'success');
+						showMatchAnimation(profile);
+						
+						// ⚠️ WICHTIG: Das Backend muss hier das vollständige Match-Objekt mit der ID zurückgeben
+						// Beispiel: { success: true, newMatch: true, match: { id: 123, ... } }
+						if (result.match && result.match.id) {
+							addToLocalMatches(result.match);
+							console.log('Match dem lokalen Speicher hinzugefügt mit der ID vom Backend:', result.match.id);
+						} else {
+							console.error('Backend hat keine Match-ID zurückgegeben.');
+						}
+
+					} else {
+						// Einseitiger Like
+						showNotification(`💖 Like gesendet an ${profile.profile_name}!`, 'success');
+					}
+				} else {
+					console.error('Match-Fehler:', result.error || result);
+					showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
+				}
+				
+			} catch (error) {
+				console.error('Fehler beim Like:', error);
+				showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
+			}
 		}
-		
+
 		// Match zu lokaler Liste hinzufügen
-		function addToLocalMatches(profile) {
-		    let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-		    
-		    // Prüfen ob bereits vorhanden
-		    const exists = localMatches.some(m => m.user_id === profile.user_id);
-		    if (!exists) {
-		        localMatches.push({
-		            ...profile,
-		            matchedAt: new Date().toISOString()
-		        });
-		        localStorage.setItem('userMatches', JSON.stringify(localMatches));
-		    }
+		function addToLocalMatches(match) {
+			let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+			
+			// Prüfen, ob bereits vorhanden, basierend auf der Match-ID
+			const exists = localMatches.some(m => m.id === match.id);
+			if (!exists) {
+				localMatches.push(match);
+				localStorage.setItem('userMatches', JSON.stringify(localMatches));
+				console.log('Match erfolgreich dem lokalen Speicher hinzugefügt.');
+			}
 		}
 
 		// Keine Karten mehr vorhanden
