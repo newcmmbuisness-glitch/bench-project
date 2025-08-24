@@ -1510,7 +1510,7 @@
 		
 		async function checkAndRenderUI() {
 			hideAllScreens();
-			
+
 			if (!currentUser || !currentUser.uid) {
 				document.getElementById('welcomeScreen').style.display = 'block';
 				updateFloatingButtons();
@@ -1527,9 +1527,19 @@
 				const result = await response.json();
 
 				if (result.hasProfile) {
-					// Zeige den Swipe-Container an
+					// 🚀 Korrektur: Mache die Profil- und Chat-Buttons sichtbar
+					const profileBtn = document.getElementById('profileButton');
+					const chatBtn = document.getElementById('chatButton');
+
+					if (profileBtn) {
+						profileBtn.style.display = 'block';
+					}
+					if (chatBtn) {
+						chatBtn.style.display = 'block';
+					}
+
+					// Zeige den Swipe-Container an und lade die Profile
 					showSwipeCards();
-					// Starte danach das Laden der Profile
 					await loadProfiles();
 				} else {
 					showCreateProfileSection();
