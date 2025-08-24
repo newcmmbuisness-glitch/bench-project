@@ -10,15 +10,18 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
+        // 🚀 KORREKTUR: Die Variablennamen wurden auf matchId, senderId und messageText geändert,
+        // um den vom Frontend gesendeten Namen zu entsprechen.
         const { matchId, senderId, messageText } = JSON.parse(event.body);
+
         if (!matchId || !senderId || !messageText) {
-            return { 
-                statusCode: 400, 
-                headers, 
-                body: JSON.stringify({ success: false, error: 'Fehlende Felder' }) 
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ success: false, error: 'Fehlende Felder' })
             };
         }
-        
+
         await sql`
             INSERT INTO chat_messages (match_id, sender_id, message_text)
             VALUES (${matchId}, ${senderId}, ${messageText});
