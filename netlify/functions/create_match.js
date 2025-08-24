@@ -15,28 +15,33 @@ exports.handler = async (event, context) => {
             return { statusCode: 400, headers, body: 'Fehlende IDs' };
         }
         
+        let matchId;
+        
+        // Match in beide Richtungen prüfen
         const existingMatch = await sql`
             SELECT id FROM matches 
             WHERE (user_id_1 = ${likerId} AND user_id_2 = ${likedId}) OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId})
         `;
 
         if (existingMatch.length > 0) {
-            const matchId = existingMatch[0].id;
+            // Match existiert bereits
+            matchId = existingMatch[0].id;
             return { 
                 statusCode: 200, 
                 headers, 
                 body: JSON.stringify({ success: true, newMatch: false, matchId }) 
             };
         }
-
-        const newMatch = await sql`
+        
+        // 🚀 KORREKTUR: Die ID des neu erstellten Matches abrufen
+        const result = await sql`
             INSERT INTO matches (user_id_1, user_id_2)
             VALUES (${likerId}, ${likedId})
             RETURNING id;
         `;
         
-        const matchId = newMatch[0].id;
-
+        matchId = result[0].id;
+        
         return {
             statusCode: 200,
             headers,
@@ -44,6 +49,7 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
+        console.error('Fehler in create_match:', error);
         return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
     }
 };
