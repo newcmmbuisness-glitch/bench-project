@@ -1343,13 +1343,17 @@
 		}
 
 		function openMatchChat(matchUserId, matchName, matchImage) {
+		
+			closeChatPreview(); 
+
+		
 		    console.log('🚀 Chat öffnen:', { matchUserId, matchName, matchImage });
 		    
 		    // Hier könntest du später ein vollständiges Chat-System implementieren
 		    // Für jetzt zeigen wir eine "Coming Soon" Nachricht
 		    
 		    const chatPreview = `
-		        <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeChatPreview()">
+		        <div class="fixed inset-0 bg-black bg-opacity-50 z-2001 flex items-center justify-center p-4" onclick="closeChatPreview()">
 		            <div class="bg-white rounded-2xl max-w-md w-full p-6" onclick="event.stopPropagation()">
 		                <div class="text-center">
 		                    <img src="${matchImage}" alt="${matchName}" class="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-pink-200">
