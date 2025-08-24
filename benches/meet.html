@@ -1301,7 +1301,7 @@
 		                
 		                // Zurück-Button hinzufügen
 		                matchesList.innerHTML += `
-		                    <div class="mt-6 text-center">
+		     at               <div class="mt-6 text-center">
 		                        <button onclick="showSwipeCards()" 
 		                                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
 		                            ← Zurück zum Swipen
@@ -1343,6 +1343,9 @@
 		}
 
 		function openMatchChat(matchUserId, matchName, matchImage) {
+			 
+			 closeChatPreview(); 
+		
 		    console.log('🚀 Chat öffnen:', { matchUserId, matchName, matchImage });
 		    
 		    // Hier könntest du später ein vollständiges Chat-System implementieren
