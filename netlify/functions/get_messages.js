@@ -11,13 +11,13 @@ exports.handler = async (event, context) => {
 
     try {
         const { match_id } = JSON.parse(event.body);
-        if (!matchId) {
+        if (!match_id) { // ✔️ Korrigiert zu match_id
             return { statusCode: 400, headers, body: 'Fehlende Match-ID' };
         }
-
+    
         const messages = await sql`
             SELECT * FROM chat_messages
-            WHERE match_id = ${matchId}
+            WHERE match_id = ${match_id} // ✔️ Korrigiert zu match_id
             ORDER BY sent_at ASC;
         `;
 
