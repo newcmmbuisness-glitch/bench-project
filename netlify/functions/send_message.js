@@ -11,13 +11,13 @@ exports.handler = async (event, context) => {
 
     try {
         const { match_id, sender_id, message_text } = JSON.parse(event.body);
-        if (!matchId || !senderId || !messageText) {
+        if (!match_id || !sender_id || !message_text) { // ✔️ Korrigiert zu match_id, sender_id, message_text
             return { statusCode: 400, headers, body: 'Fehlende Felder' };
         }
-
+    
         await sql`
             INSERT INTO chat_messages (match_id, sender_id, message_text)
-            VALUES (${matchId}, ${senderId}, ${messageText});
+            VALUES (${match_id}, ${sender_id}, ${message_text}); // ✔️ Korrigiert zu match_id, sender_id, message_text
         `;
 
         return {
