@@ -1341,61 +1341,7 @@
 		    }
 		}
 
-		function openMatchChat(matchUserId, matchName, matchImage) {
-		
-			closeChatPreview(); 
 
-		
-		    console.log('🚀 Chat öffnen:', { matchUserId, matchName, matchImage });
-		    
-		    // Hier könntest du später ein vollständiges Chat-System implementieren
-		    // Für jetzt zeigen wir eine "Coming Soon" Nachricht
-		    
-		    const chatPreview = `
-		        <div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" onclick="closeChatPreview()">
-		            <div class="bg-white rounded-2xl max-w-md w-full p-6" onclick="event.stopPropagation()">
-		                <div class="text-center">
-		                    <img src="${matchImage}" alt="${matchName}" class="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-pink-200">
-		                    <h3 class="text-xl font-bold mb-2">${matchName}</h3>
-		                    <p class="text-gray-600 mb-6">💬 Chat-System wird bald verfügbar sein!</p>
-		                    
-		                    <div class="space-y-3">
-		                        <button onclick="suggestBenchMeeting('${matchName}')" 
-		                                class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-full hover:from-green-600 hover:to-green-700 transition-colors font-semibold">
-		                            🏞️ Bank-Treffen vorschlagen
-		                        </button>
-		                        <button onclick="closeChatPreview()" 
-		                                class="w-full bg-gray-200 text-gray-700 py-3 rounded-full hover:bg-gray-300 transition-colors">
-		                            Später
-		                        </button>
-		                    </div>
-		                </div>
-		            </div>
-		        </div>
-		    `;
-		    
-		    const chatDiv = document.createElement('div');
-		    chatDiv.setAttribute('data-chat-preview', 'true');
-		    chatDiv.innerHTML = chatPreview;
-		    document.body.appendChild(chatDiv);
-		}	
-
-		function closeChatPreview() {
-		    const preview = document.querySelector('[data-chat-preview]');
-		    if (preview) {
-		        preview.remove();
-		    }
-		}
-
-		function suggestBenchMeeting(matchName) {
-		    closeChatPreview();
-		    showNotification(`🏞️ Weiterleitung zur Bank-Karte für Treffen mit ${matchName}...`, 'success');
-		    
-		    // Weiterleitung zur Haupt-Karte mit Match-Parameter
-		    setTimeout(() => {
-		        window.location.href = `index.html?match=${encodeURIComponent(matchName)}&suggest=true`;
-		    }, 1000);
-		}
 
 		// Verbesserte Error-Behandlung für alle API-Calls
 		async function safeApiCall(url, options, fallbackMessage) {
