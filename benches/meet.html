@@ -1493,7 +1493,7 @@
 			try {
 				// Dies erfordert eine neue Backend-Funktion namens `delete_profile`
 				const response = await fetch('/.netlify/functions/delete_profile', {
-					method: 'POST',
+					method: 'DELETE',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ userId: currentUser.uid })
 				});
