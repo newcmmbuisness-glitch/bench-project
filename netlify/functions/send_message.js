@@ -10,17 +10,11 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
-        let matchId, senderId, messageText;
-        
-        // 🚀 KORREKTUR: Überprüfen, ob event.body existiert, bevor es geparst wird.
-        if (event.body) {
-            const body = JSON.parse(event.body);
-            matchId = body.matchId;
-            senderId = body.senderId;
-            messageText = body.messageText;
-        }
+        // 🚀 KORREKTUR: Die Variablennamen wurden jetzt auf match_id, sender_id und message_text geändert,
+        // um den vom Frontend gesendeten Namen zu entsprechen.
+        const { match_id, sender_id, message_text } = JSON.parse(event.body);
 
-        if (!matchId || !senderId || !messageText) {
+        if (!match_id || !sender_id || !message_text) {
             return {
                 statusCode: 400,
                 headers,
@@ -30,7 +24,7 @@ exports.handler = async (event, context) => {
 
         await sql`
             INSERT INTO chat_messages (match_id, sender_id, message_text)
-            VALUES (${matchId}, ${senderId}, ${messageText});
+            VALUES (${match_id}, ${sender_id}, ${message_text});
         `;
 
         return {
