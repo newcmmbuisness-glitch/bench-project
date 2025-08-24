@@ -2299,12 +2299,11 @@
 			}
 		}
 		
-		// Funktion zum Laden der Nachrichten vom Backend
 		async function loadMessages() {
 			const container = document.getElementById('chatMessages');
 
-			if (!container) {
-				console.error("Fehler: chatMessages-Container nicht gefunden.");
+			if (!container || !currentChatMatchId) {
+				console.error("Fehler: chatMessages-Container oder matchId nicht gefunden.");
 				return;
 			}
 
@@ -2312,7 +2311,7 @@
 				const response = await fetch('/.netlify/functions/get_messages', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ matchId: currentChatMatchId })
+					body: JSON.stringify({ match_id: parseInt(currentChatMatchId) }) // ✅ match_id mit Unterstrich
 				});
 
 				const result = await response.json();
@@ -2321,7 +2320,7 @@
 					container.innerHTML = '';
 					
 					result.messages.forEach(message => {
-						const messageClass = message.sender_id === currentUser.uid ? 'sent' : 'received';
+						const messageClass = message.sender_id === parseInt(currentUser.uid) ? 'sent' : 'received';
 						const messageBubble = document.createElement('div');
 						messageBubble.classList.add('message', messageClass);
 						messageBubble.innerHTML = `<div class="message-bubble">${message.message_text}</div>`;
@@ -2342,24 +2341,15 @@
 			const messageInput = document.getElementById('messageInput');
 			const messageText = messageInput.value.trim();
 			
-			if (!messageText || !currentChatMatchId || !currentUser.uid) {
-				console.error('Missing data:', { messageText, currentChatMatchId, userId: currentUser.uid });
-				return;
-			}
-
-			console.log('📤 Sending message:', {
-				match_id: currentChatMatchId,
-				sender_id: currentUser.uid,
-				message_text: messageText
-			});
+			if (!messageText || !currentChatMatchId || !currentUser.uid) return;
 
 			try {
 				const response = await fetch('/.netlify/functions/send_message', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						match_id: parseInt(currentChatMatchId), // Stelle sicher, dass es eine Zahl ist
-						sender_id: parseInt(currentUser.uid),   // Stelle sicher, dass es eine Zahl ist
+						match_id: parseInt(currentChatMatchId),    // ✅ match_id mit Unterstrich
+						sender_id: parseInt(currentUser.uid),
 						message_text: messageText
 					})
 				});
