@@ -10,9 +10,9 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
-        // ⚠️ KORREKTUR: Die Variable wird jetzt als 'matchId' gelesen
-        const { matchId } = JSON.parse(event.body);
-        if (!matchId) {
+        // ✅ Verwende 'match_id' wie in der Datenbank
+        const { match_id } = JSON.parse(event.body);
+        if (!match_id) {
             return {
                 statusCode: 400,
                 headers,
@@ -22,7 +22,7 @@ exports.handler = async (event, context) => {
 
         const messages = await sql`
             SELECT * FROM chat_messages
-            WHERE match_id = ${matchId}
+            WHERE match_id = ${match_id}
             ORDER BY sent_at ASC;
         `;
 
