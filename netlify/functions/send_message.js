@@ -10,7 +10,7 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
-        const { matchId, senderId, messageText } = JSON.parse(event.body);
+        const { match_id, sender_id, message_text } = JSON.parse(event.body);
         if (!matchId || !senderId || !messageText) {
             return { statusCode: 400, headers, body: 'Fehlende Felder' };
         }
