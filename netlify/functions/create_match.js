@@ -15,29 +15,32 @@ exports.handler = async (event, context) => {
             return { statusCode: 400, headers, body: 'Fehlende IDs' };
         }
         
-        // Match-Versuch in beide Richtungen prüfen
         const existingMatch = await sql`
-            SELECT * FROM matches 
+            SELECT id FROM matches 
             WHERE (user_id_1 = ${likerId} AND user_id_2 = ${likedId}) OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId})
         `;
 
         if (existingMatch.length > 0) {
-            // Match existiert bereits
-            return { statusCode: 200, headers, body: JSON.stringify({ success: true, newMatch: false }) };
+            const matchId = existingMatch[0].id;
+            return { 
+                statusCode: 200, 
+                headers, 
+                body: JSON.stringify({ success: true, newMatch: false, matchId }) 
+            };
         }
 
-        // Fügen Sie das neue Match ein und geben Sie die vollständige Zeile zurück
         const newMatch = await sql`
             INSERT INTO matches (user_id_1, user_id_2)
             VALUES (${likerId}, ${likedId})
-            RETURNING *;
+            RETURNING id;
         `;
         
-        // Geben Sie das neue Match-Objekt mit der ID an das Frontend zurück
+        const matchId = newMatch[0].id;
+
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ success: true, newMatch: true, match: newMatch[0] }),
+            body: JSON.stringify({ success: true, newMatch: true, matchId }),
         };
 
     } catch (error) {
