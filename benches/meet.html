@@ -1276,7 +1276,6 @@
 		                                    <img src="${match.profile_image}" 
 		                                         alt="${match.profile_name}" 
 		                                         class="w-16 h-16 rounded-full object-cover border-2 border-pink-200"
-		                                         onerror="this.src='data:image/svg+xml;base64,' + btoa('<svg width=\\"64\\" height=\\"64\\" xmlns=\\"http://www.w3.org/2000/svg\\"><circle cx=\\"32\\" cy=\\"32\\" r=\\"32\\" fill=\\"#f0f0f0\\"/><text x=\\"32\\" y=\\"38\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"24\\">👤</text></svg>')">
 		                                    <div class="w-4 h-4 bg-green-400 border-2 border-white rounded-full absolute -mt-3 ml-12"></div>
 		                                </div>
 		                                <div class="flex-1 min-w-0">
@@ -1301,7 +1300,7 @@
 		                
 		                // Zurück-Button hinzufügen
 		                matchesList.innerHTML += `
-		     at               <div class="mt-6 text-center">
+		                      <div class="mt-6 text-center">
 		                        <button onclick="showSwipeCards()" 
 		                                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
 		                            ← Zurück zum Swipen
