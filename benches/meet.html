@@ -1794,7 +1794,7 @@
 		function createSwipeCardFromData(profile) {
 		    const cardHtml = `
 		        <div class="swipe-card" data-user-id="${profile.user_id}">
-		            <img src="${profile.profile_image || profile.image}" alt="${profile.profile_name || profile.name}" class="card-image" onerror="this.src = 'data:image/svg+xml;base64,' + btoa('<svg width=\\"400\\" height=\\"250\\" xmlns=\\"http://www.w3.org/2000/svg\\"><rect width=\\"400\\" height=\\"250\\" fill=\\"#f0f0f0\\"/><text x=\\"200\\" y=\\"110\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"30\\">📷</text><text x=\\"200\\" y=\\"140\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"14\\" font-family=\\"Arial\\">Bild nicht verfügbar</text></svg>')" >
+		            <img src="${profile.profile_image || profile.image}" alt="${profile.profile_name || profile.name}" >
 		            <div class="card-content">
 		                <div>
 		                    <h3 class="card-name">${profile.profile_name || profile.name}</h3>
@@ -1904,14 +1904,8 @@
 		    card.dataset.userId = profile.user_id;
 		    card.dataset.stackIndex = stackIndex;
 		    
-		    // Fallback für fehlendes Bild
-		    const imageUrl = profile.profile_image || 'data:image/svg+xml;base64,' + btoa(`
-		        <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-		            <rect width="400" height="300" fill="#f0f0f0"/>
-		            <text x="200" y="120" text-anchor="middle" fill="#999" font-size="40">📷</text>
-		            <text x="200" y="160" text-anchor="middle" fill="#999" font-size="18">Kein Bild</text>
-		        </svg>
-		    `);
+			const imageUrl = profile.profile_image;
+
 		    
 		    // Interessen formatieren
 		    const interests = (profile.interests || []).map(interest => 
@@ -1922,7 +1916,6 @@
 		        <img src="${imageUrl}" 
 		             alt="${profile.profile_name}" 
 		             class="card-image"
-		             onerror="this.src='data:image/svg+xml;base64,' + btoa('<svg width=\\"400\\" height=\\"300\\" xmlns=\\"http://www.w3.org/2000/svg\\"><rect width=\\"400\\" height=\\"300\\" fill=\\"#f0f0f0\\"/><text x=\\"200\\" y=\\"120\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"40\\">📷</text><text x=\\"200\\" y=\\"160\\" text-anchor=\\"middle\\" fill=\\"#999\\" font-size=\\"18\\">Kein Bild</text></svg>')"
 		        >
 		        <div class="card-content">
 		            <div>
@@ -1961,16 +1954,6 @@
 		    
 		    let profileImage = profile.profile_image || profile.image;
 		    
-		    if (!profileImage) {
-		        profileImage = 'data:image/svg+xml;base64,' + btoa(`
-		            <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-		                <rect width="400" height="300" fill="#f0f0f0"/>
-		                <text x="200" y="120" text-anchor="middle" fill="#999" font-size="40">📷</text>
-		                <text x="200" y="160" text-anchor="middle" fill="#999" font-size="18">Kein Bild</text>
-		                <text x="200" y="180" text-anchor="middle" fill="#999" font-size="14">verfügbar</text>
-		            </svg>
-		        `);
-		    }
 		    
 		    const preferencesHtml = prefs.map(pref => {
 		        const icon = emojiMap[pref] || '❓';
