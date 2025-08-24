@@ -1247,34 +1247,34 @@
 		}
 
 		async function loadUserMatches() {
-		    const matchesList = document.getElementById('matchesList');
-		    
-		    if (!matchesList) {
-		        console.error('matchesList Element nicht gefunden');
-		        return;
-		    }
-		    
-		    matchesList.innerHTML = '<div class="text-center p-4">Lade Matches... 🔄</div>';
-		    
-		    try {
-		        const response = await fetch('/.netlify/functions/get_matches', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ userId: currentUser.uid })
-		        });
-		        
-		        const result = await response.json();
-		        
-		        if (response.ok && result.success) {
-		            if (result.matches && result.matches.length > 0) {
+			const matchesList = document.getElementById('matchesList');
+			
+			if (!matchesList) {
+				console.error('matchesList Element nicht gefunden');
+				return;
+			}
+			
+			matchesList.innerHTML = '<div class="text-center p-4">Lade Matches... 🔄</div>';
+			
+			try {
+				const response = await fetch('/.netlify/functions/get_matches', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+				
+				const result = await response.json();
+				
+				if (response.ok && result.success) {
+					if (result.matches && result.matches.length > 0) {
 						matchesList.innerHTML = result.matches.map(match => {
 							const interests = Array.isArray(match.interests) ? match.interests : [];
 							const interestEmojis = interests.slice(0, 3).map(i => emojiMap[i] || '❓').join(' ');
 
-							// ⚠️ HIER ist die entscheidende Korrektur: Wir übergeben die Match-ID als erstes
+							// ✅ CRITICAL FIX: Use match.match_id (from matches table) instead of match.id
 							return `
 								<div class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3"
-									onclick="console.log('Match clicked:', ${match.id}); openMatchChat(${match.id}, ${match.matched_user_id}, '${match.profile_name}', '${match.profile_image}')"
+									onclick="console.log('Match clicked:', ${match.match_id}); openMatchChat(${match.match_id}, ${match.matched_user_id}, '${match.profile_name}', '${match.profile_image}')">
 									<div class="flex items-center space-x-4">
 										<div class="flex-shrink-0">
 											<img src="${match.profile_image}"
@@ -1301,49 +1301,50 @@
 								</div>
 							`;
 						}).join('');
-		                
-		                // Zurück-Button hinzufügen
-		                matchesList.innerHTML += `
-		                      <div class="mt-6 text-center">
-		                        <button onclick="showSwipeCards()" 
-		                                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
-		                            ← Zurück zum Swipen
-		                        </button>
-		                    </div>
-		                `;
-		            } else {
-		                matchesList.innerHTML = `
-		                    <div class="text-center py-16">
-		                        <div class="text-8xl mb-6">💔</div>
-		                        <h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
-		                        <p class="text-gray-500 mb-8 max-w-sm mx-auto">
-		                            Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
-		                        </p>
-		                        <button onclick="showSwipeCards()" 
-		                                class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors font-semibold text-lg">
-		                            💖 Jetzt swipen
-		                        </button>
-		                    </div>
-		                `;
-		            }
-		        } else {
-		            throw new Error(result.error || 'Fehler beim Laden der Matches');
-		        }
-		    } catch (error) {
-		        console.error('Fehler beim Laden der Matches:', error);
-		        matchesList.innerHTML = `
-		            <div class="text-center py-16">
-		                <div class="text-6xl mb-4">⚠️</div>
-		                <h3 class="text-xl font-semibold text-gray-700 mb-2">Verbindungsfehler</h3>
-		                <p class="text-gray-500 mb-6">Matches konnten nicht geladen werden</p>
-		                <button onclick="loadUserMatches()" 
-		                        class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
-		                    🔄 Erneut versuchen
-		                </button>
-		            </div>
-		        `;
-		    }
+						
+						// Zurück-Button hinzufügen
+						matchesList.innerHTML += `
+							  <div class="mt-6 text-center">
+								<button onclick="showSwipeCards()" 
+										class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
+									← Zurück zum Swipen
+								</button>
+							</div>
+						`;
+					} else {
+						matchesList.innerHTML = `
+							<div class="text-center py-16">
+								<div class="text-8xl mb-6">💔</div>
+								<h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
+								<p class="text-gray-500 mb-8 max-w-sm mx-auto">
+									Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
+								</p>
+								<button onclick="showSwipeCards()" 
+										class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors font-semibold text-lg">
+									💖 Jetzt swipen
+								</button>
+							</div>
+						`;
+					}
+				} else {
+					throw new Error(result.error || 'Fehler beim Laden der Matches');
+				}
+			} catch (error) {
+				console.error('Fehler beim Laden der Matches:', error);
+				matchesList.innerHTML = `
+					<div class="text-center py-16">
+						<div class="text-6xl mb-4">⚠️</div>
+						<h3 class="text-xl font-semibold text-gray-700 mb-2">Verbindungsfehler</h3>
+						<p class="text-gray-500 mb-6">Matches konnten nicht geladen werden</p>
+						<button onclick="loadUserMatches()" 
+								class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
+							🔄 Erneut versuchen
+						</button>
+					</div>
+				`;
+			}
 		}
+
 
 
 
@@ -2311,7 +2312,7 @@
 				const response = await fetch('/.netlify/functions/get_messages', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ match_id: parseInt(currentChatMatchId) }) // ✅ match_id mit Unterstrich
+					body: JSON.stringify({ match_id: parseInt(currentChatMatchId) })
 				});
 
 				const result = await response.json();
@@ -2319,20 +2320,60 @@
 				if (response.ok && result.success) {
 					container.innerHTML = '';
 					
-					result.messages.forEach(message => {
-						const messageClass = message.sender_id === parseInt(currentUser.uid) ? 'sent' : 'received';
-						const messageBubble = document.createElement('div');
-						messageBubble.classList.add('message', messageClass);
-						messageBubble.innerHTML = `<div class="message-bubble">${message.message_text}</div>`;
-						container.appendChild(messageBubble);
-					});
+					if (result.messages && result.messages.length > 0) {
+						result.messages.forEach(message => {
+							const messageClass = message.sender_id === parseInt(currentUser.uid) ? 'sent' : 'received';
+							const messageBubble = document.createElement('div');
+							messageBubble.classList.add('message', messageClass);
+							
+							// ✅ Better message formatting with timestamp
+							const timestamp = new Date(message.sent_at).toLocaleTimeString('de-DE', { 
+								hour: '2-digit', 
+								minute: '2-digit' 
+							});
+							
+							messageBubble.innerHTML = `
+								<div class="message-bubble">${(message.message_text)}</div>escapeHtml
+								<div class="text-xs opacity-50 mt-1">${timestamp}</div>
+							`;
+							container.appendChild(messageBubble);
+						});
+					} else {
+						// Show welcome message if no messages exist
+						container.innerHTML = `
+							<div class="text-center text-gray-500 py-8">
+								<div class="text-4xl mb-2">👋</div>
+								<p>Schreibt euch eure erste Nachricht!</p>
+							</div>
+						`;
+					}
 					
 					container.scrollTop = container.scrollHeight;
 				} else {
 					console.error('Fehler beim Laden der Nachrichten:', result.error);
+					if (container.children.length === 0) {
+						container.innerHTML = `
+							<div class="text-center text-red-500 py-8">
+								<p>Nachrichten konnten nicht geladen werden</p>
+								<button onclick="loadMessages()" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded">
+									🔄 Erneut versuchen
+								</button>
+							</div>
+						`;
+					}
 				}
 			} catch (error) {
 				console.error('Fehler beim Laden der Nachrichten:', error);
+				if (container.children.length === 0) {
+					container.innerHTML = `
+						<div class="text-center text-red-500 py-8">
+							<p>Verbindungsfehler</p>
+							<button onclick="loadMessages()" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded">
+								🔄 Erneut versuchen
+							</button>
+						</div>
+					`;
+				}
 			}
 		}
 
@@ -2341,14 +2382,24 @@
 			const messageInput = document.getElementById('messageInput');
 			const messageText = messageInput.value.trim();
 			
-			if (!messageText || !currentChatMatchId || !currentUser.uid) return;
+			if (!messageText || !currentChatMatchId || !currentUser.uid) {
+				if (!messageText) {
+					showNotification('⚠️ Bitte gib eine Nachricht ein', 'error');
+				}
+				return;
+			}
+
+			// ✅ Disable input during send
+			messageInput.disabled = true;
+			const originalValue = messageText;
+			messageInput.value = 'Wird gesendet...';
 
 			try {
 				const response = await fetch('/.netlify/functions/send_message', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						match_id: parseInt(currentChatMatchId),    // ✅ match_id mit Unterstrich
+						match_id: parseInt(currentChatMatchId),
 						sender_id: parseInt(currentUser.uid),
 						message_text: messageText
 					})
@@ -2358,16 +2409,26 @@
 				
 				if (response.ok && result.success) {
 					messageInput.value = '';
-					loadMessages();
+					loadMessages(); // Reload messages to show the new one
+					showNotification('✅ Nachricht gesendet!', 'success');
 				} else {
 					console.error('Server error:', result);
-					showNotification('❌ Nachricht konnte nicht gesendet werden', 'error');
+					showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
+					// Restore original message if send failed
+					messageInput.value = originalValue;
 				}
 			} catch (error) {
 				console.error('Network error:', error);
-				showNotification('❌ Verbindungsfehler', 'error');
+				showNotification('❌ Verbindungsfehler beim Senden', 'error');
+				// Restore original message if send failed
+				messageInput.value = originalValue;
+			} finally {
+				// ✅ Re-enable input
+				messageInput.disabled = false;
+				messageInput.focus();
 			}
 		}
+
 
 		// Funktion zum Öffnen des Chat-Fensters
 		function openMatchChat(matchId, matchUserId, matchName, matchImage) {
@@ -2375,12 +2436,19 @@
 			
 			closeChat();
 			
-			// Stelle sicher, dass matchId eine Zahl ist
+			// ✅ CRITICAL FIX: Ensure matchId is valid before proceeding
 			currentChatMatchId = parseInt(matchId);
 			
-			if (isNaN(currentChatMatchId)) {
+			if (isNaN(currentChatMatchId) || currentChatMatchId <= 0) {
 				console.error('❌ Invalid match ID:', matchId);
 				showNotification('❌ Fehlerhafte Match-ID', 'error');
+				return;
+			}
+
+			// ✅ VALIDATION: Check if all required parameters are present
+			if (!matchUserId || !matchName) {
+				console.error('❌ Missing required chat parameters');
+				showNotification('❌ Unvollständige Match-Daten', 'error');
 				return;
 			}
 
@@ -2388,7 +2456,7 @@
 				<div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" data-chat-modal>
 					<div class="bg-white rounded-2xl max-w-md w-full h-[90vh] flex flex-col" onclick="event.stopPropagation()">
 						<div class="bg-gray-100 p-4 flex items-center rounded-t-2xl shadow-sm">
-							<img src="${matchImage}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
+							<img src="${matchImage || '/default-avatar.png'}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
 							<h3 class="text-lg font-bold flex-grow">${matchName}</h3>
 							<button onclick="closeChat()" class="text-gray-500 hover:text-gray-700">
 								<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -2396,7 +2464,7 @@
 						</div>
 						<div id="chatMessages" class="flex-grow p-4 overflow-y-auto space-y-2"></div>
 						<div class="p-4 bg-gray-100 rounded-b-2xl flex items-center">
-							<input type="text" id="messageInput" placeholder="Nachricht senden..." class="flex-grow rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+							<input type="text" id="messageInput" placeholder="Nachricht senden..." class="flex-grow rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" maxlength="500">
 							<button onclick="sendMessage()" class="bg-blue-500 text-white rounded-full p-2 ml-2 hover:bg-blue-600">
 								<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
 							</button>
@@ -2409,27 +2477,40 @@
 			chatDiv.innerHTML = chatModalHtml;
 			document.body.appendChild(chatDiv);
 
+			// ✅ Load messages and start polling
 			loadMessages();
 			messageInterval = setInterval(loadMessages, 3000);
 
-			document.getElementById('messageInput').addEventListener('keydown', (e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					sendMessage();
-				}
-			});
-		}	
+			// ✅ Enter key listener for message input
+			const messageInput = document.getElementById('messageInput');
+			if (messageInput) {
+				messageInput.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						sendMessage();
+					}
+				});
+				messageInput.focus(); // Auto-focus for better UX
+			}
+		}
 		
 		// Funktion zum Schließen des Chat-Popups
 		function closeChat() {
 			const chatModal = document.querySelector('[data-chat-modal]');
 			if (chatModal) {
 				chatModal.remove();
-				clearInterval(messageInterval);
-				currentChatMatchId = null; // Wichtig: Zurücksetzen der Match-ID
 			}
+			
+			// ✅ Clear polling interval
+			if (messageInterval) {
+				clearInterval(messageInterval);
+				messageInterval = null;
+			}
+			
+			// ✅ Reset chat state
+			currentChatMatchId = null;
 		}
-				
+						
 		// Swipe abschließen
 		async function completeSwipe(direction) {
 		    if (isSwipeInProgress) return;
@@ -2851,6 +2932,18 @@
                 }, 10000);
             });
         }
+		
+		// 5. ADD: Helper function to escape HTML
+		function escapeHtml(text) {
+			const map = {
+				'&': '&amp;',
+				'<': '&lt;',
+				'>': '&gt;',
+				'"': '&quot;',
+				"'": '&#039;'
+			};
+			return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+		}		
 		
 
         function suggestBench() {
