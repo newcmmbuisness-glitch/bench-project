@@ -10,9 +10,15 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
-        // 🚀 KORREKTUR: Die Variablennamen wurden auf matchId, senderId und messageText geändert,
-        // um den vom Frontend gesendeten Namen zu entsprechen.
-        const { matchId, senderId, messageText } = JSON.parse(event.body);
+        let matchId, senderId, messageText;
+        
+        // 🚀 KORREKTUR: Überprüfen, ob event.body existiert, bevor es geparst wird.
+        if (event.body) {
+            const body = JSON.parse(event.body);
+            matchId = body.matchId;
+            senderId = body.senderId;
+            messageText = body.messageText;
+        }
 
         if (!matchId || !senderId || !messageText) {
             return {
