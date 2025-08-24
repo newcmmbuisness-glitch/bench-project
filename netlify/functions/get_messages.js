@@ -10,7 +10,7 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
-        const { matchId } = JSON.parse(event.body);
+        const { match_id } = JSON.parse(event.body);
         if (!matchId) {
             return { statusCode: 400, headers, body: 'Fehlende Match-ID' };
         }
