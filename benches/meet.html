@@ -673,6 +673,58 @@
 		    animation: shimmer 5s infinite linear;
 		}
 
+		/* Styling für die KI-Blase (basierend auf "One-KI Beta") */
+		.ai-bubble-style {
+		    background-color: #f0f0f0;
+		    border-radius: 1.5rem;
+		    padding: 0.5rem 1rem;
+		    max-width: 80%;
+		    font-family: 'Inter', sans-serif;
+		    font-size: 0.875rem;
+		    border: 1px solid rgba(0,0,0,0.1);
+		    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+		}
+		
+		/* Tipp-Effekt-Animation */
+		.typing-animation {
+		    display: inline-block;
+		    overflow: hidden;
+		    white-space: nowrap;
+		    animation: typing 2.5s steps(22, end) forwards, blink-caret .75s step-end infinite;
+		}
+		
+		@keyframes typing {
+		    from { width: 0; }
+		    to { width: 100%; }
+		}
+		
+		@keyframes blink-caret {
+		    from, to { border-color: transparent }
+		    50% { border-color: black; }
+		}
+		
+		/* Styling für die Vorschlagsbuttons */
+		.suggestion-button-style {
+		    background-color: #e5e7eb; /* Hellgrauer Hintergrund */
+		    color: #4b5563; /* Dunklerer Text */
+		    border-radius: 9999px; /* Runde Ecken */
+		    padding: 0.5rem 1rem;
+		    font-size: 0.875rem; /* Etwas kleinere Schrift */
+		    font-weight: 600;
+		    transition: transform 0.2s;
+		    cursor: pointer;
+		    border: 1px solid #d1d5db; /* Grauer Rand */
+		    display: inline-block; /* Für die korrekte Ausrichtung */
+		}
+		.suggestion-button-style:hover {
+		    transform: scale(1.05);
+		}
+		
+		/* Versteckt den Container standardmäßig */
+		.hidden {
+		    display: none;
+		}		
+
         /* Chat System */
 		.chat-container {
 			position: fixed;
@@ -2661,35 +2713,59 @@
 		        document.getElementById('aiSuggestionsContainer').classList.add('hidden');
 		        return;
 		    }
+		
+		    const mainContainer = document.getElementById('aiSuggestionsContainer');
+		    const thinkingBubble = document.getElementById('aiThinkingBubble');
+		    const typingTextElement = document.getElementById('typingText');
+		
+		    // Container anzeigen, aber zunächst nur die Ladeanimation
+		    mainContainer.classList.remove('hidden');
+		    thinkingBubble.classList.remove('hidden');
+		    thinkingBubble.classList.remove('flex'); // Entfernt Tailwind Flex-Klassen
+		    typingTextElement.textContent = 'One-KI denkt nach...';
+		    
+		    // Alte Vorschläge sofort entfernen
+		    const oldButtons = mainContainer.querySelectorAll('button');
+		    oldButtons.forEach(button => button.remove());
+		
 		    try {
 		        const response = await fetch('/.netlify/functions/get_chat_suggestions', {
 		            method: 'POST',
 		            headers: { 'Content-Type': 'application/json' },
 		            body: JSON.stringify({ matchId: currentChatMatchId, currentUserId: currentUser.uid }),
 		        });
+		
 		        const result = await response.json();
 		        
-		        const container = document.getElementById('aiSuggestionsContainer');
-		        container.innerHTML = '';
-		        
-		        if (result.success && result.suggestions.length > 0) {
-		            container.classList.remove('hidden');
-		            result.suggestions.forEach(suggestion => {
-		                const button = document.createElement('button');
-		                button.textContent = suggestion;
-		                button.className = 'bg-gray-800 text-white rounded-full py-2 px-4 text-sm font-semibold hover:bg-gray-900 transition-colors duration-200';
-		                button.onclick = () => {
-		                    document.getElementById('messageInput').value = suggestion;
-		                    logSuggestionClick(suggestion); // NEU: Klick protokollieren
-		                };
-		                container.appendChild(button);
-		            });
-		        } else {
-		            container.classList.add('hidden');
-		        }
+		        // Timeout für die Animation
+		        setTimeout(() => {
+		            // Ladeanimation ausblenden
+		            thinkingBubble.classList.add('hidden');
+		
+		            if (result.success && result.suggestions.length > 0) {
+		                // Fügen Sie jetzt die neuen Vorschlagsbuttons hinzu
+		                result.suggestions.forEach(suggestion => {
+		                    const button = document.createElement('button');
+		                    button.textContent = suggestion;
+		                    // Verwenden Sie das neue CSS-Styling
+		                    button.className = 'suggestion-button-style'; 
+		                    button.onclick = () => {
+		                        document.getElementById('messageInput').value = suggestion;
+		                        logSuggestionClick(suggestion);
+		                    };
+		                    mainContainer.appendChild(button);
+		                });
+		            } else {
+		                // Wenn keine Vorschläge vorhanden sind, Container verstecken
+		                mainContainer.classList.add('hidden');
+		            }
+		        }, 2500); // 2.5 Sekunden Verzögerung für die Animation
+		
 		    } catch (error) {
 		        console.error('Fehler beim Laden der KI-Vorschläge:', error);
-		        document.getElementById('aiSuggestionsContainer').classList.add('hidden');
+		        // Bei Fehler: Ladeanimation ausblenden und Container verstecken
+		        thinkingBubble.classList.add('hidden');
+		        mainContainer.classList.add('hidden');
 		    }
 		}
 		
@@ -2751,7 +2827,11 @@
 						    </div>
 						</div>
 			            <div id="chatMessages" class="flex-grow p-4 overflow-y-auto space-y-2"></div>
-			   			<div id="aiSuggestionsContainer" class="p-2 flex flex-wrap gap-2 justify-center border-t border-gray-200"></div>
+						<div id="aiSuggestionsContainer" class="p-2 flex flex-wrap gap-2 justify-center border-t border-gray-200 hidden">
+						    <div id="aiThinkingBubble" class="ai-bubble-style hidden">
+						        <span id="typingText" class="typing-animation"></span>
+						    </div>
+						</div>
 			            <div class="p-4 bg-gray-100 rounded-b-2xl flex items-center">
 			                <input type="text" id="messageInput" placeholder="Nachricht senden..." class="flex-grow rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" maxlength="500">
 			                <button onclick="sendMessage()" class="bg-blue-500 text-white rounded-full p-2 ml-2 hover:bg-blue-600">
