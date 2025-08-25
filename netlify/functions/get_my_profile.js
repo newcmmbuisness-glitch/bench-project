@@ -28,6 +28,7 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // ✅ KORREKTUR: Verwenden Sie hier die richtigen Spaltennamen mit Unterstrich
         const profile = await sql`
             SELECT 
                 user_id, 
@@ -36,10 +37,10 @@ exports.handler = async (event, context) => {
                 description, 
                 interests,
                 postal_code,
-                prompt1,
-                answer1,
-                prompt2,
-                answer2
+                prompt_1,
+                answer_1,
+                prompt_2,
+                answer_2
             FROM meet_profiles
             WHERE user_id = ${userId}
         `;
