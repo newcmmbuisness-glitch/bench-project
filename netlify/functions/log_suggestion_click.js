@@ -20,6 +20,7 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Korrigierte SQL-Anweisung
         await sql`
             INSERT INTO suggestion_clicks (user_id, clicked_suggestion)
             VALUES (${userId}, ${clickedSuggestion});
