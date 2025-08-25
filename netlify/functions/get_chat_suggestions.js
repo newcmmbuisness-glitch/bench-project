@@ -18,6 +18,11 @@ const generateSuggestions = (lastMessage, myUserId, myInterests, matchInterests,
     // Regel 2: Vorschläge basierend auf gemeinsamen Interessen
     if (myInterests && matchInterests) {
         const commonInterests = myInterests.filter(i => matchInterests.includes(i));
+
+        console.log('Meine Interessen:', myInterests);
+        console.log('Interessen des Matches:', matchInterests);
+        console.log('Gemeinsame Interessen (vom Code gefunden):', commonInterests);
+                
         if (commonInterests.length > 0) {
             const interest = commonInterests[0];
             
