@@ -2,8 +2,9 @@ const { neon } = require('@neondatabase/serverless');
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 // Hilfsfunktion zur Generierung der Vorschläge
-const generateSuggestions = (lastMessage, myUserId, myInterests, matchInterests) => {
-    const suggestions = new Set();
+const generateSuggestions = (lastMessage, myUserId, myInterests, matchInterests, topSuggestions) => {
+    const suggestions = new Set(topSuggestions); // Startet mit den Top-Vorschlägen
+
     const lastMessageText = lastMessage ? lastMessage.message_text.toLowerCase() : '';
 
     // Regel 1: Reaktion auf Komplimente
@@ -28,10 +29,17 @@ const generateSuggestions = (lastMessage, myUserId, myInterests, matchInterests)
     }
     
     // Regel 4: Standard-Vorschläge, wenn nichts Spezifisches zutrifft
-    if (suggestions.size < 3) {
-        suggestions.add('Wie geht\'s dir heute?');
-        suggestions.add('Was sind deine Pläne für das Wochenende?');
-        suggestions.add('Was hat dich auf mein Profil gebracht?');
+    while (suggestions.size < 3) {
+        if (!suggestions.has('Wie geht\'s dir heute?')) {
+            suggestions.add('Wie geht\'s dir heute?');
+        }
+        if (!suggestions.has('Was sind deine Pläne für das Wochenende?')) {
+            suggestions.add('Was sind deine Pläne für das Wochenende?');
+        }
+        if (!suggestions.has('Was hat dich auf mein Profil gebracht?')) {
+            suggestions.add('Was hat dich auf mein Profil gebracht?');
+        }
+        break;
     }
 
     return Array.from(suggestions).slice(0, 3);
@@ -48,6 +56,17 @@ exports.handler = async (event) => {
     try {
         const { matchId, currentUserId } = JSON.parse(event.body);
         
+        // NEU: Top 3 populärste Vorschläge der letzten 30 Tage abrufen
+        const topSuggestionsResult = await sql`
+            SELECT clicked_suggestion
+            FROM suggestion_clicks
+            WHERE clicked_at > NOW() - INTERVAL '30 days'
+            GROUP BY clicked_suggestion
+            ORDER BY COUNT(*) DESC
+            LIMIT 3;
+        `;
+        const topSuggestions = topSuggestionsResult.map(row => row.clicked_suggestion);
+
         // Letzte Nachricht aus der Datenbank abrufen
         const [lastMessageResult] = await sql`
             SELECT message_text, sender_id FROM chat_messages
@@ -73,7 +92,7 @@ exports.handler = async (event) => {
         const myInterests = myProfile ? myProfile.interests : [];
         const matchInterests = matchProfile ? matchProfile.interests : [];
         
-        const suggestions = generateSuggestions(lastMessage, currentUserId, myInterests, matchInterests);
+        const suggestions = generateSuggestions(lastMessage, currentUserId, myInterests, matchInterests, topSuggestions);
         
         return {
             statusCode: 200,
