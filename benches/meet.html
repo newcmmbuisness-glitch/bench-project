@@ -648,6 +648,19 @@
 			overflow-y: auto !important;
 		}
 
+		@keyframes shimmer {
+		    0% { background-position: -200% 0; }
+		    100% { background-position: 200% 0; }
+		}
+		
+		#kiBranding span {
+		    background: linear-gradient(90deg, #e2e8f0, #ffffff, #e2e8f0);
+		    background-size: 200% 100%;
+		    -webkit-background-clip: text;
+		    -webkit-text-fill-color: transparent;
+		    animation: shimmer 5s infinite linear;
+		}
+
         /* Chat System */
 		.chat-container {
 			position: fixed;
@@ -2531,6 +2544,9 @@
 			                <img src="${matchImage || '/default-avatar.png'}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
 			                <h3 class="text-lg font-bold flex-grow">${matchName}</h3>
 			                <div class="flex items-center space-x-2">
+								<div class="relative overflow-hidden text-gray-800 font-bold tracking-tight text-sm mr-2 opacity-80" id="kiBranding">
+									<span class="relative z-10">One-KI Beta</span>
+		 						</div>
 			                    <button onclick="reportChat()" class="text-gray-500 hover:text-red-500">
 			                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
 			                    </button>
