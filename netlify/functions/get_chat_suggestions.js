@@ -3,7 +3,20 @@ const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 // Hilfsfunktion zur Generierung der Vorschläge
 const generateSuggestions = (lastMessage, myUserId, myInterests, matchInterests, topSuggestions) => {
-    const suggestions = new Set(topSuggestions); // Startet mit den Top-Vorschlägen
+    const relevantTopSuggestions = topSuggestions.filter(suggestion => {
+        // Überprüft, ob der Top-Vorschlag eine spezifische Interessen-Frage ist
+        const interestRegex = /Interesse an ([^.]+)/;
+        const match = suggestion.match(interestRegex);
+        if (match) {
+            const interest = match[1].trim();
+            // Gibt den Vorschlag nur zurück, wenn das Interesse in einem der Profile ist
+            return myInterests.includes(interest) || matchInterests.includes(interest);
+        }
+        // Lässt alle anderen Top-Vorschläge (z. B. Standardfragen) durch
+        return true;
+    });
+
+    const suggestions = new Set(relevantTopSuggestions);
 
     const lastMessageText = lastMessage ? lastMessage.message_text.toLowerCase() : '';
 
