@@ -1365,7 +1365,7 @@
 					if (result.matches && result.matches.length > 0) {
 						matchesList.innerHTML = result.matches.map(match => {
 							const interests = Array.isArray(match.interests) ? match.interests : [];
-							const interestEmojis = interests.slice(0, 3).map(i => emojiMap[i] || hobbiesMap[i] || '❓').join(' ');
+							const interestEmojis = interests.slice(0, 3).map(i => ({ ...emojiMap, ...hobbiesMap })[i] || '❓').join(' ');
 
 							// ✅ CRITICAL FIX: Use match.match_id (from matches table) instead of match.id
 							return `
@@ -2082,7 +2082,7 @@
 		    
 		    // Interessen formatieren
 		    const interests = (profile.interests || []).map(interest => 
-		        `<span class="preference-icon">${emojiMap[interest] || '❓'}</span>`
+		        `<span class="preference-icon">${emojiMap[interest] || hobbiesMap[interest] || '❓'}</span>`
 		    ).join('');
 		    
 		    card.innerHTML = `
