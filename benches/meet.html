@@ -673,56 +673,50 @@
 		    animation: shimmer 5s infinite linear;
 		}
 
-		/* Styling für die KI-Blase (basierend auf "One-KI Beta") */
+		/* Styling für die KI-Blase (basierend auf den neuen Vorgaben) */
 		.ai-bubble-style {
-		    background-color: #f0f0f0;
-		    border-radius: 1.5rem;
-		    padding: 0.5rem 1rem;
-		    max-width: 80%;
+		    background-color: #e5e7eb;
+		    border-radius: 20px;
+		    padding: 10px 15px;
 		    font-family: 'Inter', sans-serif;
 		    font-size: 0.875rem;
-		    border: 1px solid rgba(0,0,0,0.1);
-		    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+		    border: 1px solid #d1d5db;
+		    color: #4b5563;
+		    display: inline-block;
+		    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 		}
 		
 		/* Tipp-Effekt-Animation */
+		@keyframes typing {
+		    from { width: 0; }
+		    to { width: 100%; }
+		}
+		@keyframes blink-caret {
+		    from, to { border-color: transparent }
+		    50% { border-color: #4b5563; }
+		}
+		
 		.typing-animation {
-		    display: inline-block;
 		    overflow: hidden;
 		    white-space: nowrap;
 		    animation: typing 2.5s steps(22, end) forwards, blink-caret .75s step-end infinite;
 		}
 		
-		@keyframes typing {
-		    from { width: 0; }
-		    to { width: 100%; }
-		}
-		
-		@keyframes blink-caret {
-		    from, to { border-color: transparent }
-		    50% { border-color: black; }
-		}
-		
 		/* Styling für die Vorschlagsbuttons */
 		.suggestion-button-style {
-		    background-color: #e5e7eb; /* Hellgrauer Hintergrund */
-		    color: #4b5563; /* Dunklerer Text */
-		    border-radius: 9999px; /* Runde Ecken */
+		    background-color: #f3f4f6;
+		    color: #4b5563;
+		    border-radius: 9999px;
 		    padding: 0.5rem 1rem;
-		    font-size: 0.875rem; /* Etwas kleinere Schrift */
+		    font-size: 0.75rem; /* Noch kleiner für den "Beta"-Look */
 		    font-weight: 600;
 		    transition: transform 0.2s;
 		    cursor: pointer;
-		    border: 1px solid #d1d5db; /* Grauer Rand */
-		    display: inline-block; /* Für die korrekte Ausrichtung */
+		    border: 1px solid #d1d5db;
+		    display: inline-block;
 		}
 		.suggestion-button-style:hover {
 		    transform: scale(1.05);
-		}
-		
-		/* Versteckt den Container standardmäßig */
-		.hidden {
-		    display: none;
 		}		
 
         /* Chat System */
@@ -2721,7 +2715,6 @@
 		    // Container anzeigen, aber zunächst nur die Ladeanimation
 		    mainContainer.classList.remove('hidden');
 		    thinkingBubble.classList.remove('hidden');
-		    thinkingBubble.classList.remove('flex'); // Entfernt Tailwind Flex-Klassen
 		    typingTextElement.textContent = 'One-KI denkt nach...';
 		    
 		    // Alte Vorschläge sofort entfernen
