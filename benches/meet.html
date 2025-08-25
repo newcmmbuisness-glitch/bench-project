@@ -3258,6 +3258,33 @@
 		        console.log('👤 Kein User angemeldet');
 		    }
 		});
+		// Neue Funktion zur Verwaltung von Interessen-Emojis
+		const selectedInterests = new Set();
+		const maxInterests = 5;
+		
+		document.addEventListener('DOMContentLoaded', () => {
+		    const interestsContainer = document.getElementById('interestsContainer');
+		    if (interestsContainer) {
+		        interestsContainer.addEventListener('click', (event) => {
+		            const span = event.target.closest('span');
+		            if (span && span.hasAttribute('data-interest')) {
+		                const interest = span.getAttribute('data-interest');
+		                if (selectedInterests.has(interest)) {
+		                    selectedInterests.delete(interest);
+		                    span.classList.remove('bg-gray-800', 'text-white', 'rounded-full');
+		                } else {
+		                    if (selectedInterests.size < maxInterests) {
+		                        selectedInterests.add(interest);
+		                        span.classList.add('bg-gray-800', 'text-white', 'rounded-full');
+		                    } else {
+		                        alert(`Du kannst maximal ${maxInterests} Interessen auswählen.`);
+		                    }
+		                }
+		                document.getElementById('selectedInterests').value = JSON.stringify(Array.from(selectedInterests));
+		            }
+		        });
+		    }
+		});
     </script>
 </body>
 </html>
