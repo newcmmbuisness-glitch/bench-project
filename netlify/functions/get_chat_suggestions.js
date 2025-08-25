@@ -104,6 +104,14 @@ const generateSuggestions = (lastMessage, myUserId, myInterests, matchInterests,
         suggestions.add('Eine Bank mit schöner Aussicht wäre perfekt!');
         suggestions.add('Ich kenne ein paar schöne Orte. Wo würdest du dich gerne treffen?');
         suggestions.add('Ein entspanntes Gespräch auf einer Bank klingt super!');
+
+        if (myInterests.includes('Wein') && matchInterests.includes('Wein')) {
+            suggestions.add('Perfekt, ich bringe den Wein mit!');
+        }
+        if (myInterests.includes('420') && matchInterests.includes('420')) {
+            suggestions.add('Cool! Ich bringe 🍃 mit.');
+        }
+                
     }
     
     // Regel 6: Standard-Vorschläge, wenn nichts Spezifisches zutrifft
