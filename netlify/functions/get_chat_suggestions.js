@@ -11,7 +11,7 @@ const generateSuggestions = (lastMessage, myUserId, myInterests, matchInterests,
         if (match) {
             const interest = match[1].trim();
             // Gibt den Vorschlag nur zurück, wenn das Interesse in einem der Profile ist
-            return myInterests.includes(interest) || matchInterests.includes(interest);
+            return myInterests.includes(interest) && matchInterests.includes(interest);
         }
         // Lässt alle anderen Top-Vorschläge (z. B. Standardfragen) durch
         return true;
