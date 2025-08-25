@@ -1439,7 +1439,7 @@
 		        return { success: false, error: error.message };
 		    }
 		}
-
+		
 		async function showProfilePopup() {
 		    if (!currentUser || !currentUser.uid) {
 		        showNotification('❌ Bitte melden Sie sich erneut an.', 'error');
@@ -1458,10 +1458,13 @@
 		        if (response.ok && result.profile) {
 		            currentProfile = result.profile;
 		            
-		            // Interests als Array behandeln
-		            const interests = Array.isArray(currentProfile.interests) 
-		                ? currentProfile.interests 
-		                : (currentProfile.interests ? [currentProfile.interests] : []);
+		            // FIX: Interests korrekt verarbeiten (kann null, Array oder String sein)
+		            let interests = [];
+		            if (Array.isArray(currentProfile.interests)) {
+		                interests = currentProfile.interests.filter(i => i !== null && i !== undefined);
+		            } else if (currentProfile.interests) {
+		                interests = [currentProfile.interests];
+		            }
 		                
 		            document.getElementById('popupProfileName').textContent = currentProfile.profile_name;
 		            document.getElementById('popupProfileImage').src = currentProfile.profile_image;
@@ -1470,9 +1473,27 @@
 		            const interestsDiv = document.getElementById('popupProfileInterests');
 		            interestsDiv.innerHTML = '';
 		            
+		            // Kombinierte emoji map für alle Interessen
+		            const allEmojis = {
+		                'wine': '🍷',
+		                '420': '🍃',
+		                'coffee': '☕',
+		                'book': '📚',
+		                'bike': '🚲',
+		                'Kochen': '👩‍🍳',
+		                'Gaming': '🎮',
+		                'Wandern': '⛰️',
+		                'Fotografie': '📸',
+		                'Musik': '🎵',
+		                'Filme': '🎬',
+		                'Sport': '🏋️',
+		                'Kunst': '🎨',
+		                'Haustiere': '🐶'
+		            };
+		            
 		            interests.forEach(interest => {
 		                const span = document.createElement('span');
-		                const emoji = emojiMap[interest] || '❓';
+		                const emoji = allEmojis[interest] || '❓';
 		                span.textContent = `${emoji} ${interest}`;
 		                span.className = 'px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium mr-2 mb-2 inline-block';
 		                interestsDiv.appendChild(span);
@@ -1504,14 +1525,33 @@
 		        // Formular mit aktuellen Daten vorausfüllen
 		        document.getElementById('profileName').value = currentProfile.profile_name || '';
 		        document.getElementById('profileDescription').value = currentProfile.description || '';
+		        document.getElementById('postalCode').value = currentProfile.postal_code || '';
 		        
-		        // Interessen setzen
+		        // FIX: Interessen korrekt aufteilen
 		        const interests = Array.isArray(currentProfile.interests) 
 		            ? currentProfile.interests 
 		            : (currentProfile.interests ? [currentProfile.interests] : []);
 		            
-		        selectedPreferences = [...interests];
+		        // Aufteilen in Genussmittel und Hobbies
+		        const preferencesOptions = ['wine', '420', 'coffee', 'book', 'bike'];
+		        const hobbiesOptions = ['Kochen', 'Gaming', 'Wandern', 'Fotografie', 'Musik', 'Filme', 'Sport', 'Kunst', 'Haustiere'];
+		        
+		        selectedPreferences = interests.filter(i => preferencesOptions.includes(i));
+		        selectedHobbies = interests.filter(i => hobbiesOptions.includes(i));
+		        
+		        // UI aktualisieren
 		        renderPreferences();
+		        renderHobbies();
+		        
+		        // Prompts und Antworten setzen
+		        if (currentProfile.prompt_1) {
+		            document.getElementById('prompt1Select').value = currentProfile.prompt_1;
+		            document.getElementById('answer1Input').value = currentProfile.answer_1 || '';
+		        }
+		        if (currentProfile.prompt_2) {
+		            document.getElementById('prompt2Select').value = currentProfile.prompt_2;
+		            document.getElementById('answer2Input').value = currentProfile.answer_2 || '';
+		        }
 		        
 		        // Profile Popup schließen und Edit-Form anzeigen
 		        closeProfilePopup();
@@ -1537,34 +1577,39 @@
 
 		
 		function renderPreferences() {
-			const preferencesDiv = document.getElementById('preferencesIcons');
-			if (preferencesDiv) {
-				preferencesDiv.innerHTML = ''; // Vorherige Icons leeren
-				// Hier definieren Sie die verfügbaren Präferenzen
-				['wine', '420', 'coffee', 'book', 'bike'].forEach(pref => {
-					const isSelected = selectedPreferences.includes(pref) ? 'selected' : '';
-					const emojiMap = {
-						'wine': '🍷',
-						'420': '🍃',
-						'coffee': '☕',
-						'book': '📚',
-						'bike': '🚲'
-					};
-					const option = document.createElement('div');
-					option.className = `preference-option ${isSelected}`;
-					option.setAttribute('onclick', `togglePreference(this, '${pref}')`);
-					option.innerHTML = `<span>${emojiMap[pref]}</span><div class="tooltip">${pref}</div>`;
-					preferencesDiv.appendChild(option);
-				});
-			}
+		    const preferencesDiv = document.getElementById('preferencesIcons');
+		    if (preferencesDiv) {
+		        preferencesDiv.innerHTML = ''; // Vorherige Icons leeren
+		        
+		        // Definiere verfügbare Präferenzen mit ihren Emojis
+		        const preferencesOptions = {
+		            'wine': '🍷',
+		            '420': '🍃', 
+		            'coffee': '☕',
+		            'book': '📚',
+		            'bike': '🚲'
+		        };
+		        
+		        Object.entries(preferencesOptions).forEach(([pref, emoji]) => {
+		            const isSelected = selectedPreferences.includes(pref) ? 'selected' : '';
+		            const option = document.createElement('div');
+		            option.className = `preference-option ${isSelected}`;
+		            option.dataset.value = pref; // WICHTIG: data-value setzen
+		            option.setAttribute('onclick', `togglePreference(this, '${pref}')`);
+		            option.innerHTML = `<span>${emoji}</span><div class="tooltip">${pref}</div>`;
+		            preferencesDiv.appendChild(option);
+		        });
+		    }
 		}
 
 		// Ihre neue Render-Funktion für Hobbies
 		function renderHobbies() {
 		    const hobbiesDiv = document.getElementById('hobbiesIcons');
 		    if (!hobbiesDiv) return;
+		    
 		    hobbiesDiv.innerHTML = ''; 
-		    const emojiMap = {
+		    
+		    const hobbiesOptions = {
 		        'Kochen': '👩‍🍳',
 		        'Gaming': '🎮',
 		        'Wandern': '⛰️',
@@ -1575,13 +1620,14 @@
 		        'Kunst': '🎨',
 		        'Haustiere': '🐶'
 		    };
-		    const hobbyKeys = Object.keys(emojiMap);
-		    hobbyKeys.forEach(hobby => {
+		    
+		    Object.entries(hobbiesOptions).forEach(([hobby, emoji]) => {
 		        const isSelected = selectedHobbies.includes(hobby) ? 'selected' : '';
 		        const option = document.createElement('div');
 		        option.className = `preference-option ${isSelected}`;
+		        option.dataset.value = hobby; // WICHTIG: data-value setzen
 		        option.setAttribute('onclick', `toggleHobby(this, '${hobby}')`);
-		        option.innerHTML = `<span>${emojiMap[hobby]}</span><div class="tooltip">${hobby}</div>`;
+		        option.innerHTML = `<span>${emoji}</span><div class="tooltip">${hobby}</div>`;
 		        hobbiesDiv.appendChild(option);
 		    });
 		}
@@ -1791,14 +1837,19 @@
 		        return;
 		    }
 		
-		    // Bestehende Logik für die Genussmittel-Interessen
-		    const selectedGenussmittel = Array.from(document.querySelectorAll('#preferencesIcons .selected')).map(el => el.dataset.value);
-		    
-		    // NEU: Logik für die Hobbies
-		    const selectedHobbies = Array.from(document.querySelectorAll('#hobbiesIcons .selected')).map(el => el.dataset.value);
+		    // FIX: Korrekte Erfassung der selektierten Werte
+		    const selectedGenussmittel = Array.from(document.querySelectorAll('#preferencesIcons .selected'))
+		        .map(el => el.dataset.value)
+		        .filter(val => val); // Filter out undefined values
+		        
+		    const selectedHobbiesFromUI = Array.from(document.querySelectorAll('#hobbiesIcons .selected'))
+		        .map(el => el.dataset.value)
+		        .filter(val => val); // Filter out undefined values
 		
 		    // Alle Interessen zusammenführen
-		    const allInterests = [...selectedGenussmittel, ...selectedHobbies];
+		    const allInterests = [...selectedGenussmittel, ...selectedHobbiesFromUI];
+		    
+		    console.log('🎯 Erfasste Interessen:', allInterests); // Debug
 		
 		    try {
 		        const profileImageUrl = await uploadImageToCloudinary(imageFile);
@@ -1807,7 +1858,7 @@
 		            userId: currentUser.uid, 
 		            name: name,
 		            description: description,
-		            interests: allInterests, // WICHTIG: Sende das kombinierte Array
+		            interests: allInterests, // Array wird korrekt gesendet
 		            profileImage: profileImageUrl,
 		            postalCode: postalCode,
 		            prompt1: prompt1,
@@ -1816,7 +1867,8 @@
 		            answer2: answer2
 		        };
 		
-		        console.log('Sende Profil für userId:', currentUser.uid);
+		        console.log('📤 Sende Profil-Daten:', profileData);
+		        
 		        const response = await fetch('/.netlify/functions/create_profile', {
 		            method: 'POST',
 		            headers: { 'Content-Type': 'application/json' },
