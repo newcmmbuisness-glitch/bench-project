@@ -1807,7 +1807,18 @@
 		
 		function showSwipeCards() {
 			hideAllScreens();
-			document.getElementById('swipeContainer').style.display = 'block';
+			const swipeContainer = document.getElementById('swipeContainer');
+			swipeContainer.style.display = 'block';
+			
+			// Ensure the cardStack is properly centered
+			const cardStack = document.getElementById('cardStack');
+			if (cardStack) {
+				cardStack.style.display = 'flex';
+				cardStack.style.alignItems = 'center';
+				cardStack.style.justifyContent = 'center';
+				cardStack.style.minHeight = '60vh';
+			}
+			
 			document.getElementById('noMoreProfiles').style.display = 'none';
 		}
 
@@ -3031,21 +3042,68 @@
 
 		// Keine Karten mehr vorhanden
 		function showNoMoreCards() {
-		    const cardStack = document.getElementById('cardStack');
-		    cardStack.innerHTML = `
-		        <div style="text-align: center; padding: 40px 20px; color: #666;">
-		            <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
-		            <h3 style="margin-bottom: 15px; color: #333;">Das war's für heute!</h3>
-		            <p style="margin-bottom: 25px;">Du hast alle verfügbaren Profile durchgeschaut.</p>
-		            <button onclick="loadSwipeCards()" class="action-btn btn-primary">
-		                🔄 Erneut versuchen
-		            </button>
-		        </div>
-		    `;
+			const cardStack = document.getElementById('cardStack');
+			const swipeActions = document.querySelector('.swipe-actions');
+			const backButton = document.querySelector('#swipeContainer button[onclick*="checkAndRenderUI"]');
 			
+			// Hide swipe action buttons (heart/x)
+			if (swipeActions) {
+				swipeActions.style.display = 'none';
+			}
+			
+			// Hide back button
+			if (backButton) {
+				backButton.style.display = 'none';
+			}
+			
+			// Show centered "no more profiles" message with reload button
+			cardStack.innerHTML = `
+				<div class="flex flex-col items-center justify-center h-full text-center p-8">
+					<div class="text-8xl mb-6">😢</div>
+					<h2 class="text-2xl font-bold text-white mb-4">Keine weiteren Profile gefunden</h2>
+					<p class="text-gray-300 mb-8 max-w-sm">
+						Versuch es später noch einmal oder passe deine Sucheinstellungen an.
+					</p>
+					<button onclick="reloadProfiles()" 
+							class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold text-lg shadow-lg">
+						🔄 Erneut laden
+					</button>
+				</div>
+			`;
+			
+			// Keep floating buttons visible
 			updateFloatingButtons();
-			
 		}
+		
+		async function reloadProfiles() {
+			// Reset state
+			currentIndex = 0;
+			currentProfiles = [];
+			
+			// Show loading state
+			const cardStack = document.getElementById('cardStack');
+			cardStack.innerHTML = `
+				<div class="flex flex-col items-center justify-center h-full text-center p-8">
+					<div class="text-6xl mb-4 animate-spin">🔄</div>
+					<p class="text-white text-lg">Lade neue Profile...</p>
+				</div>
+			`;
+			
+			// Show swipe buttons again
+			const swipeActions = document.querySelector('.swipe-actions');
+			const backButton = document.querySelector('#swipeContainer button[onclick*="checkAndRenderUI"]');
+			
+			if (swipeActions) {
+				swipeActions.style.display = 'flex';
+			}
+			
+			if (backButton) {
+				backButton.style.display = 'inline-block';
+			}
+			
+			// Load profiles
+			await loadProfiles();
+		}		
 		
 		// Match Animation
 		function showMatchAnimation(profile) {
@@ -3090,70 +3148,38 @@
 		    }, 4000);
 		}		
 
-		// Floating Buttons korrekt anzeigen/verstecken
 		function updateFloatingButtons() {
-		    const profileBtn = document.getElementById('profileButton');
-		    const chatBtn = document.getElementById('chatButton');
-		    
-		    if (!profileBtn || !chatBtn) {
-		        console.error('Floating buttons nicht gefunden');
-		        return;
-		    }
-		    
-		    if (currentUser && currentUser.uid) {
-		        const swipeContainer = document.getElementById('swipeContainer');
-		        const isSwipeView = swipeContainer && window.getComputedStyle(swipeContainer).display === 'block';
-		        
-		        if (isSwipeView) {
-		            profileBtn.classList.remove('hidden');
-		            chatBtn.classList.remove('hidden');
-		            
-		            // Position sicherstellen
-		            profileBtn.style.cssText = `
-		                position: fixed;
-		                bottom: 2rem;
-		                left: 2rem;
-		                width: 4rem;
-		                height: 4rem;
-		                border-radius: 50%;
-		                background-color: #ff5e5e;
-		                color: white;
-		                display: flex;
-		                align-items: center;
-		                justify-content: center;
-		                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-		                cursor: pointer;
-		                z-index: 1000;
-		                border: none;
-		                transition: transform 0.2s ease;
-		            `;
-		            
-		            chatBtn.style.cssText = `
-		                position: fixed;
-		                bottom: 2rem;
-		                right: 2rem;
-		                width: 4rem;
-		                height: 4rem;
-		                border-radius: 50%;
-		                background-color: #007bff;
-		                color: white;
-		                display: flex;
-		                align-items: center;
-		                justify-content: center;
-		                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-		                cursor: pointer;
-		                z-index: 1000;
-		                border: none;
-		                transition: transform 0.2s ease;
-		            `;
-		        } else {
-		            profileBtn.classList.add('hidden');
-		            chatBtn.classList.add('hidden');
-		        }
-		    } else {
-		        profileBtn.classList.add('hidden');
-		        chatBtn.classList.add('hidden');
-		    }
+			const profileBtn = document.getElementById('profileButton');
+			const chatBtn = document.getElementById('chatButton');
+			
+			if (!profileBtn || !chatBtn) {
+				console.error('Floating buttons nicht gefunden');
+				return;
+			}
+			
+			if (currentUser && currentUser.uid) {
+				const swipeContainer = document.getElementById('swipeContainer');
+				const isSwipeView = swipeContainer && window.getComputedStyle(swipeContainer).display === 'block';
+				
+				if (isSwipeView) {
+					profileBtn.classList.remove('hidden');
+					chatBtn.classList.remove('hidden');
+					
+					// Ensure proper styling
+					[profileBtn, chatBtn].forEach(btn => {
+						btn.style.display = 'flex';
+						btn.style.position = 'fixed';
+						btn.style.zIndex = '1000';
+					});
+					
+				} else {
+					profileBtn.classList.add('hidden');
+					chatBtn.classList.add('hidden');
+				}
+			} else {
+				profileBtn.classList.add('hidden');
+				chatBtn.classList.add('hidden');
+			}
 		}
 
         function addMatch(profile) {
