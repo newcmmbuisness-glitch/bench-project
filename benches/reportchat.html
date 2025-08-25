@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin Panel - Meldungen</title>
+    <style>
+        body { background: #f5f5f5; margin: 0; font-family: Arial, sans-serif; }
+        .header { background: #222; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 900px; margin: 20px auto; background: white; padding: 20px; border-radius: 6px; box-shadow: 0 0 10px #aaa; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background: #eee; transition: background-color 0.3s ease; }
+        .btn:hover { background: #ddd; }
+        .btn-resolve { background: #4CAF50; color: white; }
+        .btn-resolve:hover { background: #45a049; }
+        .btn-dismiss { background: #f44336; color: white; }
+        .btn-dismiss:hover { background: #d32f2f; }
+        .report-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #ddd; cursor: pointer; }
+        .report-item:hover { background: #f9f9f9; }
+        .chat-view { padding: 20px; border-top: 1px solid #ddd; margin-top: 20px; }
+        .message { padding: 10px; border-radius: 15px; margin-bottom: 10px; }
+        .user-message { background: #e0f7fa; align-self: flex-end; }
+        .reported-message { background: #ffebee; align-self: flex-start; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Admin Panel - Gemeldete Chats</h1>
+        <a href="admin.html" class="btn btn-back">Zurück</a>
+    </div>
+
+    <div class="container">
+        <h2>Gemeldete Chats</h2>
+        <div id="reportedChatsList">
+            <p>Lade gemeldete Chats...</p>
+        </div>
+
+        <div id="chatView" class="hidden chat-view">
+            <h3 id="chatTitle"></h3>
+            <div id="chatMessages" class="flex flex-col space-y-2"></div>
+            <div class="actions mt-4">
+                <button id="aiSummaryBtn" class="btn">KI-Zusammenfassung</button>
+                <button id="resolveBtn" class="btn btn-resolve hidden">Als gelöst markieren</button>
+                <button id="dismissBtn" class="btn btn-dismiss hidden">Meldung ablehnen</button>
+            </div>
+            <div id="aiSummaryResult" class="mt-4 p-4 bg-gray-100 rounded hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadReportedChats();
+        });
+
+        async function loadReportedChats() {
+            const list = document.getElementById('reportedChatsList');
+            try {
+                const response = await fetch('/.netlify/functions/get_reported_chats');
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    if (result.reports.length > 0) {
+                        list.innerHTML = result.reports.map(report => `
+                            <div class="report-item" data-match-id="${report.match_id}" onclick="viewChat(${report.match_id}, '${report.reporter_name}', '${report.reported_name}')">
+                                <span>Meldung von **${report.reporter_name}** gegen **${report.reported_name}** (Match ID: ${report.match_id})</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        list.innerHTML = '<p>Keine neuen Meldungen.</p>';
+                    }
+                } else {
+                    list.innerHTML = `<p style="color:red;">Fehler beim Laden: ${result.error}</p>`;
+                }
+            } catch (error) {
+                list.innerHTML = `<p style="color:red;">Netzwerkfehler: ${error.message}</p>`;
+            }
+        }
+
+        async function viewChat(matchId, reporterName, reportedName) {
+            const chatView = document.getElementById('chatView');
+            const chatTitle = document.getElementById('chatTitle');
+            const chatMessagesContainer = document.getElementById('chatMessages');
+            
+            chatTitle.textContent = `Chat zwischen ${reporterName} und ${reportedName}`;
+            chatMessagesContainer.innerHTML = '<p>Lade Nachrichten...</p>';
+            chatView.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/.netlify/functions/get_messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ match_id: matchId })
+                });
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    chatMessagesContainer.innerHTML = result.messages.map(msg => `
+                        <div class="message ${msg.sender_id === result.reporterId ? 'reported-message' : 'user-message'}">
+                            <strong>${msg.sender_id === result.reporterId ? reportedName : reporterName}:</strong> ${msg.message_text}
+                        </div>
+                    `).join('');
+                } else {
+                    chatMessagesContainer.innerHTML = `<p style="color:red;">Fehler: ${result.error}</p>`;
+                }
+            } catch (error) {
+                chatMessagesContainer.innerHTML = `<p style="color:red;">Netzwerkfehler: ${error.message}</p>`;
+            }
+        }
+
+        // KI-Zusammenfassungsfunktion (Konzeptionell)
+        document.getElementById('aiSummaryBtn').addEventListener('click', async () => {
+            const messages = Array.from(document.querySelectorAll('#chatMessages .message'))
+                                .map(el => el.textContent.trim());
+            const summaryResult = document.getElementById('aiSummaryResult');
+            summaryResult.classList.add('hidden');
+            
+            try {
+                summaryResult.textContent = 'KI generiert Zusammenfassung...';
+                summaryResult.classList.remove('hidden');
+                
+                const response = await fetch('/.netlify/functions/ai_summary', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages })
+                });
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    summaryResult.textContent = 'Zusammenfassung: ' + result.summary;
+                } else {
+                    summaryResult.textContent = 'Fehler bei der KI-Analyse: ' + result.error;
+                }
+            } catch (error) {
+                summaryResult.textContent = 'Netzwerkfehler bei der KI-Anfrage: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
