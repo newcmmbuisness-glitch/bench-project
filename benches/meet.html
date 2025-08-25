@@ -2020,7 +2020,7 @@
 				return;
 			}
 			
-			// Reset cardStack styling for normal cards
+			// Reset cardStack to normal positioning for cards
 			cardStack.style.cssText = '';
 			cardStack.innerHTML = '';
 
@@ -2029,7 +2029,7 @@
 				return;
 			}
 
-			// Show swipe buttons when we have cards
+			// Always show swipe buttons and back button when we have cards
 			const swipeActions = document.querySelector('.swipe-actions');
 			const backButtonContainer = document.querySelector('#swipeContainer > div:last-child');
 			
@@ -2904,55 +2904,55 @@
 						
 		// Swipe abschließen
 		async function completeSwipe(direction) {
-		    if (isSwipeInProgress) return;
-		    
-		    isSwipeInProgress = true;
-		    
-		    const activeCard = document.querySelector('.swipe-card[data-stack-index="0"]');
-		    if (!activeCard || !activeCard.__profile) {
-		        isSwipeInProgress = false;
-		        return;
-		    }
-		    
-		    const profile = activeCard.__profile;
-		    const isLike = direction === 'right';
-		    
-		    // Animation
-		    activeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-		    const moveX = direction === 'right' ? 400 : -400;
-		    const rotation = direction === 'right' ? 30 : -30;
-		    
-		    activeCard.style.transform = `translateX(${moveX}px) rotate(${rotation}deg)`;
-		    activeCard.style.opacity = '0';
-		    
-		    // Like/Dislike verarbeiten
-		    if (isLike) {
-		        await handleLike(profile);
-		    } else {
-		        console.log('👎 Dislike:', profile.profile_name);
-		    }
-		    
-		    // Karte nach Animation entfernen
-		    setTimeout(() => {
-		        activeCard.remove();
-		        currentIndex++;
-		        
-		        // Verbleibende Karten neu positionieren
-		        updateCardStack();
-		        
-		        // Neue Karte laden falls verfügbar
-		        if (currentIndex + 2 < currentProfiles.length) {
-		            const newProfile = currentProfiles[currentIndex + 2];
-		            createSwipeCard(newProfile, 2);
-		        }
-		        
-		        // Prüfen ob mehr Karten vorhanden
-		        if (currentIndex >= currentProfiles.length) {
-		            showNoMoreCards();
-		        }
-		        
-		        isSwipeInProgress = false;
-		    }, 300);
+			if (isSwipeInProgress) return;
+			
+			isSwipeInProgress = true;
+			
+			const activeCard = document.querySelector('.swipe-card[data-stack-index="0"]');
+			if (!activeCard || !activeCard.__profile) {
+				isSwipeInProgress = false;
+				return;
+			}
+			
+			const profile = activeCard.__profile;
+			const isLike = direction === 'right';
+			
+			// Animation
+			activeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+			const moveX = direction === 'right' ? 400 : -400;
+			const rotation = direction === 'right' ? 30 : -30;
+			
+			activeCard.style.transform = `translateX(${moveX}px) rotate(${rotation}deg)`;
+			activeCard.style.opacity = '0';
+			
+			// Like/Dislike verarbeiten
+			if (isLike) {
+				await handleLike(profile);
+			}
+			
+			// Karte nach Animation entfernen
+			setTimeout(() => {
+				activeCard.remove();
+				currentIndex++;
+				
+				// Verbleibende Karten neu positionieren
+				updateCardStack();
+				
+				// Neue Karte laden falls verfügbar
+				if (currentIndex + 2 < currentProfiles.length) {
+					const newProfile = currentProfiles[currentIndex + 2];
+					createSwipeCard(newProfile, 2);
+				}
+				
+				// Prüfen ob mehr Karten vorhanden
+				if (currentIndex >= currentProfiles.length) {
+					setTimeout(() => {
+						showNoMoreCards();
+					}, 500);
+				}
+				
+				isSwipeInProgress = false;
+			}, 300);
 		}
 
 		// Verbleibende Karten im Stack aktualisieren
@@ -3056,111 +3056,115 @@
 		// Keine Karten mehr vorhanden
 		function showNoMoreCards() {
 			const cardStack = document.getElementById('cardStack');
-			
-			// Hide ALL swipe-related buttons
 			const swipeActions = document.querySelector('.swipe-actions');
-			const backButtonContainer = document.querySelector('#swipeContainer > div:last-child');
 			
+			// Hide swipe action buttons (heart/x) - use more specific selector
 			if (swipeActions) {
 				swipeActions.style.display = 'none';
 			}
 			
-			if (backButtonContainer && backButtonContainer.querySelector('button[onclick*="checkAndRenderUI"]')) {
-				backButtonContainer.style.display = 'none';
-			}
-			
-			// Clear and set up proper centering for cardStack
-			cardStack.innerHTML = '';
+			// Force cardStack to take full height and center content
 			cardStack.style.cssText = `
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 100px;
 				display: flex;
 				flex-direction: column;
 				align-items: center;
 				justify-content: center;
-				height: 70vh;
-				width: 100%;
-				text-align: center;
-				padding: 2rem;
+				z-index: 1;
 			`;
 			
-			// Create centered content
-			const noProfilesDiv = document.createElement('div');
-			noProfilesDiv.style.cssText = `
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: center;
-				max-width: 400px;
-				margin: 0 auto;
+			cardStack.innerHTML = `
+				<div style="text-align: center; color: white;">
+					<div style="font-size: 5rem; margin-bottom: 1.5rem;">😢</div>
+					<h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">
+						Keine weiteren Profile gefunden
+					</h2>
+					<p style="color: rgba(255,255,255,0.8); margin-bottom: 2rem; line-height: 1.5; max-width: 300px;">
+						Versuch es später noch einmal oder passe deine Sucheinstellungen an.
+					</p>
+					<button onclick="reloadProfiles()" 
+							style="background: linear-gradient(45deg, #8b5cf6, #ec4899); 
+								   color: white; 
+								   padding: 1rem 2rem; 
+								   border-radius: 9999px; 
+								   border: none; 
+								   font-size: 1.1rem; 
+								   font-weight: 600; 
+								   cursor: pointer; 
+								   box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+								   transition: transform 0.2s ease;"
+							onmouseover="this.style.transform='scale(1.05)'"
+							onmouseout="this.style.transform='scale(1)'">
+						🔄 Erneut laden
+					</button>
+				</div>
 			`;
 			
-			noProfilesDiv.innerHTML = `
-				<div style="font-size: 5rem; margin-bottom: 1.5rem;">😢</div>
-				<h2 style="font-size: 1.5rem; font-weight: bold; color: white; margin-bottom: 1rem;">
-					Keine weiteren Profile gefunden
-				</h2>
-				<p style="color: rgba(255,255,255,0.8); margin-bottom: 2rem; line-height: 1.5;">
-					Versuch es später noch einmal oder passe deine Sucheinstellungen an.
-				</p>
-				<button onclick="reloadProfiles()" 
-						style="background: linear-gradient(45deg, #8b5cf6, #ec4899); 
-							   color: white; 
-							   padding: 1rem 2rem; 
-							   border-radius: 9999px; 
-							   border: none; 
-							   font-size: 1.1rem; 
-							   font-weight: 600; 
-							   cursor: pointer; 
-							   box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-							   transition: all 0.2s ease;">
-					🔄 Erneut laden
-				</button>
-			`;
-			
-			cardStack.appendChild(noProfilesDiv);
-			
-			// Keep floating buttons visible
 			updateFloatingButtons();
 		}
 		
 		async function reloadProfiles() {
 			const cardStack = document.getElementById('cardStack');
 			const swipeActions = document.querySelector('.swipe-actions');
-			const backButtonContainer = document.querySelector('#swipeContainer > div:last-child');
 			
-			// Show loading state
-			cardStack.innerHTML = `
-				<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh;">
-					<div style="font-size: 4rem; margin-bottom: 1rem;">🔄</div>
-					<p style="color: white; font-size: 1.1rem;">Lade neue Profile...</p>
-				</div>
+			// Show animated loading
+			cardStack.style.cssText = `
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 100px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				z-index: 1;
 			`;
 			
-			// Reset cardStack styling
-			cardStack.style.cssText = '';
+			cardStack.innerHTML = `
+				<div style="text-align: center; color: white;">
+					<div style="font-size: 4rem; margin-bottom: 1rem; animation: spin 2s linear infinite;">🔄</div>
+					<p style="font-size: 1.1rem;">Lade neue Profile...</p>
+				</div>
+				<style>
+					@keyframes spin {
+						from { transform: rotate(0deg); }
+						to { transform: rotate(360deg); }
+					}
+				</style>
+			`;
 			
 			try {
 				// Reset state
 				currentIndex = 0;
 				currentProfiles = [];
 				
-				// Load fresh profiles
-				await loadProfiles();
+				// Load profiles with timeout
+				const loadPromise = loadProfiles();
+				const timeoutPromise = new Promise((_, reject) => 
+					setTimeout(() => reject(new Error('timeout')), 5000)
+				);
 				
-				// Only show buttons if we actually have profiles
-				if (currentProfiles && currentProfiles.length > 0) {
-					if (swipeActions) {
-						swipeActions.style.display = 'flex';
-					}
-					if (backButtonContainer) {
-						backButtonContainer.style.display = 'block';
-					}
+				await Promise.race([loadPromise, timeoutPromise]);
+				
+				// Check if we actually got profiles
+				if (!currentProfiles || currentProfiles.length === 0) {
+					// Wait a bit then show no profiles message
+					setTimeout(() => {
+						showNoMoreCards();
+					}, 1000);
 				}
 				
 			} catch (error) {
 				console.error('Fehler beim Neuladen:', error);
-				showNotification('Fehler beim Laden der Profile', 'error');
-				// Show no profiles message again on error
-				showNoMoreCards();
+				// Show no profiles after loading attempt
+				setTimeout(() => {
+					showNoMoreCards();
+				}, 1000);
 			}
 		}	
 		
