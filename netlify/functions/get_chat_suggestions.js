@@ -200,6 +200,8 @@ exports.handler = async (event) => {
         const matchInterests = matchProfile ? matchProfile.interests || [] : [];
         
         const suggestions = generateSuggestions(lastMessage, parseInt(currentUserId), myInterests, matchInterests, topSuggestions);
+
+        console.log('Final Suggestions:', suggestions);
         
         return {
             statusCode: 200,
