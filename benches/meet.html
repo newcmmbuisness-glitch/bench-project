@@ -683,17 +683,19 @@
 		    overflow: hidden;
 		    white-space: nowrap;
 		    animation: typing 2.5s steps(22, end) forwards, blink-caret .75s step-end infinite;
+		    /* *** WICHTIGSTE ÄNDERUNG: Macht das Element blockfähig für die Animation *** */
+		    display: inline-block; 
 		}
 		
 		@keyframes blink-caret {
 		    from, to { border-color: transparent }
-		    50% { border-color: #333; }
+		    50% { border-color: #555; }
 		}
 		
 		/* Versteckt den Container standardmäßig */
 		.hidden {
 		    display: none;
-		}		
+		}
 
         /* Chat System */
 		.chat-container {
