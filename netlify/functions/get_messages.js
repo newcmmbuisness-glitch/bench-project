@@ -10,7 +10,6 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
-        // ✅ Verwende 'match_id' wie in der Datenbank
         const { match_id } = JSON.parse(event.body);
         if (!match_id) {
             return {
@@ -19,20 +18,29 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ success: false, error: 'Fehlende Match-ID' })
             };
         }
-
+        
+        // Abfrage der Chat-Nachrichten
         const messages = await sql`
             SELECT * FROM chat_messages
             WHERE match_id = ${match_id}
             ORDER BY sent_at ASC;
         `;
+        
+        // Abfrage der Benutzer-IDs für dieses Match
+        const matchInfo = await sql`
+            SELECT user_id_1, user_id_2 FROM matches WHERE id = ${match_id};
+        `;
+        
+        const reporterId = matchInfo.length > 0 ? matchInfo[0].user_id_1 : null;
+        const reportedId = matchInfo.length > 0 ? matchInfo[0].user_id_2 : null;
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ success: true, messages }),
+            body: JSON.stringify({ success: true, messages, reporterId, reportedId }),
         };
 
     } catch (error) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+        return { statusCode: 500, headers, body: JSON.stringify({ success: false, error: error.message }) };
     }
 };
