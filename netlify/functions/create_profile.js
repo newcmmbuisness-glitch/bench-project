@@ -1,3 +1,4 @@
+// netlify/functions/create_profile.js
 const { neon } = require('@neondatabase/serverless');
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
@@ -17,7 +18,8 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { userId, name, description, interests, profileImage } = JSON.parse(event.body);
+        // Die Namen der eingehenden Daten aus dem Frontend
+        const { userId, name, description, interests, profileImage, postalCode, prompt1, answer1, prompt2, answer2 } = JSON.parse(event.body);
         console.log('Empfangene userId:', userId);
 
         if (!userId || !name || !profileImage) {
@@ -28,7 +30,6 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Verify that the user exists in your users table
         const userExists = await sql`
             SELECT id FROM users WHERE id = ${userId}
         `;
@@ -41,14 +42,20 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // ✅ KORREKTUR: Verwenden Sie hier die richtigen Spaltennamen mit Unterstrich
         const result = await sql`
-            INSERT INTO meet_profiles (user_id, profile_name, description, interests, profile_image)
-            VALUES (${userId}, ${name}, ${description}, ${interests}, ${profileImage})
+            INSERT INTO meet_profiles (user_id, profile_name, description, interests, profile_image, postal_code, prompt_1, answer_1, prompt_2, answer_2)
+            VALUES (${userId}, ${name}, ${description}, ${interests}, ${profileImage}, ${postalCode}, ${prompt1}, ${answer1}, ${prompt2}, ${answer2})
             ON CONFLICT (user_id) DO UPDATE SET
                 profile_name = EXCLUDED.profile_name,
                 description = EXCLUDED.description,
                 interests = EXCLUDED.interests,
-                profile_image = EXCLUDED.profile_image
+                profile_image = EXCLUDED.profile_image,
+                postal_code = EXCLUDED.postal_code,
+                prompt_1 = EXCLUDED.prompt_1,
+                answer_1 = EXCLUDED.answer_1,
+                prompt_2 = EXCLUDED.prompt_2,
+                answer_2 = EXCLUDED.answer_2
             RETURNING id;
         `;
 
