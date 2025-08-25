@@ -673,27 +673,10 @@
 		    animation: shimmer 5s infinite linear;
 		}
 
-		/* Styling für die KI-Blase (basierend auf den neuen Vorgaben) */
-		.ai-bubble-style {
-		    background-color: #e5e7eb;
-		    border-radius: 20px;
-		    padding: 10px 15px;
-		    font-family: 'Inter', sans-serif;
-		    font-size: 0.875rem;
-		    border: 1px solid #d1d5db;
-		    color: #4b5563;
-		    display: inline-block;
-		    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-		}
-		
 		/* Tipp-Effekt-Animation */
 		@keyframes typing {
 		    from { width: 0; }
 		    to { width: 100%; }
-		}
-		@keyframes blink-caret {
-		    from, to { border-color: transparent }
-		    50% { border-color: #4b5563; }
 		}
 		
 		.typing-animation {
@@ -702,21 +685,14 @@
 		    animation: typing 2.5s steps(22, end) forwards, blink-caret .75s step-end infinite;
 		}
 		
-		/* Styling für die Vorschlagsbuttons */
-		.suggestion-button-style {
-		    background-color: #f3f4f6;
-		    color: #4b5563;
-		    border-radius: 9999px;
-		    padding: 0.5rem 1rem;
-		    font-size: 0.75rem; /* Noch kleiner für den "Beta"-Look */
-		    font-weight: 600;
-		    transition: transform 0.2s;
-		    cursor: pointer;
-		    border: 1px solid #d1d5db;
-		    display: inline-block;
+		@keyframes blink-caret {
+		    from, to { border-color: transparent }
+		    50% { border-color: #333; }
 		}
-		.suggestion-button-style:hover {
-		    transform: scale(1.05);
+		
+		/* Versteckt den Container standardmäßig */
+		.hidden {
+		    display: none;
 		}		
 
         /* Chat System */
@@ -2738,14 +2714,25 @@
 		            if (result.success && result.suggestions.length > 0) {
 		                // Fügen Sie jetzt die neuen Vorschlagsbuttons hinzu
 		                result.suggestions.forEach(suggestion => {
+		                    // Erstellt einen Button
 		                    const button = document.createElement('button');
-		                    button.textContent = suggestion;
-		                    // Verwenden Sie das neue CSS-Styling
-		                    button.className = 'suggestion-button-style'; 
 		                    button.onclick = () => {
 		                        document.getElementById('messageInput').value = suggestion;
 		                        logSuggestionClick(suggestion);
 		                    };
+		
+		                    // Erstellt die äußere Hülle mit dem Container-Stil
+		                    const innerDiv = document.createElement('div');
+		                    innerDiv.className = 'ki-beta-container';
+		                    
+		                    // Erstellt das innere Span-Element mit dem Schimmer-Effekt
+		                    const innerSpan = document.createElement('span');
+		                    innerSpan.className = 'ki-beta-branding';
+		                    innerSpan.textContent = suggestion;
+		
+		                    // Fügt die Elemente zusammen
+		                    innerDiv.appendChild(innerSpan);
+		                    button.appendChild(innerDiv);
 		                    mainContainer.appendChild(button);
 		                });
 		            } else {
@@ -2821,8 +2808,8 @@
 						</div>
 			            <div id="chatMessages" class="flex-grow p-4 overflow-y-auto space-y-2"></div>
 						<div id="aiSuggestionsContainer" class="p-2 flex flex-wrap gap-2 justify-center border-t border-gray-200 hidden">
-						    <div id="aiThinkingBubble" class="ai-bubble-style hidden">
-						        <span id="typingText" class="typing-animation"></span>
+						    <div id="aiThinkingBubble" class="ki-beta-container hidden">
+						        <span id="typingText" class="ki-beta-branding typing-animation"></span>
 						    </div>
 						</div>
 			            <div class="p-4 bg-gray-100 rounded-b-2xl flex items-center">
