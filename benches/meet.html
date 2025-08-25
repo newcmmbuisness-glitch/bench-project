@@ -936,36 +936,85 @@
 	        </button>
 	    </div>
 	
-	    <div id="createProfileModal" class="profile-creation" style="display: none;">
-	        <h2>📝 Profil erstellen</h2>
-	        <form onsubmit="createProfile(event)">
-	            <div class="form-group">
-	                <label>📷 Profilbild:</label>
-	                <input type="file" id="profileImage" accept="image/*" required>
-	            </div>
-	            <div class="form-group">
-	                <label>👤 Name:</label>
-	                <input type="text" id="profileName" placeholder="Dein Name" required>
-	            </div>
-	            <div class="form-group">
-	                <label>📝 Kurze Beschreibung:</label>
-	                <textarea id="profileDescription" rows="3" placeholder="Erzähl etwas über dich..." required></textarea>
-	            </div>
-	            <div class="preferences-section">
-	                <label>Genussmittel:</label>
-	                <div id="preferencesIcons" class="preferences-icons">
-	                </div>
-	            </div>
-	            <div class="action-buttons">
-	                <button type="submit" class="action-btn btn-primary">
-	                    ✅ Profil speichern
-	                </button>
-	                <button type="button" class="action-btn btn-secondary" onclick="closeCreateProfile()">
-	                    ↩️ Zurück
-	                </button>
-	            </div>
-	        </form>
-	    </div>
+		<div id="createProfileModal" class="profile-creation" style="display: none;">
+		    <h2>📝 Profil erstellen</h2>
+		    <form onsubmit="createProfile(event)">
+		        <div class="form-group">
+		            <label>📷 Profilbild:</label>
+		            <input type="file" id="profileImage" accept="image/*" required>
+		        </div>
+		        <div class="mb-4">
+		            <label for="postalCode" class="block text-gray-700 font-bold mb-2">Ihre Postleitzahl</label>
+		            <input type="text" id="postalCode" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="z.B. 10115" maxlength="10">
+		        </div>
+		        <div class="form-group">
+		            <label>👤 Name:</label>
+		            <input type="text" id="profileName" placeholder="Dein Name" required>
+		        </div>
+		        <div class="form-group">
+		            <label>📝 Kurze Beschreibung:</label>
+		            <textarea id="profileDescription" rows="3" placeholder="Erzähl etwas über dich..." required></textarea>
+		        </div>
+		        
+		        <div class="preferences-section">
+		            <label>Genussmittel:</label>
+		            <div id="preferencesIcons" class="preferences-icons">
+		                </div>
+		        </div>
+		
+		        <div class="mb-4">
+		            <label class="block text-gray-700 font-bold mb-2">Wähle deine Interessen</label>
+		            <div id="interestsContainer" class="flex flex-wrap gap-2 text-2xl cursor-pointer">
+		                <span data-interest="Kochen">👩‍🍳</span>
+		                <span data-interest="Gaming">🎮</span>
+		                <span data-interest="Wandern">⛰️</span>
+		                <span data-interest="Fotografie">📸</span>
+		                <span data-interest="Musik">🎵</span>
+		                <span data-interest="Lesen">📚</span>
+		                <span data-interest="Filme">🎬</span>
+		                <span data-interest="Sport">🏋️</span>
+		                <span data-interest="Kaffee">☕️</span>
+		                <span data-interest="Kunst">🎨</span>
+		                <span data-interest="Haustiere">🐶</span>
+		            </div>
+		            <input type="hidden" id="selectedInterests">
+		        </div>
+		
+		        <div class="mb-4">
+		            <label class="block text-gray-700 font-bold mb-2">Wähle 2 Fragen über dich</label>
+		            <select id="prompt1Select" class="w-full px-4 py-2 mb-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+		                <option value="">Wähle eine Frage aus...</option>
+		                <option value="Ein perfekter erster Date ist...">Ein perfekter erster Date ist...</option>
+		                <option value="Ich bin gerade besessen von...">Ich bin gerade besessen von...</option>
+		                <option value="Zwei Wahrheiten und eine Lüge...">Zwei Wahrheiten und eine Lüge...</option>
+		                <option value="Mein liebstes Reiseziel ist...">Mein liebstes Reiseziel ist...</option>
+		                <option value="Was ich in meiner Freizeit tue...">Was ich in meiner Freizeit tue...</option>
+		            </select>
+		            <input type="text" id="answer1Input" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Deine Antwort...">
+		        </div>
+		
+		        <div class="mb-4">
+		            <select id="prompt2Select" class="w-full px-4 py-2 mb-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+		                <option value="">Wähle eine zweite Frage aus...</option>
+		                <option value="Ein perfekter erster Date ist...">Ein perfekter erster Date ist...</option>
+		                <option value="Ich bin gerade besessen von...">Ich bin gerade besessen von...</option>
+		                <option value="Zwei Wahrheiten und eine Lüge...">Zwei Wahrheiten und eine Lüge...</option>
+		                <option value="Mein liebstes Reiseziel ist...">Mein liebstes Reiseziel ist...</option>
+		                <option value="Was ich in meiner Freizeit tue...">Was ich in meiner Freizeit tue...</option>
+		            </select>
+		            <input type="text" id="answer2Input" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Deine Antwort...">
+		        </div>
+		
+		        <div class="action-buttons">
+		            <button type="submit" class="action-btn btn-primary">
+		                ✅ Profil speichern
+		            </button>
+		            <button type="button" class="action-btn btn-secondary" onclick="closeCreateProfile()">
+		                ↩️ Zurück
+		            </button>
+		        </div>
+		    </form>
+		</div>
 	    
 		<div id="swipeContainer" class="swipe-container" style="display: none;">
 			<div class="card-stack" id="cardStack">
@@ -1672,66 +1721,94 @@
 			}
 		}
 
+		// Aktualisierte Funktion zum Sammeln aller Interessen
 		async function createProfile(event) {
-			event.preventDefault();
-
-			if (!currentUser || !currentUser.uid) {
-				showNotification('❌ Fehler: Bitte melden Sie sich erneut an.', 'error');
-				return;
-			}
-
-			const name = document.getElementById('profileName').value;
-			const description = document.getElementById('profileDescription').value;
-			const imageFile = document.getElementById('profileImage').files[0];
-
-			if (!imageFile) {
-				showNotification('Bitte wählen Sie ein Profilbild aus!', 'error');
-				return;
-			}
-			
-			try {
-				// Upload image to Cloudinary
-				const profileImageUrl = await uploadImageToCloudinary(imageFile);
-				
-				// Create profile with the logged-in user's ID
-				const profileData = {
-					userId: currentUser.uid, // Use the ID from your existing user system
-					name: name,
-					description: description,
-					interests: selectedPreferences,
-					profileImage: profileImageUrl
-				};
-
-				console.log('Sende Profil für userId:', currentUser.uid);
-				const response = await fetch('/.netlify/functions/create_profile', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(profileData)
-				});
-				
-				const result = await response.json();
-
-				if (response.ok && result.success) {
-					// Store profile info locally for this session
-					currentProfile = {
-						id: result.profileId,
-						name: name,
-						description: description,
-						interests: selectedPreferences,
-						profileImage: profileImageUrl
-					};
-					localStorage.setItem('currentProfile', JSON.stringify(currentProfile));
-					
-					showNotification('✅ Profil erfolgreich erstellt!', 'success');
-					checkAndRenderUI();
-				} else {
-					showNotification('❌ Fehler beim Speichern des Profils: ' + result.error, 'error');
-				}
-
-			} catch (error) {
-				console.error('Fehler beim Erstellen des Profils:', error);
-				showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
-			}
+		    event.preventDefault();
+		
+		    if (!currentUser || !currentUser.uid) {
+		        showNotification('❌ Fehler: Bitte melden Sie sich erneut an.', 'error');
+		        return;
+		    }
+		
+		    const name = document.getElementById('profileName').value;
+		    const description = document.getElementById('profileDescription').value;
+		    const imageFile = document.getElementById('profileImage').files[0];
+		
+		    // NEU: Werte der neuen Felder abrufen
+		    const postalCode = document.getElementById('postalCode').value;
+		    const prompt1 = document.getElementById('prompt1Select').value;
+		    const answer1 = document.getElementById('answer1Input').value;
+		    const prompt2 = document.getElementById('prompt2Select').value;
+		    const answer2 = document.getElementById('answer2Input').value;
+		
+		    if (!imageFile) {
+		        showNotification('Bitte wählen Sie ein Profilbild aus!', 'error');
+		        return;
+		    }
+		    
+		    // Einfache Validierung für Prompts
+		    if ((prompt1 && !answer1) || (prompt2 && !answer2)) {
+		        showNotification('Bitte beantworte deine ausgewählten Fragen.', 'error');
+		        return;
+		    }
+		
+		    // Ihre bestehende Logik für die Genussmittel-Interessen
+		    const selectedGenussmittel = Array.from(document.querySelectorAll('#preferencesIcons .selected')).map(el => el.dataset.value);
+		
+		    // NEU: Logik für die allgemeinen Interessen
+		    const selectedGeneralInterests = JSON.parse(document.getElementById('selectedInterests').value || '[]');
+		    
+		    // Alle Interessen zusammenführen
+		    const allInterests = [...selectedGenussmittel, ...selectedGeneralInterests];
+		
+		    try {
+		        // Upload image to Cloudinary
+		        const profileImageUrl = await uploadImageToCloudinary(imageFile);
+		        
+		        // Create profile with the logged-in user's ID
+		        const profileData = {
+		            userId: currentUser.uid, 
+		            name: name,
+		            description: description,
+		            interests: allInterests, // WICHTIG: Sende das kombinierte Array
+		            profileImage: profileImageUrl,
+		            postalCode: postalCode,
+		            prompt1: prompt1,
+		            answer1: answer1,
+		            prompt2: prompt2,
+		            answer2: answer2
+		        };
+		
+		        console.log('Sende Profil für userId:', currentUser.uid);
+		        const response = await fetch('/.netlify/functions/create_profile', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify(profileData)
+		        });
+		        
+		        const result = await response.json();
+		
+		        if (response.ok && result.success) {
+		            // Store profile info locally for this session
+		            currentProfile = {
+		                id: result.profileId,
+		                name: name,
+		                description: description,
+		                interests: allInterests,
+		                profileImage: profileImageUrl
+		            };
+		            localStorage.setItem('currentProfile', JSON.stringify(currentProfile));
+		            
+		            showNotification('✅ Profil erfolgreich erstellt!', 'success');
+		            checkAndRenderUI();
+		        } else {
+		            showNotification('❌ Fehler beim Speichern des Profils: ' + result.error, 'error');
+		        }
+		
+		    } catch (error) {
+		        console.error('Fehler beim Erstellen des Profils:', error);
+		        showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
+		    }
 		}
 
         // Sample Profiles Generation
