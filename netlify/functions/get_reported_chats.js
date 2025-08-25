@@ -13,11 +13,11 @@ exports.handler = async (event) => {
         const reports = await sql`
             SELECT 
                 m.id AS match_id,
-                u1.name AS reporter_name,
-                u2.name AS reported_name
+                p1.profile_name AS reporter_name,
+                p2.profile_name AS reported_name
             FROM matches m
-            JOIN users u1 ON m.user_id_1 = u1.id
-            JOIN users u2 ON m.user_id_2 = u2.id
+            JOIN meet_profiles p1 ON m.user_id_1 = p1.user_id
+            JOIN meet_profiles p2 ON m.user_id_2 = p2.user_id
             WHERE m.is_reported = TRUE;
         `;
 
