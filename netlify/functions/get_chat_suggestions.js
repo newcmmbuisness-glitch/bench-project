@@ -3,6 +3,7 @@ const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 // Hilfsfunktion zur Generierung der Vorschläge
 const generateSuggestions = (lastMessage, myUserId, myInterests, matchInterests, topSuggestions) => {
+    console.log('--- DEBUG: Neue Version 1.1 wird ausgeführt ---'); 
     const relevantTopSuggestions = topSuggestions.filter(suggestion => {
         // Überprüft, ob der Top-Vorschlag eine spezifische Interessen-Frage ist
         const interestRegex = /Interesse an ([^.]+)/;
