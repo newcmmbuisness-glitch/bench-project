@@ -2416,6 +2416,7 @@
 				if (response.ok && result.success) {
 					messageInput.value = '';
 					loadMessages(); // Reload messages to show the new one
+					updateSuggestions();
 					showNotification('✅ Nachricht gesendet!', 'success');
 				} else {
 					console.error('Server error:', result);
@@ -2464,6 +2465,43 @@
 		    }
 		}		
 
+		// NEUE FUNKTION FÜR KI-VORSCHLÄGE
+		async function updateSuggestions() {
+		    if (!currentChatMatchId || !currentUser) {
+		        document.getElementById('aiSuggestionsContainer').classList.add('hidden');
+		        return;
+		    }
+		    try {
+		        const response = await fetch('/.netlify/functions/get_chat_suggestions', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ matchId: currentChatMatchId, currentUserId: currentUser.uid }),
+		        });
+		        const result = await response.json();
+		        
+		        const container = document.getElementById('aiSuggestionsContainer');
+		        container.innerHTML = '';
+		        
+		        if (result.success && result.suggestions.length > 0) {
+		            container.classList.remove('hidden');
+		            result.suggestions.forEach(suggestion => {
+		                const button = document.createElement('button');
+		                button.textContent = suggestion;
+		                button.className = 'bg-blue-100 text-blue-800 rounded-full py-2 px-4 text-sm font-semibold hover:bg-blue-200 transition-colors duration-200';
+		                button.onclick = () => {
+		                    document.getElementById('messageInput').value = suggestion;
+		                };
+		                container.appendChild(button);
+		            });
+		        } else {
+		            container.classList.add('hidden');
+		        }
+		    } catch (error) {
+		        console.error('Fehler beim Laden der KI-Vorschläge:', error);
+		        document.getElementById('aiSuggestionsContainer').classList.add('hidden');
+		    }
+		}		
+
 		// Funktion zum Öffnen des Chat-Fensters
 		function openMatchChat(matchId, matchUserId, matchName, matchImage) {
 			console.log('🔥 Opening chat - Match ID:', matchId, 'Type:', typeof matchId);
@@ -2502,6 +2540,7 @@
 			                </div>
 			            </div>
 			            <div id="chatMessages" class="flex-grow p-4 overflow-y-auto space-y-2"></div>
+			   			<div id="aiSuggestionsContainer" class="p-2 flex flex-wrap gap-2 justify-center border-t border-gray-200"></div>
 			            <div class="p-4 bg-gray-100 rounded-b-2xl flex items-center">
 			                <input type="text" id="messageInput" placeholder="Nachricht senden..." class="flex-grow rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" maxlength="500">
 			                <button onclick="sendMessage()" class="bg-blue-500 text-white rounded-full p-2 ml-2 hover:bg-blue-600">
@@ -2519,6 +2558,8 @@
 			// ✅ Load messages and start polling
 			loadMessages();
 			messageInterval = setInterval(loadMessages, 3000);
+			
+			updateSuggestions();
 
 			// ✅ Enter key listener for message input
 			const messageInput = document.getElementById('messageInput');
