@@ -2490,7 +2490,7 @@
 		    }
 		}		
 
-		// NEUE FUNKTION FÜR KI-VORSCHLÄGE
+		// NEUE FUNKTION FÜR KI-VORSCHLÄGE (aktualisiert)
 		async function updateSuggestions() {
 		    if (!currentChatMatchId || !currentUser) {
 		        document.getElementById('aiSuggestionsContainer').classList.add('hidden');
@@ -2512,9 +2512,10 @@
 		            result.suggestions.forEach(suggestion => {
 		                const button = document.createElement('button');
 		                button.textContent = suggestion;
-						button.className = 'bg-gray-800 text-white rounded-full py-2 px-4 text-sm font-semibold hover:bg-gray-900 transition-colors duration-200';
-						button.onclick = () => {
+		                button.className = 'bg-gray-800 text-white rounded-full py-2 px-4 text-sm font-semibold hover:bg-gray-900 transition-colors duration-200';
+		                button.onclick = () => {
 		                    document.getElementById('messageInput').value = suggestion;
+		                    logSuggestionClick(suggestion); // NEU: Klick protokollieren
 		                };
 		                container.appendChild(button);
 		            });
@@ -2525,7 +2526,24 @@
 		        console.error('Fehler beim Laden der KI-Vorschläge:', error);
 		        document.getElementById('aiSuggestionsContainer').classList.add('hidden');
 		    }
-		}		
+		}
+		
+		// NEU: Funktion zum Protokollieren von Klicks
+		async function logSuggestionClick(suggestionText) {
+		    try {
+		        await fetch('/.netlify/functions/log_suggestion_click', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({
+		                userId: currentUser.uid,
+		                clickedSuggestion: suggestionText
+		            }),
+		        });
+		        // Keine Aktion bei Erfolg, da dies im Hintergrund läuft.
+		    } catch (error) {
+		        console.error('Fehler beim Protokollieren des Klicks:', error);
+		    }
+		}	
 
 		// Funktion zum Öffnen des Chat-Fensters
 		function openMatchChat(matchId, matchUserId, matchName, matchImage) {
