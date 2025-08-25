@@ -1504,6 +1504,7 @@
 		                showNotification('✅ Profil erfolgreich gelöscht!', 'success');
 		                closeProfilePopup();
 		                checkAndRenderUI();
+						window.location.reload(); 
 		            } else {
 		                showNotification('❌ Fehler beim Löschen des Profils: ' + result.error, 'error');
 		            }
