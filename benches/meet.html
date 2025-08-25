@@ -2016,24 +2016,37 @@
 		function renderSwipeCards() {
 			const cardStack = document.getElementById('cardStack');
 			if (!cardStack) {
-				console.error("❌ cardStack Element nicht gefunden!");
+				console.error("cardStack Element nicht gefunden!");
 				return;
 			}
-			cardStack.innerHTML = ''; // Alte Karten leeren
+			
+			// Reset cardStack styling for normal cards
+			cardStack.style.cssText = '';
+			cardStack.innerHTML = '';
 
 			if (!currentProfiles || currentProfiles.length === 0) {
-				showNoMoreCards(); // This will now properly maintain floating buttons
+				showNoMoreCards();
 				return;
 			}
 
-			// Maximal 3 Karten gleichzeitig stapeln
+			// Show swipe buttons when we have cards
+			const swipeActions = document.querySelector('.swipe-actions');
+			const backButtonContainer = document.querySelector('#swipeContainer > div:last-child');
+			
+			if (swipeActions) {
+				swipeActions.style.display = 'flex';
+			}
+			if (backButtonContainer) {
+				backButtonContainer.style.display = 'block';
+			}
+
+			// Create cards
 			const maxCards = Math.min(3, currentProfiles.length - currentIndex);
 			for (let i = 0; i < maxCards; i++) {
 				const profile = currentProfiles[currentIndex + i];
 				createSwipeCard(profile, i);
 			}
 			
-			// Floating buttons anzeigen nach dem Rendern
 			updateFloatingButtons();
 		}
 		
@@ -3043,67 +3056,113 @@
 		// Keine Karten mehr vorhanden
 		function showNoMoreCards() {
 			const cardStack = document.getElementById('cardStack');
-			const swipeActions = document.querySelector('.swipe-actions');
-			const backButton = document.querySelector('#swipeContainer button[onclick*="checkAndRenderUI"]');
 			
-			// Hide swipe action buttons (heart/x)
+			// Hide ALL swipe-related buttons
+			const swipeActions = document.querySelector('.swipe-actions');
+			const backButtonContainer = document.querySelector('#swipeContainer > div:last-child');
+			
 			if (swipeActions) {
 				swipeActions.style.display = 'none';
 			}
 			
-			// Hide back button
-			if (backButton) {
-				backButton.style.display = 'none';
+			if (backButtonContainer && backButtonContainer.querySelector('button[onclick*="checkAndRenderUI"]')) {
+				backButtonContainer.style.display = 'none';
 			}
 			
-			// Show centered "no more profiles" message with reload button
-			cardStack.innerHTML = `
-				<div class="flex flex-col items-center justify-center h-full text-center p-8">
-					<div class="text-8xl mb-6">😢</div>
-					<h2 class="text-2xl font-bold text-white mb-4">Keine weiteren Profile gefunden</h2>
-					<p class="text-gray-300 mb-8 max-w-sm">
-						Versuch es später noch einmal oder passe deine Sucheinstellungen an.
-					</p>
-					<button onclick="reloadProfiles()" 
-							class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold text-lg shadow-lg">
-						🔄 Erneut laden
-					</button>
-				</div>
+			// Clear and set up proper centering for cardStack
+			cardStack.innerHTML = '';
+			cardStack.style.cssText = `
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				height: 70vh;
+				width: 100%;
+				text-align: center;
+				padding: 2rem;
 			`;
+			
+			// Create centered content
+			const noProfilesDiv = document.createElement('div');
+			noProfilesDiv.style.cssText = `
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				max-width: 400px;
+				margin: 0 auto;
+			`;
+			
+			noProfilesDiv.innerHTML = `
+				<div style="font-size: 5rem; margin-bottom: 1.5rem;">😢</div>
+				<h2 style="font-size: 1.5rem; font-weight: bold; color: white; margin-bottom: 1rem;">
+					Keine weiteren Profile gefunden
+				</h2>
+				<p style="color: rgba(255,255,255,0.8); margin-bottom: 2rem; line-height: 1.5;">
+					Versuch es später noch einmal oder passe deine Sucheinstellungen an.
+				</p>
+				<button onclick="reloadProfiles()" 
+						style="background: linear-gradient(45deg, #8b5cf6, #ec4899); 
+							   color: white; 
+							   padding: 1rem 2rem; 
+							   border-radius: 9999px; 
+							   border: none; 
+							   font-size: 1.1rem; 
+							   font-weight: 600; 
+							   cursor: pointer; 
+							   box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+							   transition: all 0.2s ease;">
+					🔄 Erneut laden
+				</button>
+			`;
+			
+			cardStack.appendChild(noProfilesDiv);
 			
 			// Keep floating buttons visible
 			updateFloatingButtons();
 		}
 		
 		async function reloadProfiles() {
-			// Reset state
-			currentIndex = 0;
-			currentProfiles = [];
+			const cardStack = document.getElementById('cardStack');
+			const swipeActions = document.querySelector('.swipe-actions');
+			const backButtonContainer = document.querySelector('#swipeContainer > div:last-child');
 			
 			// Show loading state
-			const cardStack = document.getElementById('cardStack');
 			cardStack.innerHTML = `
-				<div class="flex flex-col items-center justify-center h-full text-center p-8">
-					<div class="text-6xl mb-4 animate-spin">🔄</div>
-					<p class="text-white text-lg">Lade neue Profile...</p>
+				<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh;">
+					<div style="font-size: 4rem; margin-bottom: 1rem;">🔄</div>
+					<p style="color: white; font-size: 1.1rem;">Lade neue Profile...</p>
 				</div>
 			`;
 			
-			// Show swipe buttons again
-			const swipeActions = document.querySelector('.swipe-actions');
-			const backButton = document.querySelector('#swipeContainer button[onclick*="checkAndRenderUI"]');
+			// Reset cardStack styling
+			cardStack.style.cssText = '';
 			
-			if (swipeActions) {
-				swipeActions.style.display = 'flex';
+			try {
+				// Reset state
+				currentIndex = 0;
+				currentProfiles = [];
+				
+				// Load fresh profiles
+				await loadProfiles();
+				
+				// Only show buttons if we actually have profiles
+				if (currentProfiles && currentProfiles.length > 0) {
+					if (swipeActions) {
+						swipeActions.style.display = 'flex';
+					}
+					if (backButtonContainer) {
+						backButtonContainer.style.display = 'block';
+					}
+				}
+				
+			} catch (error) {
+				console.error('Fehler beim Neuladen:', error);
+				showNotification('Fehler beim Laden der Profile', 'error');
+				// Show no profiles message again on error
+				showNoMoreCards();
 			}
-			
-			if (backButton) {
-				backButton.style.display = 'inline-block';
-			}
-			
-			// Load profiles
-			await loadProfiles();
-		}		
+		}	
 		
 		// Match Animation
 		function showMatchAnimation(profile) {
