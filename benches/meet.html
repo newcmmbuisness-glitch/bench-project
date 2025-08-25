@@ -2487,29 +2487,30 @@
 			}
 
 			const chatModalHtml = `
-				<div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" data-chat-modal>
-					<div class="bg-white rounded-2xl max-w-md w-full h-[90vh] flex flex-col" onclick="event.stopPropagation()">
-						<div class="bg-gray-100 p-4 flex items-center rounded-t-2xl shadow-sm">
-							<img src="${matchImage || '/default-avatar.png'}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
-							<h3 class="text-lg font-bold flex-grow">${matchName}</h3>
-	   						<div class="flex items-center space-x-2">
-					        <button onclick="reportChat()" class="text-gray-500 hover:text-red-500">
-					            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-					        </button>
-							<button onclick="closeChat()" class="text-gray-500 hover:text-gray-700">	   						
-								<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-							</button>
-						</div>
-						<div id="chatMessages" class="flex-grow p-4 overflow-y-auto space-y-2"></div>
-						<div class="p-4 bg-gray-100 rounded-b-2xl flex items-center">
-							<input type="text" id="messageInput" placeholder="Nachricht senden..." class="flex-grow rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" maxlength="500">
-							<button onclick="sendMessage()" class="bg-blue-500 text-white rounded-full p-2 ml-2 hover:bg-blue-600">
-								<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-							</button>
-						</div>
-					</div>
-				</div>
- 			`;
+			    <div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" data-chat-modal>
+			        <div class="bg-white rounded-2xl max-w-md w-full h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+			            <div class="bg-gray-100 p-4 flex items-center rounded-t-2xl shadow-sm">
+			                <img src="${matchImage || '/default-avatar.png'}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
+			                <h3 class="text-lg font-bold flex-grow">${matchName}</h3>
+			                <div class="flex items-center space-x-2">
+			                    <button onclick="reportChat()" class="text-gray-500 hover:text-red-500">
+			                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+			                    </button>
+			                    <button onclick="closeChat()" class="text-gray-500 hover:text-gray-700">
+			                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+			                    </button>
+			                </div>
+			            </div>
+			            <div id="chatMessages" class="flex-grow p-4 overflow-y-auto space-y-2"></div>
+			            <div class="p-4 bg-gray-100 rounded-b-2xl flex items-center">
+			                <input type="text" id="messageInput" placeholder="Nachricht senden..." class="flex-grow rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" maxlength="500">
+			                <button onclick="sendMessage()" class="bg-blue-500 text-white rounded-full p-2 ml-2 hover:bg-blue-600">
+			                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+			                </button>
+			            </div>
+			        </div>
+			    </div>
+			`;
 
 			const chatDiv = document.createElement('div');
 			chatDiv.innerHTML = chatModalHtml;
