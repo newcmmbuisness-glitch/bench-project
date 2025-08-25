@@ -1104,15 +1104,12 @@
 		let selectedHobbies = [];
 
 		
-		const emojiMap = {
+		const allEmojis = {
 			'wine': '🍷',
 			'420': '🍃',
 			'coffee': '☕',
 			'book': '📚',
-			'bike': '🚲'
-		};
-
-		const hobbiesMap = {
+			'bike': '🚲',
 		    'Kochen': '👩‍🍳',
 		    'Gaming': '🎮',
 		    'Wandern': '⛰️',
@@ -1121,8 +1118,9 @@
 		    'Filme': '🎬',
 		    'Sport': '🏋️',
 		    'Kunst': '🎨',
-		    'Haustiere': '🐶'
+		    'Haustiere': '🐶'	
 		};
+
 
 		const apiUrl = 'https://onebenches.dpdns.org'; 
 
@@ -1365,7 +1363,8 @@
 					if (result.matches && result.matches.length > 0) {
 						matchesList.innerHTML = result.matches.map(match => {
 							const interests = Array.isArray(match.interests) ? match.interests : [];
-							const interestEmojis = interests.slice(0, 3).map(i => emojiMap[i] || hobbiesMap[i] || '❓').join(' ');
+							const interestEmojis = interests.slice(0, 3).map(i => allEmojis[i] || '❓').join(' ');
+
 
 							// ✅ CRITICAL FIX: Use match.match_id (from matches table) instead of match.id
 							return `
