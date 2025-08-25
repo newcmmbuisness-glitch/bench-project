@@ -1487,29 +1487,34 @@
 		}
 
 		async function deleteProfile() {
-			if (!confirm("Sind Sie sicher, dass Sie Ihr Profil löschen möchten?")) {
-				return;
-			}
-			try {
-				// Dies erfordert eine neue Backend-Funktion namens `delete_profile`
-				const response = await fetch('/.netlify/functions/delete_profile', {
-					method: 'DELETE',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ userId: currentUser.uid })
-				});
-
-				const result = await response.json();
-
-				if (response.ok && result.success) {
-					showNotification('✅ Profil erfolgreich gelöscht!', 'success');
-					closeProfilePopup();
-					checkAndRenderUI();
-				} else {
-					showNotification('❌ Fehler beim Löschen des Profils: ' + result.error, 'error');
-				}
-			} catch (error) {
-				showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
-			}
+		    if (!confirm("Sind Sie sicher, dass Sie Ihr Profil löschen möchten?")) {
+		        return;
+		    }
+		    try {
+		        const response = await fetch('/.netlify/functions/delete_profile', {
+		            method: 'DELETE',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({ userId: currentUser.uid })
+		        });
+		
+		        // Überprüfen Sie den Statuscode, bevor Sie die Antwort parsen
+		        if (response.ok) {
+		            const result = await response.json();
+		            if (result.success) {
+		                showNotification('✅ Profil erfolgreich gelöscht!', 'success');
+		                closeProfilePopup();
+		                checkAndRenderUI();
+		            } else {
+		                showNotification('❌ Fehler beim Löschen des Profils: ' + result.error, 'error');
+		            }
+		        } else {
+		            // Wenn die Antwort nicht erfolgreich ist, verarbeiten Sie den Fehlertext
+		            const errorText = await response.text();
+		            showNotification('❌ Fehler beim Löschen des Profils: ' + errorText, 'error');
+		        }
+		    } catch (error) {
+		        showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
+		    }
 		}
 		
 		async function checkAndRenderUI() {
