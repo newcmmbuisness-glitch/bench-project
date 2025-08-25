@@ -1,3 +1,4 @@
+// netlify/functions/get_profile.js
 const { neon } = require('@neondatabase/serverless');
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
@@ -27,7 +28,6 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Verifiziere dass der Benutzer existiert
         const userExists = await sql`
             SELECT id FROM users WHERE id = ${userId}
         `;
@@ -40,74 +40,46 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Holen Sie die IDs der Benutzer, die der aktuelle Benutzer bereits gelikt hat
-        // (Annahme: matches Tabelle existiert mit user_id_1, user_id_2 Spalten)
-        let likedUsers;
-        try {
-            likedUsers = await sql`
-                SELECT user_id_2 FROM matches WHERE user_id_1 = ${userId}
-            `;
-        } catch (matchesError) {
-            // Falls matches Tabelle noch nicht existiert, setze leeres Array
-            console.log('Matches table not found, using empty array');
-            likedUsers = [];
-        }
-        
-        const likedUserIds = likedUsers.map(u => u.user_id_2);
-        
-        // Fügen Sie die eigene ID hinzu, um zu vermeiden, dass der Benutzer sein eigenes Profil sieht
-        likedUserIds.push(parseInt(userId));
-
-        // Holen Sie Profile, die der Benutzer noch nicht gesehen hat und die nicht seine eigenen sind
         let profiles;
-        
-        if (likedUserIds.length === 1) {
-            // Nur die eigene ID ist in der Liste
-            profiles = await sql`
-                SELECT 
-                    mp.user_id, 
-                    mp.profile_name, 
-                    mp.profile_image, 
-                    mp.description, 
-                    mp.interests,
-                    mp.postal_code,
-                    mp.prompt1,
-                    mp.answer1,
-                    mp.prompt2,
-                    mp.answer2,
-                    u.email
-                FROM meet_profiles mp
-                JOIN users u ON mp.user_id = u.id
-                WHERE mp.user_id != ${userId}
-                ORDER BY RANDOM()
-                LIMIT 10
-            `;
-        } else {
-            // Es gibt bereits gelikte Benutzer
-            profiles = await sql`
-                SELECT 
-                    mp.user_id, 
-                    mp.profile_name, 
-                    mp.profile_image, 
-                    mp.description, 
-                    mp.interests,
-                    u.email
-                FROM meet_profiles mp
-                JOIN users u ON mp.user_id = u.id
-                WHERE mp.user_id != ALL(${likedUserIds})
-                ORDER BY RANDOM()
-                LIMIT 10
-            `;
-        }
+        const likedMatches = await sql`
+            SELECT user_id_2 FROM matches WHERE user_id_1 = ${userId}
+        `;
+        const likedUserIds = [userId, ...likedMatches.map(m => m.user_id_2)];
 
-        // Formatiere die Profile für die Antwort
+        // ✅ KORREKTUR: Verwenden Sie hier die richtigen Spaltennamen mit Unterstrich
+        profiles = await sql`
+            SELECT 
+                mp.user_id, 
+                mp.profile_name, 
+                mp.profile_image, 
+                mp.description, 
+                mp.interests,
+                mp.postal_code,
+                mp.prompt_1,
+                mp.answer_1,
+                mp.prompt_2,
+                mp.answer_2,
+                u.email
+            FROM meet_profiles mp
+            JOIN users u ON mp.user_id = u.id
+            WHERE mp.user_id != ALL(${likedUserIds})
+            ORDER BY RANDOM()
+            LIMIT 10
+        `;
+
         const formattedProfiles = profiles.map(profile => ({
             user_id: profile.user_id,
             profile_name: profile.profile_name,
             profile_image: profile.profile_image,
             description: profile.description,
-            interests: profile.interests || [], // Falls interests null ist
-            email: profile.email // Optional: für Debug-Zwecke
+            interests: profile.interests || [],
+            postal_code: profile.postal_code,
+            // ✅ KORREKTUR: Die Namen der Eigenschaften in der Antwort anpassen
+            prompt1: profile.prompt_1,
+            answer1: profile.answer_1,
+            prompt2: profile.prompt_2,
+            answer2: profile.answer_2,
+            email: profile.email
         }));
 
         return {
