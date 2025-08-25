@@ -34,7 +34,12 @@ exports.handler = async (event, context) => {
                 profile_name, 
                 profile_image, 
                 description, 
-                interests
+                interests,
+                postal_code,
+                prompt1,
+                answer1,
+                prompt2,
+                answer2
             FROM meet_profiles
             WHERE user_id = ${userId}
         `;
