@@ -70,6 +70,11 @@ exports.handler = async (event, context) => {
                     mp.profile_image, 
                     mp.description, 
                     mp.interests,
+                    mp.postal_code,
+                    mp.prompt1,
+                    mp.answer1,
+                    mp.prompt2,
+                    mp.answer2,
                     u.email
                 FROM meet_profiles mp
                 JOIN users u ON mp.user_id = u.id
