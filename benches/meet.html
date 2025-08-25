@@ -2129,7 +2129,7 @@
 		    
 		    
 		    const preferencesHtml = prefs.map(pref => {
-		        const icon = emojiMap[pref] || '❓';
+		        const emoji = (emojiMap[interest] || hobbiesMap[interest]) || '❓';
 		        return `<span class="inline-block m-1 px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">${icon} ${pref}</span>`;
 		    }).join('');
 		    
