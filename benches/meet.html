@@ -1274,6 +1274,7 @@
             localStorage.removeItem('currentUser');
             updateAuthButtons();
             showNotification('👋 Erfolgreich abgemeldet!', 'success');
+			window.location.reload(); 
             showWelcome();
         }
 
