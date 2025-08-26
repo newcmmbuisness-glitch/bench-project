@@ -2807,6 +2807,7 @@
 			}
 		}
 		
+		// Funktion zum Laden der Nachrichten
 		async function loadMessages() {
 			const container = document.getElementById('chatMessages');
 			const messageInput = document.getElementById('messageInput');
@@ -2867,10 +2868,9 @@
 					// ✅ Logik für KI-Vorschläge
 					const lastMessage = result.messages[result.messages.length - 1];
 					const lastMessageIsFromMatch = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
-					const isInputEmpty = messageInput.value.trim() === '';
 
-					if (isChatEmpty || (lastMessageIsFromMatch && hasNewMessages && isInputEmpty)) {
-						// Denken Sie nach, wenn der Chat leer ist ODER eine neue Nachricht vom Match kommt UND das Eingabefeld leer ist
+					if (isChatEmpty || (lastMessageIsFromMatch && hasNewMessages) || messageInput.value.trim() !== '') {
+						// Denken Sie nach, wenn der Chat leer ist, eine neue Nachricht vom Match kommt oder das Eingabefeld NICHT leer ist
 						updateSuggestions();
 					} else {
 						// Verstecken Sie die Vorschläge, wenn keine der Bedingungen zutrifft (z. B. Sie haben zuletzt geschrieben)
