@@ -3153,8 +3153,8 @@
 		    } catch (error) {
 		        console.error('Fehler beim Protokollieren des Klicks:', error);
 		    }
-		}	
-
+		}
+		
 		// Fixed openMatchChat function
 		function openMatchChat(matchId, matchUserId, matchName, matchImage) {
 			console.log('🔥 Opening chat - Match ID:', matchId, 'Type:', typeof matchId);
@@ -3169,8 +3169,8 @@
 				lastLoadedMessageCount: 0,
 				messageInterval: null
 			};
-			
-		 // Check if this is an AI chat
+					
+			// Check if this is an AI chat
 			const isAIChat = typeof matchId === 'string' && matchId.includes('ai_match_');
 			
 			if (isAIChat) {
@@ -3178,8 +3178,7 @@
 				console.log('🤖 Opening AI chat with:', matchName);
 			} else {
 				currentChatMatchId = parseInt(matchId);
-			
-				
+					
 				if (isNaN(chatState.currentMatchId) || chatState.currentMatchId <= 0) {
 					console.error('❌ Invalid match ID:', matchId);
 					showNotification('❌ Fehlerhafte Match-ID', 'error');
@@ -3204,10 +3203,10 @@
 									<span class="ki-beta-branding">One-KI Beta</span>
 								</div>                                               
 								<button onclick="reportChat()" class="text-gray-500 hover:text-red-500">
-									<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+									<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
 								</button>
 								<button onclick="closeChat()" class="text-gray-500 hover:text-gray-700">
-									<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+									<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
 								</button>
 							</div>
 						</div>
@@ -3235,21 +3234,23 @@
 			if (isAIChat) {
 				loadAIMessages();
 			} else {
-			loadMessages();
-			chatState.messageInterval = setInterval(loadMessages, 3000);
+				loadMessages();
+				chatState.messageInterval = setInterval(loadMessages, 3000);
 
-			// Enter key listener for message input
-			const messageInput = document.getElementById('messageInput');
-			if (messageInput) {
-				messageInput.addEventListener('keydown', (e) => {
-					if (e.key === 'Enter') {
-						e.preventDefault();
-						sendMessage();
-					}
-				});
-				messageInput.focus();
+				// Enter key listener for message input
+				const messageInput = document.getElementById('messageInput');
+				if (messageInput) {
+					messageInput.addEventListener('keydown', (e) => {
+						if (e.key === 'Enter') {
+							e.preventDefault();
+							sendMessage();
+						}
+					});
+					messageInput.focus();
+				}
 			}
-		}
+		} // <- HIER die Funktion sauber geschlossen!
+
 		
 		// Fixed closeChat function
 		function closeChat() {
