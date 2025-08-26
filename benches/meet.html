@@ -2776,6 +2776,9 @@
 		
 		// Funktion zum Öffnen eines individuellen Chats und Laden der Nachrichten
 		async function openChat(matchId, matchedName) {
+		
+			aiSuggestionsLoaded = false;
+		
 			document.getElementById('matchesList').style.display = 'none';
 			const individualChat = document.getElementById('individualChat');
 			individualChat.style.display = 'block';
@@ -2868,13 +2871,14 @@
 					const lastMessage = result.messages[result.messages.length - 1];
 					const lastMessageIsFromPartner = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
 					
-					// KI-Vorschläge nur laden wenn:
-					// 1. Chat ist komplett leer (erste Nachricht) ODER
-					// 2. Es gibt neue Nachrichten UND die letzte Nachricht ist vom Partner
-					if (isChatEmpty || (hasNewMessages && lastMessageIsFromPartner)) {
+					// KI-Vorschläge laden wenn:
+					// 1. Chat ist komplett leer (erste Nachricht) UND noch nicht geladen
+					// 2. Es gibt neue Nachrichten UND die letzte Nachricht ist vom Partner (neue Partner-Nachricht)
+					if ((isChatEmpty && !aiSuggestionsLoaded) || (hasNewMessages && lastMessageIsFromPartner)) {
+						aiSuggestionsLoaded = true; // Flag setzen um wiederholtes Laden zu verhindern
 						updateSuggestions();
-					} else if (!hasNewMessages) {
-						// Wenn keine neuen Nachrichten, Vorschläge ausblenden (außer bei leerem Chat)
+					} else if (!isChatEmpty && !lastMessageIsFromPartner && !hasNewMessages) {
+						// Nur verstecken wenn: nicht leer, letzte Nachricht von mir, keine neuen Nachrichten
 						suggestionsContainer.classList.add('hidden');
 					}
 
