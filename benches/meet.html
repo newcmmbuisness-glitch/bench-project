@@ -2842,9 +2842,9 @@
 								const messageBubble = document.createElement('div');
 								messageBubble.classList.add('message', messageClass);
 								
-								const timestamp = new Date(message.sent_at).toLocaleTimeString('de-DE', { 
-									hour: '2-digit', 
-									minute: '2-digit' 
+								const timestamp = new Date(message.sent_at).toLocaleTimeString('de-DE', { 
+									hour: '2-digit', 
+									minute: '2-digit' 
 								});
 								
 								messageBubble.innerHTML = `
@@ -2865,20 +2865,17 @@
 						container.scrollTop = container.scrollHeight;
 					}
 
-					// ✅ Die finale und korrekte Logik für KI-Vorschläge
+					// ✅ OPTIMIERTE KI-Vorschläge Logik - lädt nur bei leerem Chat oder neuer Nachricht vom Partner
 					const lastMessage = result.messages[result.messages.length - 1];
-					const lastMessageIsFromMatch = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
-					const isInputEmpty = messageInput.value.trim() === '';
-
-					// Hier ist die Schlüsselentscheidung:
-					if (isChatEmpty || (lastMessageIsFromMatch && hasNewMessages) || !isInputEmpty) {
-						// Denken Sie nach, wenn eine dieser Bedingungen zutrifft:
-						// 1. Der Chat ist leer.
-						// 2. Es gibt eine neue Nachricht von Ihrem Match.
-						// 3. Sie tippen gerade etwas in das Eingabefeld.
+					const lastMessageIsFromPartner = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
+					
+					// KI-Vorschläge nur laden wenn:
+					// 1. Chat ist komplett leer (erste Nachricht) ODER
+					// 2. Es gibt neue Nachrichten UND die letzte Nachricht ist vom Partner
+					if (isChatEmpty || (hasNewMessages && lastMessageIsFromPartner)) {
 						updateSuggestions();
-					} else {
-						// Wenn keine der Bedingungen zutrifft, die Vorschläge ausblenden.
+					} else if (!hasNewMessages) {
+						// Wenn keine neuen Nachrichten, Vorschläge ausblenden (außer bei leerem Chat)
 						suggestionsContainer.classList.add('hidden');
 					}
 
