@@ -308,6 +308,24 @@
             cursor: pointer;
             font-size: 16px;
         }
+		
+        .captcha-box {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .captcha-box p { margin: 5px 0; font-weight: bold; }
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            z-index: 2001;
+            display: none;
+        }
+		
 
         /* Notification */
         .notification {
@@ -932,15 +950,34 @@
                 <form onsubmit="login(event)">
                     <input type="email" id="loginEmail" placeholder="E-Mail" required>
                     <input type="password" id="loginPassword" placeholder="Passwort" required>
+                    <div class="captcha-box">
+                        <p id="loginCaptcha"></p>
+                        <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
+                    </div>
                     <button type="submit">Anmelden</button>
+                    <p style="margin-top:10px;">
+                        <a href="#" onclick="showPasswordResetForm(event)">Passwort vergessen?</a>
+                    </p>
                 </form>
             </div>
+			
             <div id="registerTab" class="tab-content">
                 <form onsubmit="register(event)">
                     <input type="email" id="registerEmail" placeholder="E-Mail" required>
                     <input type="password" id="registerPassword" placeholder="Passwort" required>
                     <input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" required>
+                    <div class="captcha-box">
+                        <p id="registerCaptcha"></p>
+                        <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" required>
+                    </div>
                     <button type="submit">Registrieren</button>
+                </form>
+            </div>
+            <div id="passwordResetDiv" style="display:none;">
+                <form onsubmit="event.preventDefault(); requestPasswordReset();">
+                    <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required>
+                    <button type="submit">Passwort zurücksetzen</button>
+                    <button type="button" onclick="hidePasswordResetForm()">Abbrechen</button>
                 </form>
             </div>
         </div>
@@ -951,7 +988,7 @@
 	        <h1>One-To-Meet</h1>
 	        <p>Finde die Liebe deines Lebens auf der schönsten Bank der Stadt!</p>
 	        <div class="action-buttons">
-	            <button class="action-btn btn-primary" onclick="checkAndRenderUI()">
+	            <button class="action-btn btn-primary" onclick="showLogin()">
 	                💖 Jetzt starten
 	            </button>
 	        </div>
@@ -1091,6 +1128,7 @@
     <script>
         // Global Variables
         let currentUser = null;
+		let loginCaptcha = null, registerCaptcha = null;
         let sidebarOpen = false;
         let currentProfile = null;
         let sampleProfiles = [];
@@ -1106,6 +1144,7 @@
 		let currentChatMatchId;
 		let messageInterval;
 		let selectedHobbies = [];
+		
 
 		
 		const emojiMap = {
@@ -1165,6 +1204,7 @@
         // Auth Functions
         function showLogin() {
             document.getElementById('loginModal').style.display = 'block';
+			generateCaptchas();
         }
         
         function closeLogin() {
@@ -1181,12 +1221,41 @@
                 event.target.classList.add('active');
             }
         }
+		
+        function generateCaptchas() {
+            loginCaptcha = generateCaptcha();
+            registerCaptcha = generateCaptcha();
+            document.getElementById('loginCaptcha').textContent = `🤖 Sind Sie ein Roboter? ${loginCaptcha.question}`;
+            document.getElementById('registerCaptcha').textContent = `🤖 Sind Sie ein Roboter? ${registerCaptcha.question}`;
+        }
+        
+        function generateCaptcha() {
+            const operations = [
+                () => {
+                    const a = Math.floor(Math.random() * 10) + 1;
+                    const b = Math.floor(Math.random() * 10) + 1;
+                    return { question: `${a} + ${b} = ?`, answer: a + b };
+                },
+                () => {
+                    const a = Math.floor(Math.random() * 10) + 5;
+                    const b = Math.floor(Math.random() * 5) + 1;
+                    return { question: `${a} - ${b} = ?`, answer: a - b };
+                },
+                () => {
+                    const a = Math.floor(Math.random() * 5) + 2;
+                    const b = Math.floor(Math.random() * 5) + 2;
+                    return { question: `${a} × ${b} = ?`, answer: a * b };
+                }
+            ];
+            return operations[Math.floor(Math.random() * operations.length)]();
+        }		
 
 		async function register(event) {
 			event.preventDefault();
 			const email = document.getElementById('registerEmail').value;
 			const password = document.getElementById('registerPassword').value;
 			const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+			const captchaAnswer = parseInt(document.getElementById('registerCaptchaAnswer').value);
 
 			if (password !== passwordConfirm) {
 				showNotification('Passwörter stimmen nicht überein!', 'error');
@@ -1197,6 +1266,13 @@
 				showNotification('Passwort muss mindestens 6 Zeichen lang sein!', 'error');
 				return;
 			}
+			
+            if (captchaAnswer !== registerCaptcha.answer) {
+                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+                generateCaptchas();
+                document.getElementById('registerCaptchaAnswer').value = '';
+                return;
+            }
 
 			try {
 				// Verwende deine bestehende auth.js Funktion (gleich wie index.html)
@@ -1228,6 +1304,14 @@
 			event.preventDefault();
 			const email = document.getElementById('loginEmail').value;
 			const password = document.getElementById('loginPassword').value;
+            const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
+			
+            if (captchaAnswer !== loginCaptcha.answer) {
+                showNotification('Falsche CAPTCHA-Antwort! Bitte versuchen Sie es erneut.', 'error');
+                generateCaptchas();
+                document.getElementById('loginCaptchaAnswer').value = '';
+                return;			
+
 
 			try {
 				const response = await fetch('/.netlify/functions/auth', {
@@ -1257,7 +1341,9 @@
 					
 					document.getElementById('loginEmail').value = '';
 					document.getElementById('loginPassword').value = '';
+                    document.getElementById('loginCaptchaAnswer').value = '';					
 					updateFloatingButtons(); // <-- Diese Zeile hinzufügen
+					
 
 					
 				} else {
