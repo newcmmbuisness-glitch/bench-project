@@ -1577,77 +1577,88 @@
 			matchesList.innerHTML = '<div class="text-center p-4">Lade Matches... 🔄</div>';
 			
 			try {
+				// Load real matches from server
 				const response = await fetch('/.netlify/functions/get_matches', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ userId: currentUser.uid })
 				});
 				
-				const result = await response.json();
+				let allMatches = [];
 				
-				if (response.ok && result.success) {
-					if (result.matches && result.matches.length > 0) {
-						matchesList.innerHTML = result.matches.map(match => {
-							const interests = Array.isArray(match.interests) ? match.interests : [];
-							const interestEmojis = interests.slice(0, 3).map(i => ({ ...emojiMap, ...hobbiesMap })[i] || '❓').join(' ');
+				// Add real matches
+				if (response.ok) {
+					const result = await response.json();
+					if (result.success && result.matches) {
+						allMatches = [...result.matches];
+					}
+				}
+				
+				// Add AI matches from localStorage
+				const localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+				const aiMatches = localMatches.filter(m => m.isAI);
+				allMatches = [...allMatches, ...aiMatches];
+				
+				if (allMatches.length > 0) {
+					matchesList.innerHTML = allMatches.map(match => {
+						const interests = Array.isArray(match.interests) ? match.interests : [];
+						const interestEmojis = interests.slice(0, 3).map(i => ({ ...emojiMap, ...hobbiesMap })[i] || '❓').join(' ');
 
-							// ✅ CRITICAL FIX: Use match.match_id (from matches table) instead of match.id
-							return `
-								<div class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3"
-									onclick="console.log('Match clicked:', ${match.match_id}); openMatchChat(${match.match_id}, ${match.matched_user_id}, '${match.profile_name}', '${match.profile_image}')">
-									<div class="flex items-center space-x-4">
-										<div class="flex-shrink-0">
-											<img src="${match.profile_image}"
-												 alt="${match.profile_name}"
-												 class="w-16 h-16 rounded-full object-cover border-2 border-pink-200">
-											<div class="w-4 h-4 bg-green-400 border-2 border-white rounded-full absolute -mt-3 ml-12"></div>
-										</div>
-										<div class="flex-1 min-w-0">
-											<h4 class="font-semibold text-lg text-gray-900 truncate">${match.profile_name}</h4>
-											<p class="text-sm text-gray-600 truncate mb-1">${match.description || 'Neues Match!'}</p>
-											<div class="flex items-center justify-between">
-												<div class="flex space-x-1 text-lg">
-													${interestEmojis}
-												</div>
-												<span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full">💕 Match</span>
+						return `
+							<div class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3"
+								onclick="openMatchChat('${match.match_id}', '${match.matched_user_id}', '${match.profile_name}', '${match.profile_image}')">
+								<div class="flex items-center space-x-4">
+									<div class="flex-shrink-0">
+										<img src="${match.profile_image}"
+											 alt="${match.profile_name}"
+											 class="w-16 h-16 rounded-full object-cover border-2 border-pink-200">
+										<div class="w-4 h-4 bg-green-400 border-2 border-white rounded-full absolute -mt-3 ml-12"></div>
+									</div>
+									<div class="flex-1 min-w-0">
+										<h4 class="font-semibold text-lg text-gray-900 truncate">${match.profile_name}</h4>
+										<p class="text-sm text-gray-600 truncate mb-1">${match.description || 'Neues Match!'}</p>
+										<div class="flex items-center justify-between">
+											<div class="flex space-x-1 text-lg">
+												${interestEmojis}
 											</div>
-										</div>
-										<div class="flex-shrink-0">
-											<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-											</svg>
+											<span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full">
+												${match.isAI ? '🤖 KI' : '💕 Match'}
+											</span>
 										</div>
 									</div>
+									<div class="flex-shrink-0">
+										<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+										</svg>
+									</div>
 								</div>
-							`;
-						}).join('');
-						
-						// Zurück-Button hinzufügen
-						matchesList.innerHTML += `
-							  <div class="mt-6 text-center">
-								<button onclick="showSwipeCards()" 
-										class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
-									← Zurück zum Swipen
-								</button>
 							</div>
 						`;
-					} else {
-						matchesList.innerHTML = `
-							<div class="text-center py-16">
-								<div class="text-8xl mb-6">💔</div>
-								<h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
-								<p class="text-gray-500 mb-8 max-w-sm mx-auto">
-									Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
-								</p>
-								<button onclick="showSwipeCards()" 
-										class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors font-semibold text-lg">
-									💖 Jetzt swipen
-								</button>
-							</div>
-						`;
-					}
+					}).join('');
+					
+					// Add back button
+					matchesList.innerHTML += `
+						<div class="mt-6 text-center">
+							<button onclick="showSwipeCards()" 
+									class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
+								← Zurück zum Swipen
+							</button>
+						</div>
+					`;
 				} else {
-					throw new Error(result.error || 'Fehler beim Laden der Matches');
+					matchesList.innerHTML = `
+						<div class="text-center py-16">
+							<div class="text-8xl mb-6">💔</div>
+							<h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
+							<p class="text-gray-500 mb-8 max-w-sm mx-auto">
+								Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
+							</p>
+							<button onclick="showSwipeCards()" 
+									class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors font-semibold text-lg">
+								💖 Jetzt swipen
+							</button>
+						</div>
+					`;
 				}
 			} catch (error) {
 				console.error('Fehler beim Laden der Matches:', error);
@@ -2958,8 +2969,7 @@
 				}
 			}
 		}
-
-		// Fixed sendMessage function
+		
 		async function sendMessage() {
 			const messageInput = document.getElementById('messageInput');
 			const messageText = messageInput.value.trim();
@@ -2974,8 +2984,6 @@
 			// Check if this is an AI chat
 			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.includes('ai_match_');
 
-
-
 			// Optimistic update: Show message immediately
 			const chatMessages = document.getElementById('chatMessages');
 			const messageElement = document.createElement('div');
@@ -2985,27 +2993,23 @@
 			chatMessages.scrollTop = chatMessages.scrollHeight;
 
 			// Clear and disable input
+			const originalValue = messageText;
 			messageInput.value = '';
 			messageInput.disabled = true;
 			
 			try {
-				if (isAIChat) {		
+				if (isAIChat) {
 					// Handle AI chat
-					messageInput.value = '';
-					messageInput.disabled = false;
-					messageInput.focus();
 					await sendAIMessage(originalValue);
-
-				}
-				else {
-				
+				} else {
+					// Handle real user chat
 					const response = await fetch('/.netlify/functions/send_message', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
 							match_id: parseInt(chatState.currentMatchId),
 							sender_id: parseInt(currentUser.uid),
-							message_text: messageText
+							message_text: originalValue
 						})
 					});
 
@@ -3022,23 +3026,46 @@
 						console.error('Server error:', result);
 						showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
 						chatMessages.removeChild(messageElement);
-						messageInput.value = messageText;
-					}	
-
-				}	
+						messageInput.value = originalValue;
+					}
+				}
 			} catch (error) {
 				console.error('Network error:', error);
 				showNotification('❌ Verbindungsfehler beim Senden', 'error');
 				chatMessages.removeChild(messageElement);
-				messageInput.value = messageText;
+				messageInput.value = originalValue;
 			} finally {
-				if (!isAIChat) {
-					messageInput.disabled = false;
-					messageInput.focus();
-				}
+				messageInput.disabled = false;
+				messageInput.focus();
 			}
 		}
+		function setupAIMessageInput() {
+			const messageInput = document.getElementById('messageInput');
+			if (messageInput) {
+				messageInput.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						sendMessage(); // This will route to AI handling automatically
+					}
+				});
+				messageInput.focus();
+			}
+		}		
 
+		// 3. FIX: Setup separate input handlers
+		function setupMessageInput() {
+			const messageInput = document.getElementById('messageInput');
+			if (messageInput) {
+				messageInput.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						sendMessage();
+					}
+				});
+				messageInput.focus();
+			}
+		}
+		
 
 		// Fixed reportChat function using chat state
 		async function reportChat() {
@@ -3155,35 +3182,28 @@
 		    }
 		}
 		
-		// Fixed openMatchChat function
-		function openMatchChat(matchId, matchUserId, matchName, matchImage) {
+		async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
 			console.log('🔥 Opening chat - Match ID:', matchId, 'Type:', typeof matchId);
 			
 			// Close any existing chat first
 			closeChat();
 			
+			// Check if this is an AI chat
+			const isAIChat = typeof matchId === 'string' && matchId.includes('ai_match_');
+			
 			// Reset chat state for new chat
 			chatState = {
-				currentMatchId: parseInt(matchId),
+				currentMatchId: isAIChat ? matchId : parseInt(matchId), // Keep string for AI, parse for real
 				aiSuggestionsLoaded: false,
 				lastLoadedMessageCount: 0,
 				messageInterval: null
 			};
-					
-			// Check if this is an AI chat
-			const isAIChat = typeof matchId === 'string' && matchId.includes('ai_match_');
 			
-			if (isAIChat) {
-				currentChatMatchId = matchId; // Keep as string for AI
-				console.log('🤖 Opening AI chat with:', matchName);
-			} else {
-				currentChatMatchId = parseInt(matchId);
-					
-				if (isNaN(chatState.currentMatchId) || chatState.currentMatchId <= 0) {
-					console.error('❌ Invalid match ID:', matchId);
-					showNotification('❌ Fehlerhafte Match-ID', 'error');
-					return;
-				}
+			// Validate match ID for real chats
+			if (!isAIChat && (isNaN(chatState.currentMatchId) || chatState.currentMatchId <= 0)) {
+				console.error('❌ Invalid match ID:', matchId);
+				showNotification('❌ Fehlerhafte Match-ID', 'error');
+				return;
 			}
 
 			if (!matchUserId || !matchName) {
@@ -3199,9 +3219,7 @@
 							<img src="${matchImage || '/default-avatar.png'}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
 							<h3 class="text-lg font-bold flex-grow">${matchName}</h3>
 							<div class="flex items-center space-x-2">
-								<div class="ki-beta-container relative overflow-hidden mr-2">
-									<span class="ki-beta-branding">One-KI Beta</span>
-								</div>                                               
+								${isAIChat ? '<div class="ki-beta-container relative overflow-hidden mr-2"><span class="ki-beta-branding">One-KI Beta</span></div>' : ''}                                               
 								<button onclick="reportChat()" class="text-gray-500 hover:text-red-500">
 									<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
 								</button>
@@ -3230,26 +3248,17 @@
 			chatDiv.innerHTML = chatModalHtml;
 			document.body.appendChild(chatDiv);
 
-			// Load messages and start polling
+			// Load messages and setup polling
 			if (isAIChat) {
 				loadAIMessages();
+				setupAIMessageInput();
 			} else {
 				loadMessages();
 				chatState.messageInterval = setInterval(loadMessages, 3000);
-
-				// Enter key listener for message input
-				const messageInput = document.getElementById('messageInput');
-				if (messageInput) {
-					messageInput.addEventListener('keydown', (e) => {
-						if (e.key === 'Enter') {
-							e.preventDefault();
-							sendMessage();
-						}
-					});
-					messageInput.focus();
-				}
+				setupMessageInput();
 			}
-		} // <- HIER die Funktion sauber geschlossen!
+		}
+
 
 		
 		// Fixed closeChat function
@@ -3277,7 +3286,7 @@
 		function loadAIMessages() {
 			const container = document.getElementById('chatMessages');
 			
-			if (!currentChatMatchId) {
+			if (!chatState.currentMatchId) {
 				console.error("Keine AI Chat ID gefunden");
 				return;
 			}
@@ -3307,7 +3316,7 @@
 					});
 					
 					messageBubble.innerHTML = `
-						<div class="message-bubble">${message.text}</div>
+						<div class="message-bubble">${escapeHtml(message.text)}</div>
 						<div class="text-xs opacity-50 mt-1">${timestamp}</div>
 					`;
 					container.appendChild(messageBubble);
@@ -3316,6 +3325,7 @@
 			
 			container.scrollTop = container.scrollHeight;
 		}
+
 
 		function saveAIMessage(sender, text) {
 			if (!chatState.currentMatchId) return;
@@ -3479,10 +3489,10 @@
 					showNotification('🎉 Es ist ein Match! 💕', 'success');
 					showMatchAnimation(profile);
 					
-					// Create AI match object
+					// Create AI match with proper ID structure
 					const aiMatch = {
-						id: `ai_match_${Date.now()}`,
-						user_id: profile.user_id,
+						match_id: `ai_match_${Date.now()}`, // Use match_id for consistency
+						matched_user_id: profile.user_id,
 						profile_name: profile.profile_name || profile.name,
 						profile_image: profile.profile_image || profile.image,
 						description: profile.description,
@@ -3491,7 +3501,14 @@
 						isAI: true
 					};
 					
-					addToLocalMatches(aiMatch);
+					// Add to localStorage matches
+					let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+					const exists = localMatches.some(m => m.match_id === aiMatch.match_id);
+					if (!exists) {
+						localMatches.push(aiMatch);
+						localStorage.setItem('userMatches', JSON.stringify(localMatches));
+					}
+					
 					return;
 				}
 				
@@ -3511,20 +3528,6 @@
 					if (result.newMatch) {
 						showNotification('🎉 Es ist ein Match! 💕', 'success');
 						showMatchAnimation(profile);
-						
-						if (result.matchId) {
-							const matchObject = {
-								id: result.matchId,
-								user_id: profile.user_id,
-								profile_name: profile.profile_name,
-								profile_image: profile.profile_image,
-								description: profile.description,
-								interests: profile.interests,
-								matched_at: new Date().toISOString()
-							};
-							
-							addToLocalMatches(matchObject);
-						}
 					} else {
 						showNotification(`💖 Like gesendet an ${profile.profile_name}!`, 'success');
 					}
@@ -3537,6 +3540,7 @@
 				showNotification(`💖 Like für ${profile.profile_name || profile.name}!`, 'success');
 			}
 		}
+
 
 
 		// Match zu lokaler Liste hinzufügen - FIXED VERSION
