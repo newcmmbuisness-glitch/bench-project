@@ -1240,7 +1240,7 @@
     <!-- Notification -->
     <div id="notification" class="notification"></div>
 
-    <script>
+	<script>
         // Global Variables
         let currentUser = null;
 		let loginCaptcha = null, registerCaptcha = null;
@@ -1256,11 +1256,15 @@
 		let currentSwipeUser = null;
 		let currentUserId = localStorage.getItem('currentUserId');
 		let isSwipeInProgress = false;
-		let currentChatMatchId;
-		let messageInterval;
 		let selectedHobbies = [];
-		let lastLoadedMessageCount = 0;
-		let aiSuggestionsLoaded = false;
+		
+		// Global chat state object instead of individual variables
+		let chatState = {
+			currentMatchId: null,
+			aiSuggestionsLoaded: false,
+			lastLoadedMessageCount: 0,
+			messageInterval: null
+		};
 
 	
 		const emojiMap = {
@@ -2830,14 +2834,14 @@
 		}
 		
 
-		// Funktion zum Laden der Nachrichten
+		// Fixed loadMessages function
 		async function loadMessages() {
 			const container = document.getElementById('chatMessages');
-			const messageInput = document.getElementById('messageInput');
 			const suggestionsContainer = document.getElementById('aiSuggestionsContainer');
 
-			if (!container || !currentChatMatchId || !messageInput || !suggestionsContainer) {
-				console.error("Fehler: Ein erforderliches Element fehlt.");
+			// Use local chat state instead of global variables
+			if (!container || !chatState.currentMatchId || !suggestionsContainer) {
+				console.error("Fehler: Ein erforderliches Element fehlt oder kein aktiver Chat.");
 				return;
 			}
 
@@ -2845,14 +2849,14 @@
 				const response = await fetch('/.netlify/functions/get_messages', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ match_id: parseInt(currentChatMatchId) })
+					body: JSON.stringify({ matchId: chatState.currentMatchId })
 				});
 
 				const result = await response.json();
 
 				if (response.ok && result.success) {
 					const currentMessageCount = result.messages ? result.messages.length : 0;
-					const hasNewMessages = currentMessageCount > lastLoadedMessageCount;
+					const hasNewMessages = currentMessageCount > chatState.lastLoadedMessageCount;
 					const isChatEmpty = currentMessageCount === 0;
 
 					if (hasNewMessages || isChatEmpty) {
@@ -2870,7 +2874,7 @@
 								});
 								
 								messageBubble.innerHTML = `
-									<div class="message-bubble">${(message.message_text)}</div>
+									<div class="message-bubble">${escapeHtml(message.message_text)}</div>
 									<div class="text-xs opacity-50 mt-1">${timestamp}</div>
 								`;
 								container.appendChild(messageBubble);
@@ -2887,23 +2891,22 @@
 						container.scrollTop = container.scrollHeight;
 					}
 
-					// ✅ OPTIMIERTE KI-Vorschläge Logik - lädt nur bei leerem Chat oder neuer Nachricht vom Partner
+					// Fixed AI suggestions logic using chat state
 					const lastMessage = result.messages[result.messages.length - 1];
 					const lastMessageIsFromPartner = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
 					
-					// KI-Vorschläge laden wenn:
-					// 1. Chat ist komplett leer (erste Nachricht) UND noch nicht geladen
-					// 2. Es gibt neue Nachrichten UND die letzte Nachricht ist vom Partner (neue Partner-Nachricht)
-					if ((isChatEmpty && !aiSuggestionsLoaded) || (hasNewMessages && lastMessageIsFromPartner)) {
-						aiSuggestionsLoaded = true; // Flag setzen um wiederholtes Laden zu verhindern
+					// Load AI suggestions if:
+					// 1. Chat is empty AND not yet loaded for this chat
+					// 2. New messages AND last message is from partner
+					if ((isChatEmpty && !chatState.aiSuggestionsLoaded) || (hasNewMessages && lastMessageIsFromPartner)) {
+						chatState.aiSuggestionsLoaded = true;
 						updateSuggestions();
 					} else if (!isChatEmpty && !lastMessageIsFromPartner && !hasNewMessages) {
-						// Nur verstecken wenn: nicht leer, letzte Nachricht von mir, keine neuen Nachrichten
 						suggestionsContainer.classList.add('hidden');
 					}
 
-					// Aktualisieren der Nachrichtenanzahl
-					lastLoadedMessageCount = currentMessageCount;
+					// Update message count for this chat
+					chatState.lastLoadedMessageCount = currentMessageCount;
 
 				} else {
 					console.error('Fehler beim Laden der Nachrichten:', result.error);
@@ -2933,47 +2936,50 @@
 			}
 		}
 
-		// Funktion zum Senden einer Nachricht
+		// Fixed sendMessage function
 		async function sendMessage() {
 			const messageInput = document.getElementById('messageInput');
 			const messageText = messageInput.value.trim();
 			
-			if (!messageText || !currentChatMatchId || !currentUser.uid) {
+			if (!messageText || !chatState.currentMatchId || !currentUser.uid) {
 				if (!messageText) {
 					showNotification('⚠️ Bitte gib eine Nachricht ein', 'error');
 				}
 				return;
 			}
-		
-			// ✅ Wichtig: Nachricht sofort im UI anzeigen (Optimistisches Update)
+
+			// Optimistic update: Show message immediately
 			const chatMessages = document.getElementById('chatMessages');
 			const messageElement = document.createElement('div');
 			messageElement.classList.add('message', 'sent', 'p-2', 'my-1', 'rounded-lg');
-			messageElement.innerHTML = `<div class="message-bubble">${messageText}</div>`;
+			messageElement.innerHTML = `<div class="message-bubble">${escapeHtml(messageText)}</div>`;
 			chatMessages.appendChild(messageElement);
 			chatMessages.scrollTop = chatMessages.scrollHeight;
-		
-			// Eingabefeld leeren und deaktivieren
+
+			// Clear and disable input
 			messageInput.value = '';
 			messageInput.disabled = true;
-		
+
 			try {
 				const response = await fetch('/.netlify/functions/send_message', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						match_id: parseInt(currentChatMatchId),
+						match_id: parseInt(chatState.currentMatchId),
 						sender_id: parseInt(currentUser.uid),
 						message_text: messageText
 					})
 				});
-		
+
 				const result = await response.json();
 				
 				if (response.ok && result.success) {
-					// ✅ Optional: Setze die KI-Flag hier zurück
-					aiSuggestionsLoaded = false;
+					// Reset AI suggestions flag so they can load on partner's response
+					chatState.aiSuggestionsLoaded = false;
 					showNotification('✅ Nachricht gesendet!', 'success');
+					
+					// Force reload messages to ensure synchronization
+					setTimeout(() => loadMessages(), 100);
 				} else {
 					console.error('Server error:', result);
 					showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
@@ -2991,105 +2997,103 @@
 			}
 		}
 
+
+		// Fixed reportChat function using chat state
 		async function reportChat() {
-		    if (!currentChatMatchId || !currentUser.uid) {
-		        alert('Fehler: Chat oder Benutzer nicht identifiziert.');
-		        return;
-		    }
-		    if (confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) {
-		        try {
-		            const response = await fetch('/.netlify/functions/report_chat', {
-		                method: 'POST',
-		                headers: { 'Content-Type': 'application/json' },
-		                body: JSON.stringify({
-		                    match_id: currentChatMatchId,
-		                    reporter_id: currentUser.uid
-		                }),
-		            });
-		            const result = await response.json();
-		            if (response.ok && result.success) {
-		                alert('Chat erfolgreich gemeldet. Vielen Dank für Ihr Feedback.');
-		                closeChat();
-		            } else {
-		                alert('Fehler beim Melden des Chats: ' + (result.error || 'Unbekannter Fehler.'));
-		            }
-		        } catch (error) {
-		            console.error('Fehler beim Melden des Chats:', error);
-		            alert('Ein Netzwerkfehler ist aufgetreten.');
-		        }
-		    }
+			if (!chatState.currentMatchId || !currentUser.uid) {
+				alert('Fehler: Chat oder Benutzer nicht identifiziert.');
+				return;
+			}
+			
+			if (confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) {
+				try {
+					const response = await fetch('/.netlify/functions/report_chat', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							match_id: chatState.currentMatchId,
+							reporter_id: currentUser.uid
+						}),
+					});
+					
+					const result = await response.json();
+					if (response.ok && result.success) {
+						alert('Chat erfolgreich gemeldet. Vielen Dank für Ihr Feedback.');
+						closeChat();
+					} else {
+						alert('Fehler beim Melden des Chats: ' + (result.error || 'Unbekannter Fehler.'));
+					}
+				} catch (error) {
+					console.error('Fehler beim Melden des Chats:', error);
+					alert('Ein Netzwerkfehler ist aufgetreten.');
+				}
+			}
 		}		
 
-		// NEUE FUNKTION FÜR KI-VORSCHLÄGE (aktualisiert)
 		async function updateSuggestions() {
-		    if (!currentChatMatchId || !currentUser) {
-		        document.getElementById('aiSuggestionsContainer').classList.add('hidden');
-		        return;
-		    }
-		
-		    const mainContainer = document.getElementById('aiSuggestionsContainer');
-		    const thinkingBubble = document.getElementById('aiThinkingBubble');
-		    const typingTextElement = document.getElementById('typingText');
-		
-		    // Container anzeigen, aber zunächst nur die Ladeanimation
-		    mainContainer.classList.remove('hidden');
-		    thinkingBubble.classList.remove('hidden');
-		    typingTextElement.textContent = 'One-KI denkt nach...';
-		    
-		    // Alte Vorschläge sofort entfernen
-		    const oldButtons = mainContainer.querySelectorAll('button');
-		    oldButtons.forEach(button => button.remove());
-		
-		    try {
-		        const response = await fetch('/.netlify/functions/get_chat_suggestions', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ matchId: currentChatMatchId, currentUserId: currentUser.uid }),
-		        });
-		
-		        const result = await response.json();
-		        
-		        // Timeout für die Animation
-		        setTimeout(() => {
-		            // Ladeanimation ausblenden
-		            thinkingBubble.classList.add('hidden');
-		
-		            if (result.success && result.suggestions.length > 0) {
-		                // Fügen Sie jetzt die neuen Vorschlagsbuttons hinzu
-		                result.suggestions.forEach(suggestion => {
-		                    // Erstellt einen Button
-		                    const button = document.createElement('button');
-		                    button.onclick = () => {
-		                        document.getElementById('messageInput').value = suggestion;
-		                        logSuggestionClick(suggestion);
-		                    };
-		
-		                    // Erstellt die äußere Hülle mit dem Container-Stil
-		                    const innerDiv = document.createElement('div');
-		                    innerDiv.className = 'ki-beta-container';
-		                    
-		                    // Erstellt das innere Span-Element mit dem Schimmer-Effekt
-		                    const innerSpan = document.createElement('span');
-		                    innerSpan.className = 'ki-beta-branding';
-		                    innerSpan.textContent = suggestion;
-		
-		                    // Fügt die Elemente zusammen
-		                    innerDiv.appendChild(innerSpan);
-		                    button.appendChild(innerDiv);
-		                    mainContainer.appendChild(button);
-		                });
-		            } else {
-		                // Wenn keine Vorschläge vorhanden sind, Container verstecken
-		                mainContainer.classList.add('hidden');
-		            }
-		        }, 2500); // 2.5 Sekunden Verzögerung für die Animation
-		
-		    } catch (error) {
-		        console.error('Fehler beim Laden der KI-Vorschläge:', error);
-		        // Bei Fehler: Ladeanimation ausblenden und Container verstecken
-		        thinkingBubble.classList.add('hidden');
-		        mainContainer.classList.add('hidden');
-		    }
+			if (!chatState.currentMatchId || !currentUser) {
+				document.getElementById('aiSuggestionsContainer').classList.add('hidden');
+				return;
+			}
+
+			const mainContainer = document.getElementById('aiSuggestionsContainer');
+			const thinkingBubble = document.getElementById('aiThinkingBubble');
+			const typingTextElement = document.getElementById('typingText');
+
+			// Show container with loading animation
+			mainContainer.classList.remove('hidden');
+			thinkingBubble.classList.remove('hidden');
+			typingTextElement.textContent = 'One-KI denkt nach...';
+			
+			// Remove old suggestion buttons
+			const oldButtons = mainContainer.querySelectorAll('button');
+			oldButtons.forEach(button => button.remove());
+
+			try {
+				const response = await fetch('/.netlify/functions/get_chat_suggestions', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ 
+						matchId: chatState.currentMatchId, 
+						currentUserId: currentUser.uid 
+					}),
+				});
+
+				const result = await response.json();
+				
+				// Animation timeout
+				setTimeout(() => {
+					thinkingBubble.classList.add('hidden');
+
+					if (result.success && result.suggestions.length > 0) {
+						result.suggestions.forEach(suggestion => {
+							const button = document.createElement('button');
+							button.onclick = () => {
+								document.getElementById('messageInput').value = suggestion;
+								logSuggestionClick(suggestion);
+							};
+
+							const innerDiv = document.createElement('div');
+							innerDiv.className = 'ki-beta-container';
+							
+							const innerSpan = document.createElement('span');
+							innerSpan.className = 'ki-beta-branding';
+							innerSpan.textContent = suggestion;
+
+							innerDiv.appendChild(innerSpan);
+							button.appendChild(innerDiv);
+							mainContainer.appendChild(button);
+						});
+					} else {
+						mainContainer.classList.add('hidden');
+					}
+				}, 2500);
+
+			} catch (error) {
+				console.error('Fehler beim Laden der KI-Vorschläge:', error);
+				thinkingBubble.classList.add('hidden');
+				mainContainer.classList.add('hidden');
+			}
 		}
 		
 		// NEU: Funktion zum Protokollieren von Klicks
@@ -3109,22 +3113,27 @@
 		    }
 		}	
 
-		// Funktion zum Öffnen des Chat-Fensters
+		// Fixed openMatchChat function
 		function openMatchChat(matchId, matchUserId, matchName, matchImage) {
 			console.log('🔥 Opening chat - Match ID:', matchId, 'Type:', typeof matchId);
 			
+			// Close any existing chat first
 			closeChat();
 			
-			// ✅ CRITICAL FIX: Ensure matchId is valid before proceeding
-			currentChatMatchId = parseInt(matchId);
+			// Reset chat state for new chat
+			chatState = {
+				currentMatchId: parseInt(matchId),
+				aiSuggestionsLoaded: false,
+				lastLoadedMessageCount: 0,
+				messageInterval: null
+			};
 			
-			if (isNaN(currentChatMatchId) || currentChatMatchId <= 0) {
+			if (isNaN(chatState.currentMatchId) || chatState.currentMatchId <= 0) {
 				console.error('❌ Invalid match ID:', matchId);
 				showNotification('❌ Fehlerhafte Match-ID', 'error');
 				return;
 			}
 
-			// ✅ VALIDATION: Check if all required parameters are present
 			if (!matchUserId || !matchName) {
 				console.error('❌ Missing required chat parameters');
 				showNotification('❌ Unvollständige Match-Daten', 'error');
@@ -3132,49 +3141,48 @@
 			}
 
 			const chatModalHtml = `
-			    <div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" data-chat-modal>
-			        <div class="bg-white rounded-2xl max-w-md w-full h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+				<div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" data-chat-modal>
+					<div class="bg-white rounded-2xl max-w-md w-full h-[90vh] flex flex-col" onclick="event.stopPropagation()">
 						<div class="bg-gray-100 p-4 flex items-center rounded-t-2xl shadow-sm">
-						    <img src="${matchImage || '/default-avatar.png'}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
-						    <h3 class="text-lg font-bold flex-grow">${matchName}</h3>
-						    <div class="flex items-center space-x-2">
+							<img src="${matchImage || '/default-avatar.png'}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
+							<h3 class="text-lg font-bold flex-grow">${matchName}</h3>
+							<div class="flex items-center space-x-2">
 								<div class="ki-beta-container relative overflow-hidden mr-2">
-								    <span class="ki-beta-branding">One-KI Beta</span>
-							    </div>								   				        
-						        <button onclick="reportChat()" class="text-gray-500 hover:text-red-500">
-						            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-						        </button>
-						        <button onclick="closeChat()" class="text-gray-500 hover:text-gray-700">
-						            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-						        </button>
-						    </div>
+									<span class="ki-beta-branding">One-KI Beta</span>
+								</div>                                               
+								<button onclick="reportChat()" class="text-gray-500 hover:text-red-500">
+									<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+								</button>
+								<button onclick="closeChat()" class="text-gray-500 hover:text-gray-700">
+									<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+								</button>
+							</div>
 						</div>
-			            <div id="chatMessages" class="flex-grow p-4 overflow-y-auto space-y-2"></div>
+						<div id="chatMessages" class="flex-grow p-4 overflow-y-auto space-y-2"></div>
 						<div id="aiSuggestionsContainer" class="p-2 flex flex-wrap gap-2 justify-center border-t border-gray-200 hidden">
-						    <div id="aiThinkingBubble" class="ki-beta-container hidden">
-						        <span id="typingText" class="ki-beta-branding typing-animation"></span>
-						    </div>
+							<div id="aiThinkingBubble" class="ki-beta-container hidden">
+								<span id="typingText" class="ki-beta-branding typing-animation"></span>
+							</div>
 						</div>
-			            <div class="p-4 bg-gray-100 rounded-b-2xl flex items-center">
-			                <input type="text" id="messageInput" placeholder="Nachricht senden..." class="flex-grow rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" maxlength="500">
-			                <button onclick="sendMessage()" class="bg-blue-500 text-white rounded-full p-2 ml-2 hover:bg-blue-600">
-			                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-			                </button>
-			            </div>
-			        </div>
-			    </div>
+						<div class="p-4 bg-gray-100 rounded-b-2xl flex items-center">
+							<input type="text" id="messageInput" placeholder="Nachricht senden..." class="flex-grow rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" maxlength="500">
+							<button onclick="sendMessage()" class="bg-blue-500 text-white rounded-full p-2 ml-2 hover:bg-blue-600">
+								<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+							</button>
+						</div>
+					</div>
+				</div>
 			`;
 
 			const chatDiv = document.createElement('div');
 			chatDiv.innerHTML = chatModalHtml;
 			document.body.appendChild(chatDiv);
 
-			// ✅ Load messages and start polling
+			// Load messages and start polling
 			loadMessages();
-			messageInterval = setInterval(loadMessages, 3000);
+			chatState.messageInterval = setInterval(loadMessages, 3000);
 
-
-			// ✅ Enter key listener for message input
+			// Enter key listener for message input
 			const messageInput = document.getElementById('messageInput');
 			if (messageInput) {
 				messageInput.addEventListener('keydown', (e) => {
@@ -3182,26 +3190,30 @@
 						e.preventDefault();
 						sendMessage();
 					}
-				});	
-				messageInput.focus(); // Auto-focus for better UX
+				});
+				messageInput.focus();
 			}
 		}
 		
-		// Funktion zum Schließen des Chat-Popups
+		// Fixed closeChat function
 		function closeChat() {
 			const chatModal = document.querySelector('[data-chat-modal]');
 			if (chatModal) {
 				chatModal.remove();
 			}
 			
-			// ✅ Clear polling interval
-			if (messageInterval) {
-				clearInterval(messageInterval);
-				messageInterval = null;
+			// Clear polling interval
+			if (chatState.messageInterval) {
+				clearInterval(chatState.messageInterval);
 			}
 			
-			// ✅ Reset chat state
-			currentChatMatchId = null;
+			// Reset chat state completely
+			chatState = {
+				currentMatchId: null,
+				aiSuggestionsLoaded: false,
+				lastLoadedMessageCount: 0,
+				messageInterval: null
+			};
 		}
 						
 		// Swipe abschließen
