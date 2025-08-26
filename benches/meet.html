@@ -2849,7 +2849,7 @@
 				const response = await fetch('/.netlify/functions/get_messages', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ matchId: chatState.currentMatchId })
+					body: JSON.stringify({ match_id: chatState.currentMatchId })
 				});
 
 				const result = await response.json();
