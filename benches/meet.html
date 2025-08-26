@@ -2975,20 +2975,19 @@
 		// Funktion zum Öffnen eines individuellen Chats und Laden der Nachrichten
 		async function openChat(matchId, matchedName) {
 		
-			// ✅ UI-Elemente sofort aktualisieren und den Chat-Container leeren
+			// ✅ WICHTIG: Setze die KI-Flag zurück, bevor der Chat geöffnet wird
+			aiSuggestionsLoaded = false;
+		
 			document.getElementById('matchesList').style.display = 'none';
 			const individualChat = document.getElementById('individualChat');
-			const chatMessages = document.getElementById('chatMessages');
-			const messageInput = document.getElementById('messageInput');
-		
 			individualChat.style.display = 'block';
 			document.getElementById('chatHeaderName').textContent = matchedName;
-			messageInput.dataset.matchId = matchId;
-		
-			chatMessages.innerHTML = ''; // ✅ Den Container sofort leeren
-			aiSuggestionsLoaded = false; // ✅ Und die Flag für KI-Vorschläge zurücksetzen
-		
-			// ✅ Nachrichten asynchron laden
+			document.getElementById('messageInput').dataset.matchId = matchId;
+            currentChatMatchId = matchId; // ✅ Stelle sicher, dass die globale Variable gesetzt ist
+
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = ''; // ✅ Den Chat-Container sofort leeren
+
 			try {
 				const response = await fetch('/.netlify/functions/get_messages', {
 					method: 'POST',
@@ -2998,20 +2997,36 @@
 				const result = await response.json();
 				
 				if (result.success) {
-					// Lade die Nachrichten, die aus dem Backend kommen
-					result.messages.forEach(msg => {
-						const messageElement = document.createElement('div');
-						messageElement.classList.add('message', msg.sender_id === currentUser.uid ? 'sent' : 'received', 'p-2', 'my-1', 'rounded-lg');
-						messageElement.innerHTML = `<div class="message-bubble">${msg.message_text}</div>`;
-						chatMessages.appendChild(messageElement);
-					});
+                    const isChatEmpty = result.messages.length === 0;
+
+					if (result.messages && result.messages.length > 0) {
+                        result.messages.forEach(msg => {
+                            const messageElement = document.createElement('div');
+                            messageElement.classList.add('message', msg.sender_id === currentUser.uid ? 'sent' : 'received', 'p-2', 'my-1', 'rounded-lg');
+                            messageElement.innerHTML = `<div class="message-bubble">${msg.message_text}</div>`;
+                            chatMessages.appendChild(messageElement);
+                        });
+                    } else {
+                        // Zeige Platzhalter für leeren Chat
+                        chatMessages.innerHTML = `
+                            <div class="text-center text-gray-500 py-8">
+                                <div class="text-4xl mb-2">👋</div>
+                                <p>Schreibt euch eure erste Nachricht!</p>
+                            </div>
+                        `;
+                    }
 					chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                    // ✅ Logik für KI-Vorschläge nach dem Laden der Nachrichten
+                    if (isChatEmpty && !aiSuggestionsLoaded) {
+                        aiSuggestionsLoaded = true;
+                        updateSuggestions();
+                    }
 				}
 			} catch (error) {
 				console.error('Fehler beim Laden der Nachrichten:', error);
 			}
-		}		
-
+		}
 		async function reportChat() {
 		    if (!currentChatMatchId || !currentUser.uid) {
 		        alert('Fehler: Chat oder Benutzer nicht identifiziert.');
