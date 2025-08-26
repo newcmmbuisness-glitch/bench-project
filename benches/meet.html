@@ -2869,13 +2869,12 @@
 					const lastMessageIsFromPartner = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
 					
 					// KI-Vorschläge nur laden wenn:
-					// 1. Chat ist komplett leer (erste Nachricht) UND noch nicht geladen ODER
-					// 2. Es gibt neue Nachrichten UND die letzte Nachricht ist vom Partner UND noch nicht für diese Nachricht geladen
-					if ((isChatEmpty && !aiSuggestionsLoaded) || (hasNewMessages && lastMessageIsFromPartner)) {
-						aiSuggestionsLoaded = true; // Flag setzen um wiederholtes Laden zu verhindern
+					// 1. Chat ist komplett leer (erste Nachricht) ODER
+					// 2. Es gibt neue Nachrichten UND die letzte Nachricht ist vom Partner
+					if (isChatEmpty || (hasNewMessages && lastMessageIsFromPartner)) {
 						updateSuggestions();
-					} else if (!hasNewMessages && !isChatEmpty) {
-						// Wenn keine neuen Nachrichten und Chat nicht leer, Vorschläge ausblenden
+					} else if (!hasNewMessages) {
+						// Wenn keine neuen Nachrichten, Vorschläge ausblenden (außer bei leerem Chat)
 						suggestionsContainer.classList.add('hidden');
 					}
 
