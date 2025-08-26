@@ -3044,56 +3044,23 @@
 		// Keine Karten mehr vorhanden
 		function showNoMoreCards() {
 			const cardStack = document.getElementById('cardStack');
+			const noMoreProfiles = document.getElementById('noMoreProfiles');
 			const swipeActions = document.querySelector('.swipe-actions');
-			
-			// Hide swipe action buttons (heart/x) - use more specific selector
-			if (swipeActions) {
-				swipeActions.style.display = 'none';
+			const backButton = document.querySelector('button[onclick="checkAndRenderUI()"]');
+
+			if (cardStack) {
+				cardStack.style.display = 'none'; // Versteckt den Kartenstapel
 			}
-			
-			// Force cardStack to take full height and center content
-			cardStack.style.cssText = `
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 100px;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: center;
-				z-index: 1;
-			`;
-			
-			cardStack.innerHTML = `
-				<div style="text-align: center; color: white;">
-					<div style="font-size: 5rem; margin-bottom: 1.5rem;">😢</div>
-					<h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">
-						Keine weiteren Profile gefunden
-					</h2>
-					<p style="color: rgba(255,255,255,0.8); margin-bottom: 2rem; line-height: 1.5; max-width: 300px;">
-						Versuch es später noch einmal oder passe deine Sucheinstellungen an.
-					</p>
-					<button onclick="reloadProfiles()" 
-							style="background: linear-gradient(45deg, #8b5cf6, #ec4899); 
-								   color: white; 
-								   padding: 1rem 2rem; 
-								   border-radius: 9999px; 
-								   border: none; 
-								   font-size: 1.1rem; 
-								   font-weight: 600; 
-								   cursor: pointer; 
-								   box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-								   transition: transform 0.2s ease;"
-							onmouseover="this.style.transform='scale(1.05)'"
-							onmouseout="this.style.transform='scale(1)'">
-						🔄 Erneut laden
-					</button>
-				</div>
-			`;
-			
-			updateFloatingButtons();
+			if (swipeActions) {
+				swipeActions.style.display = 'none'; // Versteckt die Swipe-Buttons
+			}
+			if (noMoreProfiles) {
+				noMoreProfiles.style.display = 'block'; // Zeigt das richtige HTML-Element
+			}
+			if (backButton) {
+				backButton.style.display = 'block';
 		}
+
 		
 		async function reloadProfiles() {
 			const cardStack = document.getElementById('cardStack');
