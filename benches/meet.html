@@ -2811,9 +2811,10 @@
 		// Funktion zum Laden der Nachrichten
 		async function loadMessages() {
 			const container = document.getElementById('chatMessages');
+			const messageInput = document.getElementById('messageInput');
 
-			if (!container || !currentChatMatchId) {
-				console.error("Fehler: chatMessages-Container oder matchId nicht gefunden.");
+			if (!container || !currentChatMatchId || !messageInput) {
+				console.error("Fehler: chatMessages-Container, matchId oder messageInput nicht gefunden.");
 				return;
 			}
 
@@ -2831,6 +2832,7 @@
 					const hasNewMessages = currentMessageCount > lastLoadedMessageCount;
 					const isChatEmpty = currentMessageCount === 0;
 
+					// Nachrichten nur aktualisieren, wenn es neue gibt oder der Chat leer ist
 					if (hasNewMessages || isChatEmpty) {
 						container.innerHTML = '';
 						
@@ -2863,12 +2865,24 @@
 						container.scrollTop = container.scrollHeight;
 					}
 
-					// ✅ Rufen Sie die KI-Funktion nur auf, wenn es neue Nachrichten gibt
-					if (hasNewMessages) {
+					// ✅ Logik für KI-Vorschläge
+					const lastMessage = result.messages[result.messages.length - 1];
+					const isLastMessageFromMatch = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
+					const isInputEmpty = messageInput.value.trim() === '';
+
+					// Die KI soll nachdenken, wenn:
+					// 1. Der Chat leer ist (erste Nachricht).
+					// 2. Es gibt eine neue Nachricht vom Match.
+					// 3. Der Benutzer tippt gerade etwas in das Nachrichtenfeld.
+					if (isChatEmpty || (isLastMessageFromMatch && hasNewMessages) || !isInputEmpty) {
 						updateSuggestions();
+					} else {
+						// Wenn keine der Bedingungen zutrifft (z.B. Sie haben zuletzt geschrieben und das Feld ist leer),
+						// blenden Sie die Vorschläge aus.
+						document.getElementById('aiSuggestionsContainer').classList.add('hidden');
 					}
 
-					// ✅ Aktualisieren Sie die Anzahl der geladenen Nachrichten
+					// Aktualisieren Sie die Anzahl der geladenen Nachrichten
 					lastLoadedMessageCount = currentMessageCount;
 
 				} else {
