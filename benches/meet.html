@@ -3178,12 +3178,13 @@
 				console.log('🤖 Opening AI chat with:', matchName);
 			} else {
 				currentChatMatchId = parseInt(matchId);
-
 			
-			if (isNaN(chatState.currentMatchId) || chatState.currentMatchId <= 0) {
-				console.error('❌ Invalid match ID:', matchId);
-				showNotification('❌ Fehlerhafte Match-ID', 'error');
-				return;
+				
+				if (isNaN(chatState.currentMatchId) || chatState.currentMatchId <= 0) {
+					console.error('❌ Invalid match ID:', matchId);
+					showNotification('❌ Fehlerhafte Match-ID', 'error');
+					return;
+				}
 			}
 
 			if (!matchUserId || !matchName) {
