@@ -2915,56 +2915,66 @@
 
 		// Funktion zum Senden einer Nachricht
 		async function sendMessage() {
-			const messageInput = document.getElementById('messageInput');
-			const messageText = messageInput.value.trim();
-			
-			if (!messageText || !currentChatMatchId || !currentUser.uid) {
-				if (!messageText) {
-					showNotification('⚠️ Bitte gib eine Nachricht ein', 'error');
-				}
-				return;
-			}
-
-			// ✅ Disable input during send
-			messageInput.disabled = true;
-			const originalValue = messageText;
-			messageInput.value = 'Wird gesendet...';
-
-			try {
-				const response = await fetch('/.netlify/functions/send_message', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						match_id: parseInt(currentChatMatchId),
-						sender_id: parseInt(currentUser.uid),
-						message_text: messageText
-					})
-				});
-
-				const result = await response.json();
+					const messageInput = document.getElementById('messageInput');
+					const messageText = messageInput.value.trim();
+					
+					if (!messageText || !currentChatMatchId || !currentUser.uid) {
+						if (!messageText) {
+							showNotification('⚠️ Bitte gib eine Nachricht ein', 'error');
+						}
+						return;
+					}
 				
-				if (response.ok && result.success) {
+					// Deaktiviere das Eingabefeld, um Doppelsendungen zu verhindern
+					messageInput.disabled = true;
+					
+					// ✅ NEU: Nachricht sofort im UI anzeigen (Optimistisches Update)
+					const chatMessages = document.getElementById('chatMessages');
+					const messageElement = document.createElement('div');
+					messageElement.classList.add('message', 'sent', 'p-2', 'my-1', 'rounded-lg');
+					messageElement.innerHTML = `<div class="message-bubble">${messageText}</div>`;
+					chatMessages.appendChild(messageElement);
+					chatMessages.scrollTop = chatMessages.scrollHeight;
+				
+					// Leere das Eingabefeld sofort nach dem Absenden
 					messageInput.value = '';
-					loadMessages(); // Reload messages to show the new one
-					updateSuggestions();
-					showNotification('✅ Nachricht gesendet!', 'success');
-				} else {
-					console.error('Server error:', result);
-					showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
-					// Restore original message if send failed
-					messageInput.value = originalValue;
+				
+					try {
+						const response = await fetch('/.netlify/functions/send_message', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								match_id: parseInt(currentChatMatchId),
+								sender_id: parseInt(currentUser.uid),
+								message_text: messageText
+							})
+						});
+				
+						const result = await response.json();
+						
+						if (response.ok && result.success) {
+							showNotification('✅ Nachricht gesendet!', 'success');
+						} else {
+							console.error('Server error:', result);
+							showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
+							// ❌ Wenn das Senden fehlschlägt, entfernen Sie die hinzugefügte Nachricht
+							chatMessages.removeChild(messageElement);
+							// Füllen Sie das Eingabefeld wieder mit dem Text
+							messageInput.value = messageText;
+						}
+					} catch (error) {
+						console.error('Network error:', error);
+						showNotification('❌ Verbindungsfehler beim Senden', 'error');
+						// ❌ Bei einem Netzwerkfehler entfernen Sie die hinzugefügte Nachricht
+						chatMessages.removeChild(messageElement);
+						// Füllen Sie das Eingabefeld wieder mit dem Text
+						messageInput.value = messageText;
+					} finally {
+						// ✅ Eingabefeld wieder aktivieren
+						messageInput.disabled = false;
+						messageInput.focus();
+					}
 				}
-			} catch (error) {
-				console.error('Network error:', error);
-				showNotification('❌ Verbindungsfehler beim Senden', 'error');
-				// Restore original message if send failed
-				messageInput.value = originalValue;
-			} finally {
-				// ✅ Re-enable input
-				messageInput.disabled = false;
-				messageInput.focus();
-			}
-		}
 
 		async function reportChat() {
 		    if (!currentChatMatchId || !currentUser.uid) {
