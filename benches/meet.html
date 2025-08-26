@@ -2492,20 +2492,15 @@
 		    // Swipe shortcuts nur wenn Swipe-Container sichtbar
 		    const swipeContainer = document.getElementById('swipeContainer');
 		    if (swipeContainer && swipeContainer.style.display === 'block') {
-		        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+		        if (e.key === 'ArrowLeft') {
 		            e.preventDefault();
 		            swipeCard('left');
 		        }
-		        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+		        if (e.key === 'ArrowRight') {
 		            e.preventDefault();
 		            swipeCard('right');
 		        }
-		        if (e.key === ' ') { // Spacebar für Details
-		            e.preventDefault();
-		            const activeCard = document.querySelector('.swipe-card[data-stack-index="0"]');
-		            if (activeCard && activeCard.__profile) {
-		                showProfileDetails(activeCard.__profile);
-		            }
+		            
 		        }
 		    }
 		});
