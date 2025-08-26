@@ -2924,19 +2924,12 @@
 				}
 				return;
 			}
-		
-			// ✅ NEU: Nachricht sofort im UI anzeigen (Optimistisches Update)
-			const chatMessages = document.getElementById('chatMessages');
-			const messageElement = document.createElement('div');
-			messageElement.classList.add('message', 'sent', 'p-2', 'my-1', 'rounded-lg');
-			messageElement.innerHTML = `<div class="message-bubble">${messageText}</div>`;
-			chatMessages.appendChild(messageElement);
-			chatMessages.scrollTop = chatMessages.scrollHeight;
-		
-			// Eingabefeld leeren und deaktivieren
-			messageInput.value = '';
+
+			// ✅ Disable input during send
 			messageInput.disabled = true;
-		
+			const originalValue = messageText;
+			messageInput.value = 'Wird gesendet...';
+
 			try {
 				const response = await fetch('/.netlify/functions/send_message', {
 					method: 'POST',
@@ -2947,86 +2940,32 @@
 						message_text: messageText
 					})
 				});
-		
+
 				const result = await response.json();
 				
 				if (response.ok && result.success) {
-					// ✅ Optional: Setze die KI-Flag hier zurück
-					aiSuggestionsLoaded = false;
+					messageInput.value = '';
+					loadMessages(); // Reload messages to show the new one
+					updateSuggestions();
 					showNotification('✅ Nachricht gesendet!', 'success');
 				} else {
 					console.error('Server error:', result);
 					showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
-					// ❌ Im Fehlerfall die lokal hinzugefügte Nachricht wieder entfernen
-					chatMessages.removeChild(messageElement);
-					messageInput.value = messageText; // Fülle das Eingabefeld wieder
+					// Restore original message if send failed
+					messageInput.value = originalValue;
 				}
 			} catch (error) {
 				console.error('Network error:', error);
 				showNotification('❌ Verbindungsfehler beim Senden', 'error');
-				chatMessages.removeChild(messageElement); // Nachricht entfernen
-				messageInput.value = messageText;
+				// Restore original message if send failed
+				messageInput.value = originalValue;
 			} finally {
+				// ✅ Re-enable input
 				messageInput.disabled = false;
 				messageInput.focus();
 			}
 		}
-		
-		// Funktion zum Öffnen eines individuellen Chats und Laden der Nachrichten
-		async function openChat(matchId, matchedName) {
-		
-			// ✅ WICHTIG: Setze die KI-Flag zurück, bevor der Chat geöffnet wird
-			aiSuggestionsLoaded = false;
-		
-			document.getElementById('matchesList').style.display = 'none';
-			const individualChat = document.getElementById('individualChat');
-			individualChat.style.display = 'block';
-			document.getElementById('chatHeaderName').textContent = matchedName;
-			document.getElementById('messageInput').dataset.matchId = matchId;
-            currentChatMatchId = matchId; // ✅ Stelle sicher, dass die globale Variable gesetzt ist
 
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML = ''; // ✅ Den Chat-Container sofort leeren
-
-			try {
-				const response = await fetch('/.netlify/functions/get_messages', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ matchId })
-				});
-				const result = await response.json();
-				
-				if (result.success) {
-                    const isChatEmpty = result.messages.length === 0;
-
-					if (result.messages && result.messages.length > 0) {
-                        result.messages.forEach(msg => {
-                            const messageElement = document.createElement('div');
-                            messageElement.classList.add('message', msg.sender_id === currentUser.uid ? 'sent' : 'received', 'p-2', 'my-1', 'rounded-lg');
-                            messageElement.innerHTML = `<div class="message-bubble">${msg.message_text}</div>`;
-                            chatMessages.appendChild(messageElement);
-                        });
-                    } else {
-                        // Zeige Platzhalter für leeren Chat
-                        chatMessages.innerHTML = `
-                            <div class="text-center text-gray-500 py-8">
-                                <div class="text-4xl mb-2">👋</div>
-                                <p>Schreibt euch eure erste Nachricht!</p>
-                            </div>
-                        `;
-                    }
-					chatMessages.scrollTop = chatMessages.scrollHeight;
-
-                    // ✅ Logik für KI-Vorschläge nach dem Laden der Nachrichten
-                    if (isChatEmpty && !aiSuggestionsLoaded) {
-                        aiSuggestionsLoaded = true;
-                        updateSuggestions();
-                    }
-				}
-			} catch (error) {
-				console.error('Fehler beim Laden der Nachrichten:', error);
-			}
-		}
 		async function reportChat() {
 		    if (!currentChatMatchId || !currentUser.uid) {
 		        alert('Fehler: Chat oder Benutzer nicht identifiziert.');
@@ -3618,6 +3557,42 @@
             `).join('');
         }
 
+        function openChat(matchId) {
+            currentChatUser = matches.find(m => m.id === matchId);
+            if (!currentChatUser) return;
+            
+            document.getElementById('matchesList').style.display = 'none';
+            document.getElementById('individualChat').style.display = 'block';
+            
+            document.getElementById('chatUserAvatar').src = currentChatUser.image;
+            document.getElementById('chatUserName').textContent = currentChatUser.name;
+            
+            loadChatMessages();
+        }
+
+        function loadChatMessages() {
+            const container = document.getElementById('chatMessages');
+            
+            if (!currentChatUser.messages || currentChatUser.messages.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #666; margin-top: 50px;">
+                        <p>👋 Sag Hallo zu ${currentChatUser.name}!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = currentChatUser.messages.map(message => {
+                const messageClass = message.sender === 'me' ? 'sent' : 'received';
+                return `
+                    <div class="message ${messageClass}">
+                        <div class="message-bubble">${message.text}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.scrollTop = container.scrollHeight;
+        }
 
 		
 		   async function uploadImageToCloudinary(file) {
