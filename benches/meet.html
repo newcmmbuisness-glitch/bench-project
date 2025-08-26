@@ -2777,7 +2777,7 @@
 		// Funktion zum Öffnen eines individuellen Chats und Laden der Nachrichten
 		async function openChat(matchId, matchedName) {
 		
-			aiSuggestionsLoaded = false;
+			
 
 		
 			document.getElementById('matchesList').style.display = 'none';
@@ -2804,6 +2804,7 @@
 						chatMessages.appendChild(messageElement);
 					});
 					chatMessages.scrollTop = chatMessages.scrollHeight;
+					aiSuggestionsLoaded = false;
 				}
 			} catch (error) {
 				console.error('Fehler beim Laden der Nachrichten:', error);
