@@ -984,15 +984,64 @@
     </div>
     
 	<div class="app-container">
-	    <div id="welcomeScreen" class="welcome-screen" style="display: none;">
-	        <h1>One-To-Meet</h1>
-	        <p>Finde die Liebe deines Lebens auf der schönsten Bank der Stadt!</p>
-	        <div class="action-buttons">
-	            <button class="action-btn btn-primary" onclick="showLogin()">
-	                💖 Jetzt starten
-	            </button>
-	        </div>
-	    </div>
+		<div id="welcomeScreen" class="welcome-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background:black; color:white; text-align:center; padding:2rem;">
+
+			<!-- Loslegen Button oben -->
+			<div class="action-buttons" style="margin-bottom:2rem;">
+				<button class="action-btn btn-primary" onclick="showLogin()">
+					💖 Loslegen
+				</button>
+			</div>
+
+			<h1 style="font-size:3rem; font-weight:800; margin-bottom:0.5rem;">OneConnect</h1>
+			<h2 style="font-size:1.5rem; font-weight:600; margin-bottom:2rem;">One-To-Meet x OneBenches</h2>
+
+			<div style="margin-bottom:2rem; font-size:1.2rem; line-height:1.8;">
+				<p>1 Simple</p>
+				<p>2 Registrieren</p>
+				<p>3 Loslegen</p>
+			</div>
+
+			<h3 style="font-size:1.3rem; margin-bottom:1rem;">One-To-Meet ist die Zukunft</h3>
+			<p style="margin-bottom:2rem;">Online Dating ohne Limit</p>
+
+			<!-- Vergleichstabelle -->
+			<table style="border-collapse:collapse; margin: 0 auto 2rem auto; color:white;">
+				<tr>
+					<th style="border:1px solid white; padding:8px;">&nbsp;</th>
+					<th style="border:1px solid white; padding:8px;">One-To-Meet</th>
+					<th style="border:1px solid white; padding:8px;">Standard Date-Apps</th>
+				</tr>
+				<tr>
+					<td style="border:1px solid white; padding:8px;">Kostenlos Unendlich Swipen</td>
+					<td style="border:1px solid white; padding:8px;">✅</td>
+					<td style="border:1px solid white; padding:8px;">❌</td>
+				</tr>
+				<tr>
+					<td style="border:1px solid white; padding:8px;">Ohne Begrenzung Daten</td>
+					<td style="border:1px solid white; padding:8px;">✅</td>
+					<td style="border:1px solid white; padding:8px;">❌</td>
+				</tr>
+				<tr>
+					<td style="border:1px solid white; padding:8px;">Date-Chat KI Unterstützung</td>
+					<td style="border:1px solid white; padding:8px;">✅</td>
+					<td style="border:1px solid white; padding:8px;">❌</td>
+				</tr>
+			</table>
+
+			<h2 style="margin:2rem 0;">x OneBenches x</h2>
+
+			<p style="max-width:500px; margin:0 auto 1.5rem auto; line-height:1.6;">
+				Erstelle und Suche Bänke in deiner Gegend – beim Wandern, mit deinen Freunden oder deinem Date.<br>
+				Beim Sonnenuntergang Wein trinken oder eine Tüte zünden.
+			</p>
+
+			<h2 style="margin-bottom:2rem;">x OneBenches x</h2>
+			<p style="margin-bottom:2rem;">Komm raus mit OneBenches</p>
+
+			<blockquote style="font-style:italic; opacity:0.8;">“Peace can’t be found without searching”</blockquote>
+		</div>
+
 	    
 	    <div id="createProfileSection" class="relative z-0 p-4 w-full h-screen flex flex-col items-center justify-center" style="display: none;">
 	        <button onclick="showCreateProfileForm()" class="bg-white text-blue-600 font-bold py-4 px-8 rounded-full shadow-lg hover:bg-gray-200 transition duration-300 transform scale-105 hover:scale-110">
