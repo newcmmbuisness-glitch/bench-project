@@ -1311,7 +1311,7 @@
                 generateCaptchas();
                 document.getElementById('loginCaptchaAnswer').value = '';
                 return;			
-
+			}
 
 			try {
 				const response = await fetch('/.netlify/functions/auth', {
