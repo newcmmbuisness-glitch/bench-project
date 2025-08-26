@@ -2812,9 +2812,10 @@
 		async function loadMessages() {
 			const container = document.getElementById('chatMessages');
 			const messageInput = document.getElementById('messageInput');
+			const suggestionsContainer = document.getElementById('aiSuggestionsContainer');
 
-			if (!container || !currentChatMatchId || !messageInput) {
-				console.error("Fehler: chatMessages-Container, matchId oder messageInput nicht gefunden.");
+			if (!container || !currentChatMatchId || !messageInput || !suggestionsContainer) {
+				console.error("Fehler: Ein erforderliches Element fehlt.");
 				return;
 			}
 
@@ -2830,9 +2831,9 @@
 				if (response.ok && result.success) {
 					const currentMessageCount = result.messages ? result.messages.length : 0;
 					const hasNewMessages = currentMessageCount > lastLoadedMessageCount;
-					
-					// ✅ Die Vorschläge nur dann aktualisieren, wenn es neue Nachrichten gibt oder der Chat leer ist
-					if (hasNewMessages || currentMessageCount === 0) {
+					const isChatEmpty = currentMessageCount === 0;
+
+					if (hasNewMessages || isChatEmpty) {
 						container.innerHTML = '';
 						
 						if (result.messages && result.messages.length > 0) {
@@ -2862,12 +2863,26 @@
 						}
 						
 						container.scrollTop = container.scrollHeight;
-
-						// KI-Vorschläge nach dem Laden der Nachrichten aufrufen
-						updateSuggestions();
 					}
 
-					// ✅ Aktualisieren der Nachrichtenanzahl nach erfolgreichem Laden
+					// ✅ Die finale und korrekte Logik für KI-Vorschläge
+					const lastMessage = result.messages[result.messages.length - 1];
+					const lastMessageIsFromMatch = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
+					const isInputEmpty = messageInput.value.trim() === '';
+
+					// Hier ist die Schlüsselentscheidung:
+					if (isChatEmpty || (lastMessageIsFromMatch && hasNewMessages) || !isInputEmpty) {
+						// Denken Sie nach, wenn eine dieser Bedingungen zutrifft:
+						// 1. Der Chat ist leer.
+						// 2. Es gibt eine neue Nachricht von Ihrem Match.
+						// 3. Sie tippen gerade etwas in das Eingabefeld.
+						updateSuggestions();
+					} else {
+						// Wenn keine der Bedingungen zutrifft, die Vorschläge ausblenden.
+						suggestionsContainer.classList.add('hidden');
+					}
+
+					// Aktualisieren der Nachrichtenanzahl
 					lastLoadedMessageCount = currentMessageCount;
 
 				} else {
