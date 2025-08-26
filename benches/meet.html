@@ -3046,19 +3046,18 @@
 			const cardStack = document.getElementById('cardStack');
 			const noMoreProfiles = document.getElementById('noMoreProfiles');
 			const swipeActions = document.querySelector('.swipe-actions');
-			const backButton = document.querySelector('button[onclick="checkAndRenderUI()"]');
-
+			
 			if (cardStack) {
-				cardStack.style.display = 'none'; // Versteckt den Kartenstapel
+				cardStack.style.display = 'none';
 			}
 			if (swipeActions) {
-				swipeActions.style.display = 'none'; // Versteckt die Swipe-Buttons
+				swipeActions.style.display = 'none';
 			}
 			if (noMoreProfiles) {
-				noMoreProfiles.style.display = 'block'; // Zeigt das richtige HTML-Element
+				noMoreProfiles.style.display = 'block';
 			}
-			if (backButton) {
-				backButton.style.display = 'block';
+
+			updateFloatingButtons();
 		}
 
 		
