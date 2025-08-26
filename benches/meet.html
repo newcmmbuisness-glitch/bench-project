@@ -2807,13 +2807,13 @@
 			}
 		}
 		
+
 		// Funktion zum Laden der Nachrichten
 		async function loadMessages() {
 			const container = document.getElementById('chatMessages');
-			const messageInput = document.getElementById('messageInput');
 
-			if (!container || !currentChatMatchId || !messageInput) {
-				console.error("Fehler: chatMessages-Container, matchId oder messageInput nicht gefunden.");
+			if (!container || !currentChatMatchId) {
+				console.error("Fehler: chatMessages-Container oder matchId nicht gefunden.");
 				return;
 			}
 
@@ -2831,7 +2831,6 @@
 					const hasNewMessages = currentMessageCount > lastLoadedMessageCount;
 					const isChatEmpty = currentMessageCount === 0;
 
-					// Nachrichten nur aktualisieren, wenn es neue gibt oder der Chat leer ist
 					if (hasNewMessages || isChatEmpty) {
 						container.innerHTML = '';
 						
@@ -2861,20 +2860,12 @@
 							`;
 						}
 						
-						// Scrollen Sie immer ans Ende, wenn die Nachrichten geladen werden
 						container.scrollTop = container.scrollHeight;
 					}
 
-					// ✅ Logik für KI-Vorschläge
-					const lastMessage = result.messages[result.messages.length - 1];
-					const lastMessageIsFromMatch = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
-
-					if (isChatEmpty || (lastMessageIsFromMatch && hasNewMessages) || messageInput.value.trim() !== '') {
-						// Denken Sie nach, wenn der Chat leer ist, eine neue Nachricht vom Match kommt oder das Eingabefeld NICHT leer ist
+					// ✅ Rufen Sie die KI-Funktion nur auf, wenn es neue Nachrichten gibt
+					if (hasNewMessages) {
 						updateSuggestions();
-					} else {
-						// Verstecken Sie die Vorschläge, wenn keine der Bedingungen zutrifft (z. B. Sie haben zuletzt geschrieben)
-						document.getElementById('aiSuggestionsContainer').classList.add('hidden');
 					}
 
 					// ✅ Aktualisieren Sie die Anzahl der geladenen Nachrichten
