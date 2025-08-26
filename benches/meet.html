@@ -1745,6 +1745,38 @@
 			}
 		}
 		
+		// ✅ NEW: Unified function to show "no more profiles" message
+		function showNoMoreProfilesInCardStack() {
+			const cardStack = document.getElementById('cardStack');
+			const swipeActions = document.querySelector('.swipe-actions');
+			const backButtonContainer = document.querySelector('div[style*="text-align: center; margin-top: 20px;"]');
+			
+			// Hide swipe actions and back button
+			if (swipeActions) {
+				swipeActions.style.display = 'none';
+			}
+			if (backButtonContainer) {
+				backButtonContainer.style.display = 'none';
+			}
+			
+			// Set cardStack to use the same positioning as loadSwipeCards
+			cardStack.style.cssText = '';
+			cardStack.innerHTML = `
+				<div class="text-center p-12 flex flex-col items-center justify-center h-full">
+					<div class="text-6xl mb-4">😞</div>
+					<h3 class="text-xl font-bold text-gray-700 mb-2">Keine weiteren Profile gefunden</h3>
+					<p class="text-gray-500 mb-6">Versuch es später noch einmal oder passe deine Sucheinstellungen an.</p>
+					<button onclick="reloadProfiles()" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 mb-4">
+						🔄 Erneut versuchen
+					</button>
+				</div>
+			`;
+			
+			// ✅ FIX: Make sure floating buttons are visible
+			updateFloatingButtons();
+		}
+				
+		
 		async function loadProfiles() {
 			console.log('🔄 Profile werden geladen...');
 			const cardStack = document.getElementById('cardStack');
@@ -1793,16 +1825,19 @@
 						renderSwipeCards();
 					} else {
 						console.log('Keine neuen Profile gefunden.');
-						document.getElementById('noMoreProfiles').style.display = 'block';
+						// ✅ FIX: Use the same styling as loadSwipeCards for consistency
+						showNoMoreProfilesInCardStack();
 					}
 				} else {
 					console.log('Keine Profile vom Server erhalten:', profilesResult.error);
-					document.getElementById('noMoreProfiles').style.display = 'block';
+					// ✅ FIX: Use the same styling as loadSwipeCards for consistency
+					showNoMoreProfilesInCardStack();
 				}
 			} catch (error) {
 				console.error('Fehler beim Laden der Profile:', error);
 				showNotification('⚠️ Fehler beim Laden der Profile.', 'error');
-				document.getElementById('noMoreProfiles').style.display = 'block';
+				// ✅ FIX: Use the same styling as loadSwipeCards for consistency
+				showNoMoreProfilesInCardStack();
 			}
 		}		
 		
@@ -2959,10 +2994,10 @@
 					createSwipeCard(newProfile, 2);
 				}
 				
-				// Prüfen ob mehr Karten vorhanden
+				// ✅ FIX: Check if no more cards and call the unified function
 				if (currentIndex >= currentProfiles.length) {
 					setTimeout(() => {
-						showNoMoreCards();
+						showNoMoreProfilesInCardStack();
 					}, 500);
 				}
 				
@@ -3068,29 +3103,10 @@
 			}
 		}
 
-		// Keine Karten mehr vorhanden
+		// ✅ UPDATED: Replace your existing showNoMoreCards function
 		function showNoMoreCards() {
-			const cardStack = document.getElementById('cardStack');
-			const swipeActions = document.querySelector('.swipe-actions');
-			const noMoreProfiles = document.getElementById('noMoreProfiles');
-			const backButtonContainer = document.querySelector('div[style*="text-align: center; margin-top: 20px;"]');
-
-			// Verstecke alle Elemente, die nicht angezeigt werden sollen
-			if (cardStack) {
-				cardStack.style.display = 'none';
-			}
-			if (swipeActions) {
-				swipeActions.style.display = 'none';
-			}
-			if (noMoreProfiles) {
-				noMoreProfiles.style.display = 'none';
-			}
-			if (backButtonContainer) {
-				backButtonContainer.style.display = 'none';
-			}
-			
-			// Stelle sicher, dass die Floating Buttons sichtbar sind
-			updateFloatingButtons();
+			// Just call the unified function
+			showNoMoreProfilesInCardStack();
 		}
 
 		
@@ -3199,64 +3215,69 @@
 		}		
 
 		function updateFloatingButtons() {
-		    const profileBtn = document.getElementById('profileButton');
-		    const chatBtn = document.getElementById('chatButton');
-		    
-		    if (!profileBtn || !chatBtn) return;
-		    
-		    if (currentUser && currentUser.uid) {
-		        const swipeContainer = document.getElementById('swipeContainer');
-		        const isSwipeView = swipeContainer && window.getComputedStyle(swipeContainer).display === 'block';
-		        
-		        if (isSwipeView) {
-		            // Force show with important styles
-		            profileBtn.classList.remove('hidden');
-		            chatBtn.classList.remove('hidden');
-		            
-		            profileBtn.style.cssText = `
-		                position: fixed !important;
-		                bottom: 2rem !important;
-		                left: 2rem !important;
-		                width: 4rem !important;
-		                height: 4rem !important;
-		                border-radius: 50% !important;
-		                background-color: #ff5e5e !important;
-		                color: white !important;
-		                display: flex !important;
-		                align-items: center !important;
-		                justify-content: center !important;
-		                box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-		                cursor: pointer !important;
-		                z-index: 2000 !important;
-		                border: none !important;
-		            `;
-		            
-		            chatBtn.style.cssText = `
-		                position: fixed !important;
-		                bottom: 2rem !important;
-		                right: 2rem !important;
-		                width: 4rem !important;
-		                height: 4rem !important;
-		                border-radius: 50% !important;
-		                background-color: #007bff !important;
-		                color: white !important;
-		                display: flex !important;
-		                align-items: center !important;
-		                justify-content: center !important;
-		                box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-		                cursor: pointer !important;
-		                z-index: 2000 !important;
-		                border: none !important;
-		            `;
-		        } else {
-		            profileBtn.classList.add('hidden');
-		            chatBtn.classList.add('hidden');
-		        }
-		    } else {
-		        profileBtn.classList.add('hidden');
-		        chatBtn.classList.add('hidden');
-		    }
+			const profileBtn = document.getElementById('profileButton');
+			const chatBtn = document.getElementById('chatButton');
+			
+			if (!profileBtn || !chatBtn) return;
+			
+			if (currentUser && currentUser.uid) {
+				const swipeContainer = document.getElementById('swipeContainer');
+				const isSwipeView = swipeContainer && window.getComputedStyle(swipeContainer).display === 'block';
+				
+				if (isSwipeView) {
+					// Force show with important styles
+					profileBtn.classList.remove('hidden');
+					chatBtn.classList.remove('hidden');
+					
+					profileBtn.style.cssText = `
+						position: fixed !important;
+						bottom: 2rem !important;
+						left: 2rem !important;
+						width: 4rem !important;
+						height: 4rem !important;
+						border-radius: 50% !important;
+						background-color: #ff5e5e !important;
+						color: white !important;
+						display: flex !important;
+						align-items: center !important;
+						justify-content: center !important;
+						box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+						cursor: pointer !important;
+						z-index: 2000 !important;
+						border: none !important;
+						visibility: visible !important;
+						opacity: 1 !important;
+					`;
+					
+					chatBtn.style.cssText = `
+						position: fixed !important;
+						bottom: 2rem !important;
+						right: 2rem !important;
+						width: 4rem !important;
+						height: 4rem !important;
+						border-radius: 50% !important;
+						background-color: #007bff !important;
+						color: white !important;
+						display: flex !important;
+						align-items: center !important;
+						justify-content: center !important;
+						box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+						cursor: pointer !important;
+						z-index: 2000 !important;
+						border: none !important;
+						visibility: visible !important;
+						opacity: 1 !important;
+					`;
+				} else {
+					profileBtn.classList.add('hidden');
+					chatBtn.classList.add('hidden');
+				}
+			} else {
+				profileBtn.classList.add('hidden');
+				chatBtn.classList.add('hidden');
+			}
 		}
+
 
         function addMatch(profile) {
             if (!matches.find(m => m.id === profile.id)) {
