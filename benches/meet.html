@@ -9,13 +9,44 @@
     <style>
 		body { 
 			margin: 0; 
-			font-family: 'Inter', Arial, sans-serif; 
-			background: #000;   /* statt Gradient → Schwarz */
-			color: white;       /* Schrift standardmäßig weiß */
+			font-family: 'Courier New', monospace;  /* Tech-Schrift */
+			background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); /* hochwertiges Schwarz-Grau */
+			color: #e0e0e0; /* helles Grau statt hartes Weiß */
 			min-height: 100vh;
 			overflow-x: hidden;
 		}
 
+		/* leichter Silber-Schimmer-Effekt für Überschriften */
+		.shimmer {
+			background: linear-gradient(90deg, #aaa, #ddd, #aaa);
+			background-size: 200% 100%;
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			animation: shimmer 6s infinite linear;
+			font-weight: normal; /* nicht fett */
+		}
+
+		@keyframes shimmer {
+			0% { background-position: -200% 0; }
+			100% { background-position: 200% 0; }
+		}
+
+		/* Weißer Button */
+		.white-btn {
+			background: #fff;
+			color: #000;
+			border: none;
+			padding: 12px 30px;
+			font-family: 'Courier New', monospace;
+			font-size: 1.1rem;
+			border-radius: 25px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+		.white-btn:hover {
+			background: #ddd;
+			transform: scale(1.05);
+		}
 
         /* Sidebar Styling - übernommen von index.html */
         .sidebar {
@@ -986,65 +1017,62 @@
     </div>
     
 	<div class="app-container">
-		<div id="welcomeScreen" class="welcome-screen" style="display:block; padding:4rem 2rem; max-width:900px; margin:0 auto;">
+		<div id="welcomeScreen" style="padding:4rem 2rem; max-width:900px; margin:0 auto; text-align:center;">
 
-			<!-- Loslegen Button oben -->
-			<div class="action-buttons" style="margin-bottom:3rem; text-align:center;">
-				<button class="action-btn btn-primary" onclick="showLogin()" style="padding:1rem 2rem; font-size:1.2rem;">
-					💖 Loslegen
-				</button>
+			<!-- Button oben -->
+			<div style="margin-bottom:3rem;">
+				<button class="white-btn" onclick="showLogin()">Loslegen</button>
 			</div>
 
-			<h1 style="font-size:3.5rem; font-weight:800; margin-bottom:1rem; text-align:center;">OneConnect</h1>
-			<h2 style="font-size:2rem; font-weight:600; margin-bottom:3rem; text-align:center;">One-To-Meet x OneBenches</h2>
+			<h1 class="shimmer" style="font-size:2.8rem; margin-bottom:1rem;">OneConnect</h1>
+			<h2 class="shimmer" style="font-size:1.5rem; margin-bottom:3rem;">One-To-Meet x OneBenches</h2>
 
-			<div style="margin-bottom:3rem; font-size:1.5rem; line-height:2; text-align:center;">
+			<div style="margin-bottom:3rem; font-size:1rem; line-height:1.6;">
 				<p>1 Simple</p>
 				<p>2 Registrieren</p>
-				<p>3 Loslegen</p>
+				<!-- Hier kein "3 Loslegen" mehr, weil oben Button -->
 			</div>
 
-			<h3 style="font-size:2rem; margin-bottom:1rem; text-align:center;">One-To-Meet ist die Zukunft</h3>
-			<p style="font-size:1.2rem; margin-bottom:3rem; text-align:center;">Online Dating ohne Limit</p>
+			<h3 style="font-size:1.3rem; margin-bottom:1rem;">One-To-Meet ist die Zukunft</h3>
+			<p style="margin-bottom:3rem;">Online Dating ohne Limit</p>
 
 			<!-- Vergleichstabelle -->
-			<table style="width:100%; border-collapse:collapse; margin-bottom:4rem; text-align:center; font-size:1.2rem;">
+			<table style="width:100%; border-collapse:collapse; margin-bottom:4rem; text-align:center; font-size:0.9rem;">
 				<tr>
-					<th style="border:1px solid white; padding:12px;">&nbsp;</th>
-					<th style="border:1px solid white; padding:12px;">One-To-Meet</th>
-					<th style="border:1px solid white; padding:12px;">Standard Date-Apps</th>
+					<th style="border:1px solid #888; padding:8px;">&nbsp;</th>
+					<th style="border:1px solid #888; padding:8px;">One-To-Meet</th>
+					<th style="border:1px solid #888; padding:8px;">Standard Date-Apps</th>
 				</tr>
 				<tr>
-					<td style="border:1px solid white; padding:12px;">Kostenlos Unendlich Swipen</td>
-					<td style="border:1px solid white; padding:12px;">✅</td>
-					<td style="border:1px solid white; padding:12px;">❌</td>
+					<td style="border:1px solid #888; padding:8px;">Kostenlos Unendlich Swipen</td>
+					<td style="border:1px solid #888; padding:8px;">✅</td>
+					<td style="border:1px solid #888; padding:8px;">❌</td>
 				</tr>
 				<tr>
-					<td style="border:1px solid white; padding:12px;">Ohne Begrenzung Daten</td>
-					<td style="border:1px solid white; padding:12px;">✅</td>
-					<td style="border:1px solid white; padding:12px;">❌</td>
+					<td style="border:1px solid #888; padding:8px;">Ohne Begrenzung Daten</td>
+					<td style="border:1px solid #888; padding:8px;">✅</td>
+					<td style="border:1px solid #888; padding:8px;">❌</td>
 				</tr>
 				<tr>
-					<td style="border:1px solid white; padding:12px;">Date-Chat KI Unterstützung</td>
-					<td style="border:1px solid white; padding:12px;">✅</td>
-					<td style="border:1px solid white; padding:12px;">❌</td>
+					<td style="border:1px solid #888; padding:8px;">Date-Chat KI Unterstützung</td>
+					<td style="border:1px solid #888; padding:8px;">✅</td>
+					<td style="border:1px solid #888; padding:8px;">❌</td>
 				</tr>
 			</table>
 
-			<h2 style="margin:3rem 0; text-align:center;">x OneBenches x</h2>
+			<h2 style="margin:3rem 0;" class="shimmer">x OneBenches x</h2>
 
-			<p style="max-width:700px; margin:0 auto 2rem auto; font-size:1.2rem; line-height:1.8; text-align:center;">
+			<p style="max-width:700px; margin:0 auto 2rem auto; line-height:1.6; font-size:0.95rem;">
 				Erstelle und Suche Bänke in deiner Gegend – beim Wandern, mit deinen Freunden oder deinem Date.<br>
 				Beim Sonnenuntergang Wein trinken oder eine Tüte zünden.
 			</p>
 
-			<h2 style="margin-bottom:2rem; text-align:center;">x OneBenches x</h2>
-			<p style="font-size:1.3rem; margin-bottom:3rem; text-align:center;">Komm raus mit OneBenches</p>
+			<h2 style="margin-bottom:2rem;" class="shimmer">x OneBenches x</h2>
+			<p style="margin-bottom:3rem;">Komm raus mit OneBenches</p>
 
-			<blockquote style="font-style:italic; opacity:0.9; text-align:center; font-size:1rem;">
-				“Peace can’t be found without searching”
-			</blockquote>
+			<blockquote style="font-style:italic; opacity:0.8; font-size:0.9rem;">“Peace can’t be found without searching”</blockquote>
 		</div>
+
 
 
 	    
