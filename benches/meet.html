@@ -9,9 +9,9 @@
     <style>
 		body { 
 			margin: 0; 
-			font-family: 'Courier New', monospace;  /* Tech-Schrift */
-			background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); /* hochwertiges Schwarz-Grau */
-			color: #e0e0e0; /* helles Grau statt hartes Weiß */
+			font-family: 'Inter', Arial, sans-serif;   /* wieder deine Hauptschrift */
+			background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); /* schwarz-grau Hintergrund */
+			color: white;
 			min-height: 100vh;
 			overflow-x: hidden;
 		}
@@ -401,6 +401,37 @@
             margin-bottom: 2rem;
             opacity: 0.9;
         }
+		
+		#welcomeScreen {
+			font-family: 'Courier New', monospace; 
+			color: #e0e0e0;
+		}
+
+		#welcomeScreen .shimmer {
+			background: linear-gradient(90deg, #aaa, #ddd, #aaa);
+			background-size: 200% 100%;
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			animation: shimmer 6s infinite linear;
+			font-weight: normal;
+		}
+			
+		#welcomeScreen .white-btn {
+			background: #fff;
+			color: #000;
+			border: none;
+			padding: 12px 30px;
+			font-family: 'Courier New', monospace;
+			font-size: 1.1rem;
+			border-radius: 25px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+		#welcomeScreen .white-btn:hover {
+			background: #ddd;
+			transform: scale(1.05);
+		}
+					
 
         .action-buttons {
             display: flex;
@@ -1019,10 +1050,6 @@
 	<div class="app-container">
 		<div id="welcomeScreen" style="padding:4rem 2rem; max-width:900px; margin:0 auto; text-align:center;">
 
-			<!-- Button oben -->
-			<div style="margin-bottom:3rem;">
-				<button class="white-btn" onclick="showLogin()">Loslegen</button>
-			</div>
 
 			<h1 class="shimmer" style="font-size:2.8rem; margin-bottom:1rem;">OneConnect</h1>
 			<h2 class="shimmer" style="font-size:1.5rem; margin-bottom:3rem;">One-To-Meet x OneBenches</h2>
@@ -1030,7 +1057,9 @@
 			<div style="margin-bottom:3rem; font-size:1rem; line-height:1.6;">
 				<p>1 Simple</p>
 				<p>2 Registrieren</p>
-				<!-- Hier kein "3 Loslegen" mehr, weil oben Button -->
+				<div style="margin-bottom:3rem;">
+					<button class="white-btn" onclick="showLogin()">Loslegen</button>
+				</div>
 			</div>
 
 			<h3 style="font-size:1.3rem; margin-bottom:1rem;">One-To-Meet ist die Zukunft</h3>
