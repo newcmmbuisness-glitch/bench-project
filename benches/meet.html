@@ -2776,6 +2776,10 @@
 		
 		// Funktion zum Öffnen eines individuellen Chats und Laden der Nachrichten
 		async function openChat(matchId, matchedName) {
+		
+			aiSuggestionsLoaded = false;
+
+		
 			document.getElementById('matchesList').style.display = 'none';
 			const individualChat = document.getElementById('individualChat');
 			individualChat.style.display = 'block';
