@@ -784,6 +784,17 @@
 		.hidden {
 		    display: none;
 		}
+		
+		.typing-animation::after {
+			content: '...';
+			animation: typing 1.4s infinite;
+		}
+
+		@keyframes typing {
+			0%, 20% { content: '.'; }
+			40% { content: '..'; }
+			60%, 100% { content: '...'; }
+		}		
 
         /* Chat System */
 		.chat-container {
@@ -2012,38 +2023,50 @@
 				const profilesResult = await profilesResponse.json();
 				const matchesResult = await matchesResponse.json();
 
-				if (profilesResponse.ok && profilesResult.success && profilesResult.profiles) {
-					// Get IDs of already matched users
-					const matchedUserIds = matchesResult.success && matchesResult.matches 
-						? matchesResult.matches.map(m => m.matched_user_id || m.user_id)
-						: [];
-					
-					console.log('Bereits gematched mit:', matchedUserIds);
+				// Get IDs of already matched users
+				const matchedUserIds = matchesResult.success && matchesResult.matches 
+					? matchesResult.matches.map(m => m.matched_user_id || m.user_id)
+					: [];
 
-					// Filter out own profile AND already matched profiles
-					currentProfiles = profilesResult.profiles.filter(p => 
+				let realProfiles = [];
+				if (profilesResponse.ok && profilesResult.success && profilesResult.profiles) {
+					realProfiles = profilesResult.profiles.filter(p => 
 						p.user_id !== currentUser.uid && 
 						!matchedUserIds.includes(p.user_id)
 					);
+				}
+
+				// Add AI sample profiles if we have fewer than 5 real profiles
+				let allProfiles = [...realProfiles];
+				if (realProfiles.length < 5) {
+					// Generate fresh sample profiles
+					generateSampleProfiles();
 					
-					if (currentProfiles.length > 0) {
-						console.log(`🎯 ${currentProfiles.length} neue Profile geladen`);
-						currentIndex = 0;
-						renderSwipeCards();
-					} else {
-						console.log('Keine neuen Profile gefunden.');
-						// ✅ FIX: Use the same styling as loadSwipeCards for consistency
-						showNoMoreProfilesInCardStack();
-					}
+					// Mark sample profiles as AI and add unique IDs
+					const aiProfiles = sampleProfiles.map((profile, index) => ({
+						...profile,
+						user_id: `ai_${Date.now()}_${index}`, // Unique AI ID
+						profile_name: profile.name,
+						profile_image: profile.image,
+						interests: profile.preferences,
+						isAI: true
+					}));
+					
+					allProfiles = [...realProfiles, ...aiProfiles];
+				}
+
+				currentProfiles = allProfiles;
+				
+				if (currentProfiles.length > 0) {
+					console.log(`🎯 ${currentProfiles.length} Profile geladen (${realProfiles.length} echt, ${currentProfiles.length - realProfiles.length} KI)`);
+					currentIndex = 0;
+					renderSwipeCards();
 				} else {
-					console.log('Keine Profile vom Server erhalten:', profilesResult.error);
-					// ✅ FIX: Use the same styling as loadSwipeCards for consistency
 					showNoMoreProfilesInCardStack();
 				}
+				
 			} catch (error) {
 				console.error('Fehler beim Laden der Profile:', error);
-				showNotification('⚠️ Fehler beim Laden der Profile.', 'error');
-				// ✅ FIX: Use the same styling as loadSwipeCards for consistency
 				showNoMoreProfilesInCardStack();
 			}
 		}		
@@ -2202,45 +2225,45 @@
 		}
 
         // Sample Profiles Generation
-        function generateSampleProfiles() {
-            sampleProfiles = [
-                {
-                    id: 1,
-                    name: "Anna",
-                    description: "Liebe Spaziergänge in der Natur und romantische Sonnenuntergänge auf Bänken 🌅",
-                    image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face",
-                    preferences: ["wine"]
-                },
-                {
-                    id: 2,
-                    name: "Max",
-                    description: "Entspannte Gespräche bei einem Glas Wein sind das Beste! 🍷",
-                    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
-                    preferences: ["wine", "420"]
-                },
-                {
-                    id: 3,
-                    name: "Lisa",
-                    description: "Naturliebhaberin, die gerne neue Orte entdeckt und chillige Momente genießt 🍃",
-                    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
-                    preferences: ["420"]
-                },
-                {
-                    id: 4,
-                    name: "Tom",
-                    description: "Romantiker mit Herz für schöne Aussichten und tiefe Gespräche 💕",
-                    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
-                    preferences: ["wine"]
-                },
-                {
-                    id: 5,
-                    name: "Sarah",
-                    description: "Lebenslustig und immer für Abenteuer zu haben! Lass uns die Welt entdecken 🌍",
-                    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
-                    preferences: ["wine", "420"]
-                }
-            ];
-        }
+		 function generateSampleProfiles() {
+			sampleProfiles = [
+				{
+					id: 1,
+					name: "Anna",
+					description: "Liebe Spaziergänge in der Natur und romantische Sonnenuntergänge auf Bänken 🌅 Suche jemanden für tiefe Gespräche bei einem Glas Wein.",
+					image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face",
+					preferences: ["wine", "Wandern", "Fotografie"]
+				},
+				{
+					id: 2,
+					name: "Max",
+					description: "Entspannte Gespräche bei einem Glas Wein sind das Beste! 🍷 Musik-Liebhaber der gerne chillt und das Leben genießt.",
+					image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
+					preferences: ["wine", "420", "Musik"]
+				},
+				{
+					id: 3,
+					name: "Lisa",
+					description: "Naturliebhaberin, die gerne neue Orte entdeckt und chillige Momente genießt 🍃 Bin immer für spontane Abenteuer zu haben!",
+					image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
+					preferences: ["420", "Wandern", "Haustiere"]
+				},
+				{
+					id: 4,
+					name: "Tom",
+					description: "Romantiker mit Herz für schöne Aussichten und tiefe Gespräche 💕 Kunst und Kultur sind meine Leidenschaft.",
+					image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
+					preferences: ["wine", "Kunst", "Musik"]
+				},
+				{
+					id: 5,
+					name: "Sarah",
+					description: "Lebenslustig und immer für Abenteuer zu haben! Lass uns die Welt entdecken 🌍 Sport, Filme und gute Vibes!",
+					image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
+					preferences: ["wine", "420", "Sport", "Filme"]
+				}
+			];
+		}
 
 		// Swipe Functions
 		function createSwipeCardFromData(profile) {
@@ -2849,7 +2872,7 @@
 				const response = await fetch('/.netlify/functions/get_messages', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ match_id: chatState.currentMatchId })
+					body: JSON.stringify({ matchId: chatState.currentMatchId })
 				});
 
 				const result = await response.json();
@@ -2947,6 +2970,11 @@
 				}
 				return;
 			}
+					
+			// Check if this is an AI chat
+			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.includes('ai_match_');
+
+
 
 			// Optimistic update: Show message immediately
 			const chatMessages = document.getElementById('chatMessages');
@@ -2959,41 +2987,55 @@
 			// Clear and disable input
 			messageInput.value = '';
 			messageInput.disabled = true;
-
+			
 			try {
-				const response = await fetch('/.netlify/functions/send_message', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						match_id: parseInt(chatState.currentMatchId),
-						sender_id: parseInt(currentUser.uid),
-						message_text: messageText
-					})
-				});
+				if (isAIChat) {		
+					// Handle AI chat
+					messageInput.value = '';
+					messageInput.disabled = false;
+					messageInput.focus();
+					await sendAIMessage(originalValue);
 
-				const result = await response.json();
-				
-				if (response.ok && result.success) {
-					// Reset AI suggestions flag so they can load on partner's response
-					chatState.aiSuggestionsLoaded = false;
-					showNotification('✅ Nachricht gesendet!', 'success');
-					
-					// Force reload messages to ensure synchronization
-					setTimeout(() => loadMessages(), 100);
+
 				} else {
-					console.error('Server error:', result);
-					showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
-					chatMessages.removeChild(messageElement);
-					messageInput.value = messageText;
-				}
+				
+					const response = await fetch('/.netlify/functions/send_message', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							match_id: parseInt(chatState.currentMatchId),
+							sender_id: parseInt(currentUser.uid),
+							message_text: messageText
+						})
+					});
+
+					const result = await response.json();
+					
+					if (response.ok && result.success) {
+						// Reset AI suggestions flag so they can load on partner's response
+						chatState.aiSuggestionsLoaded = false;
+						showNotification('✅ Nachricht gesendet!', 'success');
+						
+						// Force reload messages to ensure synchronization
+						setTimeout(() => loadMessages(), 100);
+					} else {
+						console.error('Server error:', result);
+						showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
+						chatMessages.removeChild(messageElement);
+						messageInput.value = messageText;
+					}	
+
+				}	
 			} catch (error) {
 				console.error('Network error:', error);
 				showNotification('❌ Verbindungsfehler beim Senden', 'error');
 				chatMessages.removeChild(messageElement);
 				messageInput.value = messageText;
 			} finally {
-				messageInput.disabled = false;
-				messageInput.focus();
+				if (!isAIChat) {
+					messageInput.disabled = false;
+					messageInput.focus();
+				}
 			}
 		}
 
@@ -3128,6 +3170,16 @@
 				messageInterval: null
 			};
 			
+		 // Check if this is an AI chat
+			const isAIChat = typeof matchId === 'string' && matchId.includes('ai_match_');
+			
+			if (isAIChat) {
+				currentChatMatchId = matchId; // Keep as string for AI
+				console.log('🤖 Opening AI chat with:', matchName);
+			} else {
+				currentChatMatchId = parseInt(matchId);
+
+			
 			if (isNaN(chatState.currentMatchId) || chatState.currentMatchId <= 0) {
 				console.error('❌ Invalid match ID:', matchId);
 				showNotification('❌ Fehlerhafte Match-ID', 'error');
@@ -3179,6 +3231,9 @@
 			document.body.appendChild(chatDiv);
 
 			// Load messages and start polling
+			if (isAIChat) {
+				loadAIMessages();
+			} else {
 			loadMessages();
 			chatState.messageInterval = setInterval(loadMessages, 3000);
 
@@ -3214,6 +3269,123 @@
 				lastLoadedMessageCount: 0,
 				messageInterval: null
 			};
+		}
+		
+		// AI Chat specific functions
+		function loadAIMessages() {
+			const container = document.getElementById('chatMessages');
+			
+			if (!currentChatMatchId) {
+				console.error("Keine AI Chat ID gefunden");
+				return;
+			}
+			
+			// Get messages from localStorage
+			let aiMessages = JSON.parse(localStorage.getItem(`ai_chat_${chatState.currentMatchId}`) || '[]');
+			
+			container.innerHTML = '';
+			
+			if (aiMessages.length === 0) {
+				// Show welcome message for new AI chat
+				container.innerHTML = `
+					<div class="text-center text-gray-500 py-8">
+						<div class="text-4xl mb-2">🤖</div>
+						<p>Beginne ein Gespräch mit der KI!</p>
+					</div>
+				`;
+			} else {
+				aiMessages.forEach(message => {
+					const messageClass = message.sender === 'user' ? 'sent' : 'received';
+					const messageBubble = document.createElement('div');
+					messageBubble.classList.add('message', messageClass);
+					
+					const timestamp = new Date(message.timestamp).toLocaleTimeString('de-DE', { 
+						hour: '2-digit', 
+						minute: '2-digit' 
+					});
+					
+					messageBubble.innerHTML = `
+						<div class="message-bubble">${message.text}</div>
+						<div class="text-xs opacity-50 mt-1">${timestamp}</div>
+					`;
+					container.appendChild(messageBubble);
+				});
+			}
+			
+			container.scrollTop = container.scrollHeight;
+		}
+
+		function saveAIMessage(sender, text) {
+			if (!chatState.currentMatchId) return;
+			
+			let aiMessages = JSON.parse(localStorage.getItem(`ai_chat_${chatState.currentMatchId}`) || '[]');
+			
+			aiMessages.push({
+				sender: sender,
+				text: text,
+				timestamp: new Date().toISOString()
+			});
+			
+			localStorage.setItem(`ai_chat_${chatState.currentMatchId}`, JSON.stringify(aiMessages));
+		}
+
+		async function sendAIMessage(messageText) {
+			// Save user message
+			saveAIMessage('user', messageText);
+			loadAIMessages();
+			
+			// Show typing indicator
+			const container = document.getElementById('chatMessages');
+			const typingDiv = document.createElement('div');
+			typingDiv.classList.add('message', 'received');
+			typingDiv.innerHTML = `
+				<div class="message-bubble">
+					<span class="typing-animation">tippt...</span>
+				</div>
+			`;
+			container.appendChild(typingDiv);
+			container.scrollTop = container.scrollHeight;
+			
+			try {
+				// Get AI profile ID from match ID
+				const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
+				
+				const response = await fetch('/.netlify/functions/ai_chat_responses', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						aiProfileId: aiProfileId,
+						userMessage: messageText,
+						userProfile: {
+							name: currentUser.email,
+							interests: currentProfile?.interests || []
+						}
+					})
+				});
+				
+				const result = await response.json();
+				
+				// Remove typing indicator
+				typingDiv.remove();
+				
+				if (result.success) {
+					// Save and display AI response
+					saveAIMessage('ai', result.response);
+					loadAIMessages();
+					showNotification('✅ Nachricht gesendet!', 'success');
+				} else {
+					// Fallback response
+					saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt... Wie geht's dir denn? 😊");
+					loadAIMessages();
+				}
+				
+			} catch (error) {
+				console.error('AI Chat error:', error);
+				// Remove typing indicator and show fallback
+				typingDiv.remove();
+				saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Aber hey, erzähl mir von dir! 😊");
+				loadAIMessages();
+			}
 		}
 						
 		// Swipe abschließen
@@ -3297,9 +3469,31 @@
 		// Like verarbeiten - FIXED VERSION
 		async function handleLike(profile) {
 			try {
-				console.log('💖 Like für:', profile.profile_name);
-				console.log('Liker ID:', currentUser.uid, 'Liked ID:', profile.user_id);
+				console.log('💖 Like für:', profile.profile_name || profile.name);
 				
+				// Check if this is an AI profile
+				if (profile.isAI || typeof profile.user_id === 'string') {
+					// Handle AI profile match
+					showNotification('🎉 Es ist ein Match! 💕', 'success');
+					showMatchAnimation(profile);
+					
+					// Create AI match object
+					const aiMatch = {
+						id: `ai_match_${Date.now()}`,
+						user_id: profile.user_id,
+						profile_name: profile.profile_name || profile.name,
+						profile_image: profile.profile_image || profile.image,
+						description: profile.description,
+						interests: profile.interests || profile.preferences,
+						matched_at: new Date().toISOString(),
+						isAI: true
+					};
+					
+					addToLocalMatches(aiMatch);
+					return;
+				}
+				
+				// Handle real user profile (existing code)
 				const response = await fetch('/.netlify/functions/create_match', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -3313,15 +3507,12 @@
 				
 				if (response.ok && result.success) {
 					if (result.newMatch) {
-						// Beidseitiges Match -> Echter Match!
 						showNotification('🎉 Es ist ein Match! 💕', 'success');
 						showMatchAnimation(profile);
 						
-						// ✅ FIXED: Backend returns matchId, not result.match.id
 						if (result.matchId) {
-							// Create match object for local storage
 							const matchObject = {
-								id: result.matchId, // Use matchId from backend response
+								id: result.matchId,
 								user_id: profile.user_id,
 								profile_name: profile.profile_name,
 								profile_image: profile.profile_image,
@@ -3331,23 +3522,17 @@
 							};
 							
 							addToLocalMatches(matchObject);
-							console.log('✅ Match dem lokalen Speicher hinzugefügt mit der ID vom Backend:', result.matchId);
-						} else {
-							console.error('❌ Backend hat keine matchId zurückgegeben.');
 						}
-
 					} else {
-						// Einseitiger Like
 						showNotification(`💖 Like gesendet an ${profile.profile_name}!`, 'success');
 					}
 				} else {
-					console.error('Match-Fehler:', result.error || result);
 					showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
 				}
 				
 			} catch (error) {
 				console.error('Fehler beim Like:', error);
-				showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
+				showNotification(`💖 Like für ${profile.profile_name || profile.name}!`, 'success');
 			}
 		}
 
