@@ -2809,9 +2809,10 @@
 		
 		async function loadMessages() {
 			const container = document.getElementById('chatMessages');
+			const messageInput = document.getElementById('messageInput');
 
-			if (!container || !currentChatMatchId) {
-				console.error("Fehler: chatMessages-Container oder matchId nicht gefunden.");
+			if (!container || !currentChatMatchId || !messageInput) {
+				console.error("Fehler: chatMessages-Container, matchId oder messageInput nicht gefunden.");
 				return;
 			}
 
@@ -2827,22 +2828,23 @@
 				if (response.ok && result.success) {
 					const currentMessageCount = result.messages ? result.messages.length : 0;
 					const hasNewMessages = currentMessageCount > lastLoadedMessageCount;
+					const isChatEmpty = currentMessageCount === 0;
 
-					// Aktualisieren Sie die Nachrichten nur, wenn es neue gibt oder der Chat leer ist
-					if (hasNewMessages || currentMessageCount === 0) {
+					// Nachrichten nur aktualisieren, wenn es neue gibt oder der Chat leer ist
+					if (hasNewMessages || isChatEmpty) {
 						container.innerHTML = '';
-
+						
 						if (result.messages && result.messages.length > 0) {
 							result.messages.forEach(message => {
 								const messageClass = message.sender_id === parseInt(currentUser.uid) ? 'sent' : 'received';
 								const messageBubble = document.createElement('div');
 								messageBubble.classList.add('message', messageClass);
-
+								
 								const timestamp = new Date(message.sent_at).toLocaleTimeString('de-DE', { 
 									hour: '2-digit', 
 									minute: '2-digit' 
 								});
-
+								
 								messageBubble.innerHTML = `
 									<div class="message-bubble">${(message.message_text)}</div>
 									<div class="text-xs opacity-50 mt-1">${timestamp}</div>
@@ -2857,17 +2859,25 @@
 								</div>
 							`;
 						}
-
-						// Scrollen Sie nur, wenn neue Nachrichten da sind
+						
+						// Scrollen Sie immer ans Ende, wenn die Nachrichten geladen werden
 						container.scrollTop = container.scrollHeight;
 					}
 
-					// Rufen Sie die KI-Funktion nur auf, wenn es neue Nachrichten gibt
-					if (hasNewMessages) {
+					// ✅ Logik für KI-Vorschläge
+					const lastMessage = result.messages[result.messages.length - 1];
+					const lastMessageIsFromMatch = lastMessage && lastMessage.sender_id !== parseInt(currentUser.uid);
+					const isInputEmpty = messageInput.value.trim() === '';
+
+					if (isChatEmpty || (lastMessageIsFromMatch && hasNewMessages && isInputEmpty)) {
+						// Denken Sie nach, wenn der Chat leer ist ODER eine neue Nachricht vom Match kommt UND das Eingabefeld leer ist
 						updateSuggestions();
+					} else {
+						// Verstecken Sie die Vorschläge, wenn keine der Bedingungen zutrifft (z. B. Sie haben zuletzt geschrieben)
+						document.getElementById('aiSuggestionsContainer').classList.add('hidden');
 					}
 
-					// Aktualisieren Sie die Anzahl der geladenen Nachrichten
+					// ✅ Aktualisieren Sie die Anzahl der geladenen Nachrichten
 					lastLoadedMessageCount = currentMessageCount;
 
 				} else {
