@@ -1259,6 +1259,7 @@
 		let currentChatMatchId;
 		let messageInterval;
 		let selectedHobbies = [];
+		let lastSuggestionTimestamp = null;
 		
 
 		
@@ -2969,74 +2970,84 @@
 
 		// NEUE FUNKTION FÜR KI-VORSCHLÄGE (aktualisiert)
 		async function updateSuggestions() {
-		    if (!currentChatMatchId || !currentUser) {
-		        document.getElementById('aiSuggestionsContainer').classList.add('hidden');
-		        return;
-		    }
-		
-		    const mainContainer = document.getElementById('aiSuggestionsContainer');
-		    const thinkingBubble = document.getElementById('aiThinkingBubble');
-		    const typingTextElement = document.getElementById('typingText');
-		
-		    // Container anzeigen, aber zunächst nur die Ladeanimation
-		    mainContainer.classList.remove('hidden');
-		    thinkingBubble.classList.remove('hidden');
-		    typingTextElement.textContent = 'One-KI denkt nach...';
-		    
-		    // Alte Vorschläge sofort entfernen
-		    const oldButtons = mainContainer.querySelectorAll('button');
-		    oldButtons.forEach(button => button.remove());
-		
-		    try {
-		        const response = await fetch('/.netlify/functions/get_chat_suggestions', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ matchId: currentChatMatchId, currentUserId: currentUser.uid }),
-		        });
-		
-		        const result = await response.json();
-		        
-		        // Timeout für die Animation
-		        setTimeout(() => {
-		            // Ladeanimation ausblenden
-		            thinkingBubble.classList.add('hidden');
-		
-		            if (result.success && result.suggestions.length > 0) {
-		                // Fügen Sie jetzt die neuen Vorschlagsbuttons hinzu
-		                result.suggestions.forEach(suggestion => {
-		                    // Erstellt einen Button
-		                    const button = document.createElement('button');
-		                    button.onclick = () => {
-		                        document.getElementById('messageInput').value = suggestion;
-		                        logSuggestionClick(suggestion);
-		                    };
-		
-		                    // Erstellt die äußere Hülle mit dem Container-Stil
-		                    const innerDiv = document.createElement('div');
-		                    innerDiv.className = 'ki-beta-container';
-		                    
-		                    // Erstellt das innere Span-Element mit dem Schimmer-Effekt
-		                    const innerSpan = document.createElement('span');
-		                    innerSpan.className = 'ki-beta-branding';
-		                    innerSpan.textContent = suggestion;
-		
-		                    // Fügt die Elemente zusammen
-		                    innerDiv.appendChild(innerSpan);
-		                    button.appendChild(innerDiv);
-		                    mainContainer.appendChild(button);
-		                });
-		            } else {
-		                // Wenn keine Vorschläge vorhanden sind, Container verstecken
-		                mainContainer.classList.add('hidden');
-		            }
-		        }, 2500); // 2.5 Sekunden Verzögerung für die Animation
-		
-		    } catch (error) {
-		        console.error('Fehler beim Laden der KI-Vorschläge:', error);
-		        // Bei Fehler: Ladeanimation ausblenden und Container verstecken
-		        thinkingBubble.classList.add('hidden');
-		        mainContainer.classList.add('hidden');
-		    }
+			if (!currentChatMatchId || !currentUser) {
+				document.getElementById('aiSuggestionsContainer').classList.add('hidden');
+				return;
+			}
+
+			// 1. Letzte Nachricht abrufen, um den Zeitstempel zu bekommen
+			const lastMessageResult = await fetch('/.netlify/functions/get_messages', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ match_id: parseInt(currentChatMatchId), limit: 1 })
+			});
+			const lastMessageData = await lastMessageResult.json();
+			const lastMessage = lastMessageData.messages[0];
+
+			// 2. Prüfen, ob eine neue Nachricht vorliegt, die noch nicht verarbeitet wurde
+			if (lastMessage && lastSuggestionTimestamp && new Date(lastMessage.sent_at).getTime() <= lastSuggestionTimestamp) {
+				// Keine neue, unverarbeitete Nachricht, Vorschläge nicht aktualisieren
+				return;
+			}
+			
+			// 3. Vorschläge laden und anzeigen (nur wenn eine neue Nachricht vorliegt)
+			const mainContainer = document.getElementById('aiSuggestionsContainer');
+			const thinkingBubble = document.getElementById('aiThinkingBubble');
+			const typingTextElement = document.getElementById('typingText');
+
+			mainContainer.classList.remove('hidden');
+			thinkingBubble.classList.remove('hidden');
+			typingTextElement.textContent = 'One-KI denkt nach...';
+			
+			const oldButtons = mainContainer.querySelectorAll('button');
+			oldButtons.forEach(button => button.remove());
+
+			try {
+				const response = await fetch('/.netlify/functions/get_chat_suggestions', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ matchId: currentChatMatchId, currentUserId: currentUser.uid }),
+				});
+
+				const result = await response.json();
+				
+				setTimeout(() => {
+					thinkingBubble.classList.add('hidden');
+
+					if (result.success && result.suggestions.length > 0) {
+						result.suggestions.forEach(suggestion => {
+							const button = document.createElement('button');
+							button.onclick = () => {
+								document.getElementById('messageInput').value = suggestion;
+								logSuggestionClick(suggestion);
+							};
+							
+							const innerDiv = document.createElement('div');
+							innerDiv.className = 'ki-beta-container';
+							
+							const innerSpan = document.createElement('span');
+							innerSpan.className = 'ki-beta-branding';
+							innerSpan.textContent = suggestion;
+			
+							innerDiv.appendChild(innerSpan);
+							button.appendChild(innerDiv);
+							mainContainer.appendChild(button);
+						});
+					} else {
+						mainContainer.classList.add('hidden');
+					}
+				}, 2500);
+
+				// 4. Den Zeitstempel der verarbeiteten Nachricht speichern
+				if (lastMessage) {
+					lastSuggestionTimestamp = new Date(lastMessage.sent_at).getTime();
+				}
+
+			} catch (error) {
+				console.error('Fehler beim Laden der KI-Vorschläge:', error);
+				thinkingBubble.classList.add('hidden');
+				mainContainer.classList.add('hidden');
+			}
 		}
 		
 		// NEU: Funktion zum Protokollieren von Klicks
