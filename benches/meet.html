@@ -3296,8 +3296,8 @@
 				// Show welcome message for new AI chat
 				container.innerHTML = `
 					<div class="text-center text-gray-500 py-8">
-						<div class="text-4xl mb-2">🤖</div>
-						<p>Beginne ein Gespräch mit der KI!</p>
+						<div class="text-4xl mb-2">👋</div>
+						<p>Schreibt euch eure erste Nachricht!</p>
 					</div>
 				`;
 			} else {
@@ -3340,26 +3340,20 @@
 
 
 		async function sendAIMessage(messageText) {
-			// Save user message
+			if (!chatState.currentMatchId) return;
+
+			// 1️⃣ User-Nachricht speichern und anzeigen
 			saveAIMessage('user', messageText);
 			loadAIMessages();
-			
-			// Show typing indicator
-			const container = document.getElementById('chatMessages');
-			const typingDiv = document.createElement('div');
-			typingDiv.classList.add('message', 'received');
-			typingDiv.innerHTML = `
-				<div class="message-bubble">
-					<span class="typing-animation">tippt...</span>
-				</div>
-			`;
-			container.appendChild(typingDiv);
-			container.scrollTop = container.scrollHeight;
-			
+
 			try {
-				// Get AI profile ID from match ID
+				// AI Profil-ID aus Match-ID extrahieren
 				const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
-				
+
+				// 2️⃣ AI-Antwort erst nach 2 Minuten verzögern
+				await new Promise(res => setTimeout(res, 2 * 60 * 1000)); // 2 Minuten = 120000 ms
+
+				// 3️⃣ AI-Antwort anfordern
 				const response = await fetch('/.netlify/functions/ai_chat_responses', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -3372,28 +3366,24 @@
 						}
 					})
 				});
-				
+
 				const result = await response.json();
-				
-				// Remove typing indicator
-				typingDiv.remove();
-				
+
+				// 4️⃣ AI-Antwort speichern und Chat aktualisieren
 				if (result.success) {
-					// Save and display AI response
 					saveAIMessage('ai', result.response);
 					loadAIMessages();
 					showNotification('✅ Nachricht gesendet!', 'success');
 				} else {
-					// Fallback response
-					saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt... Wie geht's dir denn? 😊");
+					// Fallback-Antwort
+					saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt... Wie geht's dir?");
 					loadAIMessages();
 				}
-				
+
 			} catch (error) {
 				console.error('❌ AI Chat error:', error);
-				// Remove typing indicator and show fallback
-				typingDiv.remove();
-				saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Aber hey, erzähl mir von dir! 😊");
+				// Fallback bei Fehler
+				saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
 				loadAIMessages();
 			}
 		}
