@@ -2873,23 +2873,22 @@
 			const suggestionsContainer = document.getElementById('aiSuggestionsContainer');
 
 			if (!container || !chatState.currentMatchId || !suggestionsContainer) {
-				console.error("Fehler: Ein erforderliches Element fehlt oder kein aktiver Chat.");
+				console.error("❌ Missing required elements or no active chat");
 				return;
 			}
 
-			// Check if this is an AI chat
-			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.includes('ai_match_');
+			// Check if this is an AI chat - if so, redirect to AI function
+			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
 			if (isAIChat) {
-				// For AI chats, use the local loading function
 				loadAIMessages();
 				return;
 			}
 
 			try {
-				// Make sure matchId is a number for real chats
+				// Ensure matchId is a number for real chats
 				const matchId = parseInt(chatState.currentMatchId);
 				if (isNaN(matchId) || matchId <= 0) {
-					console.error('Invalid match ID:', chatState.currentMatchId);
+					console.error('❌ Invalid match ID for real chat:', chatState.currentMatchId);
 					container.innerHTML = `
 						<div class="text-center text-red-500 py-8">
 							<p>Fehlerhafte Chat-ID</p>
@@ -2957,7 +2956,7 @@
 					chatState.lastLoadedMessageCount = currentMessageCount;
 
 				} else {
-					console.error('Fehler beim Laden der Nachrichten:', result.error);
+					console.error('❌ Error loading messages:', result.error);
 					if (container.children.length === 0) {
 						container.innerHTML = `
 							<div class="text-center text-red-500 py-8">
@@ -2970,7 +2969,7 @@
 					}
 				}
 			} catch (error) {
-				console.error('Fehler beim Laden der Nachrichten:', error);
+				console.error('❌ Network error loading messages:', error);
 				if (container.children.length === 0) {
 					container.innerHTML = `
 						<div class="text-center text-red-500 py-8">
@@ -2994,14 +2993,14 @@
 				}
 				return;
 			}
-					
+			
 			// Check if this is an AI chat
-			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.includes('ai_match_');
+			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
 
 			// Optimistic update: Show message immediately
 			const chatMessages = document.getElementById('chatMessages');
 			const messageElement = document.createElement('div');
-			messageElement.classList.add('message', 'sent', 'p-2', 'my-1', 'rounded-lg');
+			messageElement.classList.add('message', 'sent');
 			messageElement.innerHTML = `<div class="message-bubble">${escapeHtml(messageText)}</div>`;
 			chatMessages.appendChild(messageElement);
 			chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -3037,14 +3036,14 @@
 						// Force reload messages to ensure synchronization
 						setTimeout(() => loadMessages(), 100);
 					} else {
-						console.error('Server error:', result);
+						console.error('❌ Server error:', result);
 						showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
 						chatMessages.removeChild(messageElement);
 						messageInput.value = originalValue;
 					}
 				}
 			} catch (error) {
-				console.error('Network error:', error);
+				console.error('❌ Network error:', error);
 				showNotification('❌ Verbindungsfehler beim Senden', 'error');
 				chatMessages.removeChild(messageElement);
 				messageInput.value = originalValue;
@@ -3053,38 +3052,35 @@
 				messageInput.focus();
 			}
 		}
-		function setupAIMessageInput() {
-			const messageInput = document.getElementById('messageInput');
-			if (messageInput) {
-				messageInput.addEventListener('keydown', (e) => {
-					if (e.key === 'Enter') {
-						e.preventDefault();
-						sendMessage(); // This will route to AI handling automatically
-					}
-				});
-				messageInput.focus();
-			}
-		}		
 
-		// 3. FIX: Setup separate input handlers
+
 		function setupMessageInput() {
 			const messageInput = document.getElementById('messageInput');
 			if (messageInput) {
-				messageInput.addEventListener('keydown', (e) => {
+				// Remove any existing event listeners
+				messageInput.replaceWith(messageInput.cloneNode(true));
+				const newInput = document.getElementById('messageInput');
+				
+				newInput.addEventListener('keydown', (e) => {
 					if (e.key === 'Enter') {
 						e.preventDefault();
 						sendMessage();
 					}
 				});
-				messageInput.focus();
+				newInput.focus();
 			}
 		}
 		
-
-		// Fixed reportChat function using chat state
 		async function reportChat() {
 			if (!chatState.currentMatchId || !currentUser.uid) {
 				alert('Fehler: Chat oder Benutzer nicht identifiziert.');
+				return;
+			}
+			
+			// Don't allow reporting AI chats
+			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
+			if (isAIChat) {
+				alert('AI-Chats können nicht gemeldet werden.');
 				return;
 			}
 			
@@ -3094,7 +3090,7 @@
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
-							match_id: chatState.currentMatchId,
+							match_id: parseInt(chatState.currentMatchId),
 							reporter_id: currentUser.uid
 						}),
 					});
@@ -3107,11 +3103,11 @@
 						alert('Fehler beim Melden des Chats: ' + (result.error || 'Unbekannter Fehler.'));
 					}
 				} catch (error) {
-					console.error('Fehler beim Melden des Chats:', error);
+					console.error('❌ Error reporting chat:', error);
 					alert('Ein Netzwerkfehler ist aufgetreten.');
 				}
 			}
-		}		
+		}
 
 		async function updateSuggestions() {
 			if (!chatState.currentMatchId || !currentUser) {
@@ -3124,7 +3120,7 @@
 			const typingTextElement = document.getElementById('typingText');
 
 			// Check if this is an AI chat - if so, don't show suggestions
-			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.includes('ai_match_');
+			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
 			if (isAIChat) {
 				mainContainer.classList.add('hidden');
 				return;
@@ -3143,7 +3139,7 @@
 				// Make sure matchId is a number for real chats
 				const matchId = parseInt(chatState.currentMatchId);
 				if (isNaN(matchId)) {
-					console.error('Invalid match ID for suggestions:', chatState.currentMatchId);
+					console.error('❌ Invalid match ID for suggestions:', chatState.currentMatchId);
 					mainContainer.classList.add('hidden');
 					return;
 				}
@@ -3188,27 +3184,26 @@
 				}, 2500);
 
 			} catch (error) {
-				console.error('Fehler beim Laden der KI-Vorschläge:', error);
+				console.error('❌ Error loading AI suggestions:', error);
 				thinkingBubble.classList.add('hidden');
 				mainContainer.classList.add('hidden');
 			}
 		}
+
 		
-		// NEU: Funktion zum Protokollieren von Klicks
 		async function logSuggestionClick(suggestionText) {
-		    try {
-		        await fetch('/.netlify/functions/log_suggestion_click', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({
-		                userId: currentUser.uid,
-		                clickedSuggestion: suggestionText
-		            }),
-		        });
-		        // Keine Aktion bei Erfolg, da dies im Hintergrund läuft.
-		    } catch (error) {
-		        console.error('Fehler beim Protokollieren des Klicks:', error);
-		    }
+			try {
+				await fetch('/.netlify/functions/log_suggestion_click', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						userId: currentUser.uid,
+						clickedSuggestion: suggestionText
+					}),
+				});
+			} catch (error) {
+				console.error('❌ Error logging suggestion click:', error);
+			}
 		}
 		
 		async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
@@ -3217,30 +3212,37 @@
 			// Close any existing chat first
 			closeChat();
 			
-			// Check if this is an AI chat
+			// Validate required parameters
+			if (!matchId || !matchUserId || !matchName) {
+				console.error('❌ Missing required chat parameters');
+				showNotification('❌ Fehlerhafte Chat-Daten', 'error');
+				return;
+			}
+			
+			// Determine if this is an AI chat
 			const isAIChat = typeof matchId === 'string' && matchId.includes('ai_match_');
 			
 			// Reset chat state for new chat
 			chatState = {
-				currentMatchId: isAIChat ? matchId : parseInt(matchId), // Keep string for AI, parse for real
+				currentMatchId: matchId, // Keep original format (string for AI, can be string or number for real)
 				aiSuggestionsLoaded: false,
 				lastLoadedMessageCount: 0,
 				messageInterval: null
 			};
 			
-			// Validate match ID for real chats
-			if (!isAIChat && (isNaN(chatState.currentMatchId) || chatState.currentMatchId <= 0)) {
-				console.error('❌ Invalid match ID:', matchId);
-				showNotification('❌ Fehlerhafte Match-ID', 'error');
-				return;
+			// For real chats, ensure matchId is valid
+			if (!isAIChat) {
+				const numericMatchId = parseInt(matchId);
+				if (isNaN(numericMatchId) || numericMatchId <= 0) {
+					console.error('❌ Invalid numeric match ID:', matchId);
+					showNotification('❌ Fehlerhafte Match-ID', 'error');
+					return;
+				}
+				// Update chatState with numeric ID for real chats
+				chatState.currentMatchId = numericMatchId;
 			}
 
-			if (!matchUserId || !matchName) {
-				console.error('❌ Missing required chat parameters');
-				showNotification('❌ Unvollständige Match-Daten', 'error');
-				return;
-			}
-
+			// Create chat modal
 			const chatModalHtml = `
 				<div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" data-chat-modal>
 					<div class="bg-white rounded-2xl max-w-md w-full h-[90vh] flex flex-col" onclick="event.stopPropagation()">
@@ -3277,20 +3279,22 @@
 			chatDiv.innerHTML = chatModalHtml;
 			document.body.appendChild(chatDiv);
 
-			// Load messages and setup polling
+			// Setup input handler
+			setupMessageInput();
+
+			// Load messages based on chat type
 			if (isAIChat) {
 				loadAIMessages();
-				setupAIMessageInput();
 			} else {
 				loadMessages();
+				// Start polling for new messages (real chats only)
 				chatState.messageInterval = setInterval(loadMessages, 3000);
-				setupMessageInput();
 			}
 		}
 
 
+
 		
-		// Fixed closeChat function
 		function closeChat() {
 			const chatModal = document.querySelector('[data-chat-modal]');
 			if (chatModal) {
@@ -3316,7 +3320,7 @@
 			const container = document.getElementById('chatMessages');
 			
 			if (!chatState.currentMatchId) {
-				console.error("Keine AI Chat ID gefunden");
+				console.error("❌ No AI Chat ID found");
 				return;
 			}
 			
@@ -3356,6 +3360,7 @@
 		}
 
 
+
 		function saveAIMessage(sender, text) {
 			if (!chatState.currentMatchId) return;
 			
@@ -3369,6 +3374,7 @@
 			
 			localStorage.setItem(`ai_chat_${chatState.currentMatchId}`, JSON.stringify(aiMessages));
 		}
+
 
 		async function sendAIMessage(messageText) {
 			// Save user message
@@ -3421,13 +3427,14 @@
 				}
 				
 			} catch (error) {
-				console.error('AI Chat error:', error);
+				console.error('❌ AI Chat error:', error);
 				// Remove typing indicator and show fallback
 				typingDiv.remove();
 				saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Aber hey, erzähl mir von dir! 😊");
 				loadAIMessages();
 			}
 		}
+
 						
 		// Swipe abschließen
 		async function completeSwipe(direction) {
@@ -3940,8 +3947,7 @@
                 }, 10000);
             });
         }
-		
-		// 5. ADD: Helper function to escape HTML
+				
 		function escapeHtml(text) {
 			const map = {
 				'&': '&amp;',
@@ -3951,7 +3957,7 @@
 				"'": '&#039;'
 			};
 			return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-		}		
+		}
 		
 
         function suggestBench() {
