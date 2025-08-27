@@ -2812,60 +2812,6 @@
 			}
 		}
 		
-		// Funktion zum Öffnen eines individuellen Chats und Laden der Nachrichten
-		async function openChat(matchId, matchedName) {
-		
-			// ✅ Globale Variablen und den Container sofort leeren
-			aiSuggestionsLoaded = false;
-            currentChatMatchId = matchId;
-		
-			document.getElementById('matchesList').style.display = 'none';
-			const individualChat = document.getElementById('individualChat');
-			individualChat.style.display = 'block';
-			document.getElementById('chatHeaderName').textContent = matchedName;
-			document.getElementById('messageInput').dataset.matchId = matchId;
-            
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML = '';
-            
-            // ✅ Daten immer vom Server abrufen
-			try {
-				const response = await fetch('/.netlify/functions/get_messages', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ matchId })
-				});
-				const result = await response.json();
-				
-				if (result.success) {
-                    const isChatEmpty = result.messages.length === 0;
-
-					if (result.messages && result.messages.length > 0) {
-                        result.messages.forEach(msg => {
-                            const messageElement = document.createElement('div');
-                            messageElement.classList.add('message', msg.sender_id === currentUser.uid ? 'sent' : 'received', 'p-2', 'my-1', 'rounded-lg');
-                            messageElement.innerHTML = `<div class="message-bubble">${msg.message_text}</div>`;
-                            chatMessages.appendChild(messageElement);
-                        });
-                    } else {
-                        chatMessages.innerHTML = `
-                            <div class="text-center text-gray-500 py-8">
-                                <div class="text-4xl mb-2">👋</div>
-                                <p>Schreibt euch eure erste Nachricht!</p>
-                            </div>
-                        `;
-                    }
-					chatMessages.scrollTop = chatMessages.scrollHeight;
-                    
-                    if (isChatEmpty && !aiSuggestionsLoaded) {
-                        aiSuggestionsLoaded = true;
-                        updateSuggestions();
-                    }
-				}
-			} catch (error) {
-				console.error('Fehler beim Laden der Nachrichten:', error);
-			}
-		}
 		
 
 		async function loadMessages() {
