@@ -2006,10 +2006,11 @@
 		}
 				
 		
+		// Profile laden
 		async function loadProfiles() {
 			console.log('🔄 Profile werden geladen...');
 			const cardStack = document.getElementById('cardStack');
-			
+
 			if (!cardStack) {
 				console.log('cardStack noch nicht bereit, versuche erneut...');
 				setTimeout(loadProfiles, 100);
@@ -2034,11 +2035,26 @@
 				const profilesResult = await profilesResponse.json();
 				const matchesResult = await matchesResponse.json();
 
-				// Get IDs of already matched users
+				// Lokale Matches laden (für AI-Profile)
+				let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+				const now = Date.now();
+
+				// Dauer in Tagen, wie lange AI-Matches blockiert bleiben sollen
+				const AI_BLOCK_DAYS = 7; // 🔧 hier ändern für 1 Tag, 3 Tage, 7 Tage usw.
+
+				// IDs von echten Matches aus der API (dauerhaft blockiert)
 				const matchedUserIds = matchesResult.success && matchesResult.matches 
-					? matchesResult.matches.map(m => m.matched_user_id || m.user_id)
+					? matchesResult.matches
+						.filter(m => !m.isAI) // nur echte
+						.map(m => m.matched_user_id || m.user_id)
 					: [];
 
+				// IDs von AI-Matches, die jünger als AI_BLOCK_DAYS sind
+				const blockedAIIds = localMatches
+					.filter(m => m.isAI && now - m.matched_at < AI_BLOCK_DAYS * 24 * 60 * 60 * 1000)
+					.map(m => m.matched_user_id);
+
+				// --- Echte Profile filtern ---
 				let realProfiles = [];
 				if (profilesResponse.ok && profilesResult.success && profilesResult.profiles) {
 					realProfiles = profilesResult.profiles.filter(p => 
@@ -2047,27 +2063,27 @@
 					);
 				}
 
-				// Add AI sample profiles if we have fewer than 5 real profiles
-				let allProfiles = [...realProfiles];
+				// --- AI Profile hinzufügen ---
+				let aiProfiles = [];
 				if (realProfiles.length < 5) {
-					// Generate fresh sample profiles
 					generateSampleProfiles();
-					
-					// Mark sample profiles as AI and add unique IDs
-					const aiProfiles = sampleProfiles.map((profile, index) => ({
-						...profile,
-						user_id: `ai_${Date.now()}_${index}`, // Unique AI ID
-						profile_name: profile.name,
-						profile_image: profile.image,
-						interests: profile.preferences,
-						isAI: true
-					}));
-					
-					allProfiles = [...realProfiles, ...aiProfiles];
+
+					aiProfiles = sampleProfiles
+						.map((profile, index) => ({
+							...profile,
+							user_id: `ai_${profile.name}_${index}`, // stabile ID pro AI-Profil
+							profile_name: profile.name,
+							profile_image: profile.image,
+							interests: profile.preferences,
+							isAI: true
+						}))
+						// blockierte AI-Profile (innerhalb AI_BLOCK_DAYS) ausfiltern
+						.filter(p => !blockedAIIds.includes(p.user_id));
 				}
 
+				const allProfiles = [...realProfiles, ...aiProfiles];
 				currentProfiles = allProfiles;
-				
+
 				if (currentProfiles.length > 0) {
 					console.log(`🎯 ${currentProfiles.length} Profile geladen (${realProfiles.length} echt, ${currentProfiles.length - realProfiles.length} KI)`);
 					currentIndex = 0;
@@ -2075,12 +2091,13 @@
 				} else {
 					showNoMoreProfilesInCardStack();
 				}
-				
+
 			} catch (error) {
 				console.error('Fehler beim Laden der Profile:', error);
 				showNoMoreProfilesInCardStack();
 			}
-		}		
+		}
+		
 		
 		function showCreateProfileSection() {
 			hideAllScreens();
@@ -3471,25 +3488,31 @@
 					showNotification('🎉 Es ist ein Match! 💕', 'success');
 					showMatchAnimation(profile);
 					
+					const now = Date.now();
+
+					
 					// Create AI match with proper ID structure
 					const aiMatch = {
-						match_id: `ai_match_${Date.now()}`, // Use match_id for consistency
+						match_id: `ai_match_${profile.user_id}`, // stabil pro Profil
 						matched_user_id: profile.user_id,
 						profile_name: profile.profile_name || profile.name,
 						profile_image: profile.profile_image || profile.image,
 						description: profile.description,
 						interests: profile.interests || profile.preferences,
-						matched_at: new Date().toISOString(),
+						matched_at: now,
 						isAI: true
 					};
 					
 					// Add to localStorage matches
-					let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-					const exists = localMatches.some(m => m.match_id === aiMatch.match_id);
-					if (!exists) {
+					let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');	
+					
+					const idx = localMatches.findIndex(m => m.match_id === aiMatch.match_id);
+					if (idx !== -1) {
+						localMatches[idx] = aiMatch;
+					} else {
 						localMatches.push(aiMatch);
-						localStorage.setItem('userMatches', JSON.stringify(localMatches));
 					}
+					localStorage.setItem('userMatches', JSON.stringify(localMatches));
 					
 					return;
 				}
