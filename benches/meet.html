@@ -2831,9 +2831,9 @@
 			}
 
 			try {
-				// Ensure matchId is a number for real chats
-				const matchId = parseInt(chatState.currentMatchId);
-				if (isNaN(matchId) || matchId <= 0) {
+				// Ensure match_id is a number for real chats
+				const match_id = parseInt(chatState.currentMatchId);
+				if (isNaN(match_id) || match_id <= 0) {
 					console.error('❌ Invalid match ID for real chat:', chatState.currentMatchId);
 					container.innerHTML = `
 						<div class="text-center text-red-500 py-8">
@@ -2846,7 +2846,7 @@
 				const response = await fetch('/.netlify/functions/get_messages', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ matchId: matchId })
+					body: JSON.stringify({ matchId: match_id })
 				});
 
 				const result = await response.json();
