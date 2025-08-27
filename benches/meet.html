@@ -3340,53 +3340,70 @@
 
 
 		async function sendAIMessage(messageText) {
-			if (!chatState.currentMatchId) return;
-
-			// 1️⃣ User-Nachricht speichern und anzeigen
-			saveAIMessage('user', messageText);
-			loadAIMessages();
-
-			try {
-				// AI Profil-ID aus Match-ID extrahieren
-				const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
-
-				// 2️⃣ AI-Antwort erst nach 2 Minuten verzögern
-				await new Promise(res => setTimeout(res, 2 * 60 * 1000)); // 2 Minuten = 120000 ms
-
-				// 3️⃣ AI-Antwort anfordern
-				const response = await fetch('/.netlify/functions/ai_chat_responses', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						aiProfileId: aiProfileId,
-						userMessage: messageText,
-						userProfile: {
-							name: currentUser.email,
-							interests: currentProfile?.interests || []
-						}
-					})
-				});
-
-				const result = await response.json();
-
-				// 4️⃣ AI-Antwort speichern und Chat aktualisieren
-				if (result.success) {
-					saveAIMessage('ai', result.response);
-					loadAIMessages();
-					showNotification('✅ Nachricht gesendet!', 'success');
-				} else {
-					// Fallback-Antwort
-					saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt... Wie geht's dir?");
-					loadAIMessages();
-				}
-
-			} catch (error) {
-				console.error('❌ AI Chat error:', error);
-				// Fallback bei Fehler
-				saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
-				loadAIMessages();
-			}
+		  if (!chatState.currentMatchId) return;
+		
+		  // 1️⃣ User-Nachricht speichern und anzeigen
+		  saveAIMessage('user', messageText);
+		  loadAIMessages();
+		
+		  try {
+		    // AI Profil-ID aus Match-ID extrahieren
+		    const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
+		
+		    // 2️⃣ Dynamisches Delay berechnen
+		    const isFirstMessage = !chatState.chatHistory || chatState.chatHistory.length === 0;
+		
+		    function getDynamicDelay(msg, first) {
+		      if (first) {
+		        // Erste Antwort: 2–30 Minuten (120000 ms – 1800000 ms)
+		        return Math.floor(Math.random() * (30 * 60_000 - 2 * 60_000)) + 2 * 60_000;
+		      }
+		      // Basis: ~40ms pro Zeichen Lesedauer + Zufall 0–2s
+		      const base = msg.length * 40;
+		      const jitter = Math.floor(Math.random() * 2000);
+		      return Math.min(Math.max(base + jitter, 2000), 25000); // 2–25s
+		    }
+		
+		    const delay = getDynamicDelay(messageText, isFirstMessage);
+		    console.log(`⏱️ AI antwortet in ${Math.round(delay/1000)} Sekunden`);
+		    await new Promise(res => setTimeout(res, delay));
+		
+		    // 3️⃣ AI-Antwort anfordern
+		    const response = await fetch('/.netlify/functions/ai_chat_responses', {
+		      method: 'POST',
+		      headers: { 'Content-Type': 'application/json' },
+		      body: JSON.stringify({
+		        aiProfileId: aiProfileId,
+		        userMessage: messageText,
+		        userProfile: {
+		          name: currentUser.email,
+		          interests: currentProfile?.interests || []
+		        },
+		        conversationId: chatState.currentConversationId // optional für Memory
+		      })
+		    });
+		
+		    const result = await response.json();
+		
+		    // 4️⃣ AI-Antwort speichern und Chat aktualisieren
+		    if (result.success) {
+		      saveAIMessage('ai', result.response);
+		      loadAIMessages();
+		      showNotification('✅ Nachricht gesendet!', 'success');
+		    } else {
+		      // Fallback-Antwort
+		      saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt... Wie geht's dir?");
+		      loadAIMessages();
+		    }
+		
+		  } catch (error) {
+		    console.error('❌ AI Chat error:', error);
+		    // Fallback bei Fehler
+		    saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
+		    loadAIMessages();
+		  }
 		}
+
 
 						
 		// Swipe abschließen
