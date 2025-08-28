@@ -3382,18 +3382,31 @@
 
 
 
-		function saveAIMessage(sender, text) {
-			if (!chatState.currentMatchId) return;
-			
-			let aiMessages = JSON.parse(localStorage.getItem(`ai_chat_${chatState.currentMatchId}`) || '[]');
-			
-			aiMessages.push({
-				sender: sender,
-				text: text,
-				timestamp: new Date().toISOString()
-			});
-			
-			localStorage.setItem(`ai_chat_${chatState.currentMatchId}`, JSON.stringify(aiMessages));
+		// Neue, robuste Version der saveAIMessage-Funktion
+		function saveAIMessage(sender, text, convId) {
+		    // Stellen Sie sicher, dass eine gültige Chat-ID vorhanden ist
+		    if (!convId) {
+		        console.error('❌ Keine Chat-ID zum Speichern der Nachricht gefunden');
+		        return;
+		    }
+		
+		    const newMessage = {
+		        id: Date.now(),
+		        sender,
+		        text,
+		        timestamp: new Date().toISOString()
+		    };
+		    
+		    // Daten aus localStorage abrufen
+		    let chatHistory = JSON.parse(localStorage.getItem(`chatHistory_${convId}`) || '[]');
+		    
+		    // Neue Nachricht hinzufügen
+		    chatHistory.push(newMessage);
+		    
+		    // Daten in localStorage speichern
+		    localStorage.setItem(`chatHistory_${convId}`, JSON.stringify(chatHistory));
+		
+		    console.log(`✅ Nachricht für ConvID ${convId} gespeichert: ${text}`);
 		}
 
 		async function sendAIMessage(messageText) {
@@ -3484,16 +3497,14 @@
 		        const result = await response.json();
 		        
 		        if (result && result.success) {
-		            saveAIMessage('ai', result.response);
-		            loadAIMessages();
+		            // KORREKT: Nachricht speichern, aber nicht laden
+		            saveAIMessage('ai', result.response, convId);
 		        } else {
-		            saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...");
-		            loadAIMessages();
+		            saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...", convId);
 		        }
 		    } catch (err) {
 		        console.error('AI reply failed', err);
-		        saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
-		        loadAIMessages();
+		        saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!", convId);
 		    } finally {
 		        removeTimerFromStorage(convId);
 		    }
