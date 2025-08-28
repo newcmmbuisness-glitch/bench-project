@@ -2992,76 +2992,70 @@
 		}
 		
 		async function sendMessage() {
-			const messageInput = document.getElementById('messageInput');
-			const messageText = messageInput.value.trim();
-			
-			if (!messageText || !chatState.currentMatchId || !currentUser.uid) {
-				if (!messageText) {
-					showNotification('⚠️ Bitte gib eine Nachricht ein', 'error');
-				}
-				return;
-			}
-			
-			// Check if this is an AI chat
-			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
-
-			// Optimistic update: Show message immediately
-			const chatMessages = document.getElementById('chatMessages');
-			const messageElement = document.createElement('div');
-			messageElement.classList.add('message', 'sent');
-			messageElement.innerHTML = `<div class="message-bubble">${escapeHtml(messageText)}</div>`;
-			chatMessages.appendChild(messageElement);
-			chatMessages.scrollTop = chatMessages.scrollHeight;
-
-			// Clear and disable input
-			const originalValue = messageText;
-			messageInput.value = '';
-			messageInput.disabled = true;
-			
-			try {
-				if (isAIChat) {
-					saveAIMessage('user', originalValue, chatState.currentMatchId);
-					loadAIMessages();
-					sendAIMessage(originalValue);
-				} else {
-					// Handle real user chat
-					const response = await fetch('/.netlify/functions/send_message', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({
-							match_id: parseInt(chatState.currentMatchId),
-							sender_id: parseInt(currentUser.uid),
-							message_text: originalValue
-						})
-					});
-
-					const result = await response.json();
-					
-					if (response.ok && result.success) {
-						// Reset AI suggestions flag so they can load on partner's response
-						chatState.aiSuggestionsLoaded = false;
-						showNotification('✅ Nachricht gesendet!', 'success');
-						
-						// Force reload messages to ensure synchronization
-						setTimeout(() => loadMessages(), 100);
-					} else {
-						console.error('❌ Server error:', result);
-						showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
-						chatMessages.removeChild(messageElement);
-						messageInput.value = originalValue;
-					}
-				}
-			} catch (error) {
-				console.error('❌ Network error:', error);
-				showNotification('❌ Verbindungsfehler beim Senden', 'error');
-				chatMessages.removeChild(messageElement);
-				messageInput.value = originalValue;
-			} finally {
-				messageInput.disabled = false;
-				messageInput.focus();
-			}
+		    const messageInput = document.getElementById('messageInput');
+		    const messageText = messageInput.value.trim();
+		    
+		    if (!messageText || !chatState.currentMatchId || !currentUser.uid) {
+		        if (!messageText) {
+		            showNotification('⚠️ Bitte gib eine Nachricht ein', 'error');
+		        }
+		        return;
+		    }
+		    
+		    const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
+		
+		    // Optimistic update: Show message immediately
+		    const chatMessages = document.getElementById('chatMessages');
+		    const messageElement = document.createElement('div');
+		    messageElement.classList.add('message', 'sent');
+		    messageElement.innerHTML = `<div class="message-bubble">${escapeHtml(messageText)}</div>`;
+		    chatMessages.appendChild(messageElement);
+		    chatMessages.scrollTop = chatMessages.scrollHeight;
+		
+		    const originalValue = messageText;
+		    messageInput.value = '';
+		    messageInput.disabled = true;
+		    
+		    try {
+		        if (isAIChat) {
+		            // ✅ KORREKT: Speichere nur die Nachricht. Die Anzeige ist bereits erfolgt.
+		            saveAIMessage('user', originalValue, chatState.currentMatchId);
+		            sendAIMessage(originalValue);
+		        } else {
+		            // Handle real user chat
+		            const response = await fetch('/.netlify/functions/send_message', {
+		                method: 'POST',
+		                headers: { 'Content-Type': 'application/json' },
+		                body: JSON.stringify({
+		                    match_id: parseInt(chatState.currentMatchId),
+		                    sender_id: parseInt(currentUser.uid),
+		                    message_text: originalValue
+		                })
+		            });
+		
+		            const result = await response.json();
+		            
+		            if (response.ok && result.success) {
+		                chatState.aiSuggestionsLoaded = false;
+		                showNotification('✅ Nachricht gesendet!', 'success');
+		                setTimeout(() => loadMessages(), 100);
+		            } else {
+		                console.error('❌ Server error:', result);
+		                showNotification('❌ Nachricht konnte nicht gesendet werden: ' + (result.error || 'Unbekannter Fehler'), 'error');
+		                chatMessages.removeChild(messageElement);
+		                messageInput.value = originalValue;
+		            }
+		        }
+		    } catch (error) {
+		        console.error('❌ Network error:', error);
+		        showNotification('❌ Verbindungsfehler beim Senden', 'error');
+		        chatMessages.removeChild(messageElement);
+		        messageInput.value = originalValue;
+		    } finally {
+		        messageInput.disabled = false;
+		        messageInput.focus();
+		    }
 		}
-
 
 		function setupMessageInput() {
 			const messageInput = document.getElementById('messageInput');
@@ -3383,9 +3377,7 @@
 
 
 
-		// Neue, robuste Version der saveAIMessage-Funktion
 		function saveAIMessage(sender, text, convId) {
-		    // Stellen Sie sicher, dass eine gültige Chat-ID vorhanden ist
 		    if (!convId) {
 		        console.error('❌ Keine Chat-ID zum Speichern der Nachricht gefunden');
 		        return;
@@ -3398,13 +3390,8 @@
 		        timestamp: new Date().toISOString()
 		    };
 		    
-		    // Daten aus localStorage abrufen
 		    let chatHistory = JSON.parse(localStorage.getItem(`chatHistory_${convId}`) || '[]');
-		    
-		    // Neue Nachricht hinzufügen
 		    chatHistory.push(newMessage);
-		    
-		    // Daten in localStorage speichern
 		    localStorage.setItem(`chatHistory_${convId}`, JSON.stringify(chatHistory));
 		
 		    console.log(`✅ Nachricht für ConvID ${convId} gespeichert: ${text}`);
@@ -3498,7 +3485,7 @@
 		        const result = await response.json();
 		        
 		        if (result && result.success) {
-		            // KORREKT: Nachricht speichern, aber nicht laden
+		            // ✅ KORREKT: convId wird an saveAIMessage übergeben
 		            saveAIMessage('ai', result.response, convId);
 		        } else {
 		            saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...", convId);
