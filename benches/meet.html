@@ -3392,7 +3392,7 @@
 
 		  function getDynamicDelay(isFirst) {
 			if (isFirst) {
-			  return Math.floor(Math.random() * (30*60_000 - 2*60_000)) + 2*60_000; // 2–30 Min
+			  return Math.floor(Math.random() * (60_000 - 8_000)) + 8_000; // 8–60 Sek
 			}
 			const lastUser = (chatState.chatHistory || []).filter(m => m.sender === 'user').slice(-1)[0];
 			const since = lastUser ? (Date.now() - new Date(lastUser.timestamp).getTime()) : Infinity;
