@@ -3458,56 +3458,58 @@
 				
 		// Angepasste Funktion zum Auslösen der KI-Antwort
 		async function triggerAiReply(convId) {
-			// Daten aus dem LocalStorage abrufen
-			const timerData = JSON.parse(localStorage.getItem(`ai_timer_${convId}`));
-			if (!timerData) {
-				console.log("triggerAiReply: Timer-Daten nicht gefunden, überspringe AI-Antwort");
-				return;
-			}
-			
-			// ✅ Prüfung, ob die Daten zu einem AI-Match gehören
-			if (!convId.startsWith('ai_match_')) {
-				console.log("triggerAiReply: Kein AI-Match, überspringe AI-Antwort");
-				removeTimerFromStorage(convId);
-				return;
-			}
-			
-			const aiProfileId = convId.replace('ai_match_', '');
-			
-			try {
-				const combinedUserText = (timerData.pendingUserMessages || []).map(m => m.text).join("\n");
-				removeTimerFromStorage(convId);
-			
-				const response = await fetch('/.netlify/functions/ai_chat_responses', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						aiProfileId: aiProfileId,
-						userMessage: combinedUserText,
-						userProfile: {
-							name: currentUser?.email || null,
-							interests: currentProfile?.interests || []
-						},
-						conversationId: convId
-					})
-				});
-
-				const result = await response.json();
-				
-				if (result && result.success) {
-					saveAIMessage('ai', result.response);
-					loadAIMessages();
-				} else {
-					saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...");
-					loadAIMessages();
-				}
-			} catch (err) {
-				console.error('AI reply failed', err);
-				saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
-				loadAIMessages();
-			} finally {
-				removeTimerFromStorage(convId);
-			}
+		    // Daten aus dem LocalStorage abrufen
+		    const timerData = JSON.parse(localStorage.getItem(`ai_timer_${convId}`));
+		    if (!timerData) {
+		        console.log("triggerAiReply: Timer-Daten nicht gefunden, überspringe AI-Antwort");
+		        return;
+		    }
+		
+		    // ✅ KORREKT: Prüfung, ob die ID mit 'ai_match_' beginnt
+		    // Dies ist zuverlässig, da convId immer vom Timer kommt,
+		    // der in sendAIMessage gesetzt wurde.
+		    if (!convId.startsWith('ai_match_')) {
+		        console.log("triggerAiReply: Kein AI-Match, überspringe AI-Antwort");
+		        removeTimerFromStorage(convId);
+		        return;
+		    }
+		    
+		    const aiProfileId = convId.replace('ai_match_', '');
+		    
+		    try {
+		        const combinedUserText = (timerData.pendingUserMessages || []).map(m => m.text).join("\n");
+		        removeTimerFromStorage(convId);
+		    
+		        const response = await fetch('/.netlify/functions/ai_chat_responses', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({
+		                aiProfileId: aiProfileId,
+		                userMessage: combinedUserText,
+		                userProfile: {
+		                    name: currentUser?.email || null,
+		                    interests: currentProfile?.interests || []
+		                },
+		                conversationId: convId
+		            })
+		        });
+		
+		        const result = await response.json();
+		        
+		        if (result && result.success) {
+		            saveAIMessage('ai', result.response);
+		            loadAIMessages();
+		        } else {
+		            saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...");
+		            loadAIMessages();
+		        }
+		    } catch (err) {
+		        console.error('AI reply failed', err);
+		        saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
+		        loadAIMessages();
+		    } finally {
+		        removeTimerFromStorage(convId);
+		    }
 		}
 			
 		// Neue Funktion, um Timer-Daten im LocalStorage zu speichern
