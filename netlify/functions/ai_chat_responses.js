@@ -219,6 +219,63 @@ exports.handler = async (event) => {
     }
 
     const intentObj = detectIntent(userMessage);
+	
+    // ---------------------------
+    // Response Composer mit Short-Message-Handling
+    // ---------------------------
+    function composeResponse(intent, userMsg, persona) {
+      const msgLength = userMsg.trim().length;
+      let raw = '';
+    
+      switch (intent) {
+        case 'greeting':
+          if (msgLength < 5) {
+            // Sehr kurze Begrüßungen → kurze, direkte Antworten
+            raw = pick(pools.greetings_short);
+          } else {
+            // Längere Begrüßungen → Playful optional
+            raw = chance(0.3) ? pick(pools.greetings_playful) : pick(pools.greetings_short);
+          }
+          break;
+    
+        case 'compliment':
+          raw = pick(['Oh, danke! 😊', 'Aww, danke dir!', 'Du siehst auch nett aus!', 'Back at ya 😉']);
+          break;
+    
+        case 'date':
+          raw = pick(pools.date_suggestions);
+          if (chance(0.4)) raw += ' ' + pick(pools.date_confirm);
+          break;
+    
+        case 'interest_wine':
+        case 'interest_music':
+        case 'teasing_tattoo':
+          raw = pick(pools[intent] || ['Interessant! Erzähl mir mehr.']);
+          if (msgLength > 20 && chance(0.6)) raw += ' ' + pick(['Und bei dir?', 'Was meinst du dazu?', 'Wie siehst du das?']);
+          break;
+    
+        case 'question':
+        case 'goals':
+        case 'unknown':
+          // Längere Antworten für komplexe Fragen
+          raw = pick(pools.questions_open) + ' ' + pick(pools.smalltalk_closers);
+          if (msgLength > 30 && chance(0.3)) raw += ' ' + pick(['Erzähl mal!', 'Wie war das bei dir?']);
+          break;
+    
+        case 'short':
+          raw = pick(['Haha, stimmt!', 'Ja, echt?', 'Klingt nice!']);
+          if (chance(0.25)) raw += ' ' + pick(['Und du?', 'Weiter.']);
+          break;
+    
+        default:
+          raw = pick(['Das klingt interessant! Erzähl mir mehr darüber.', 'Echt? Wie kam es dazu?', 'Oh nice — was noch?']);
+      }
+    
+      return raw;
+    }
+    
+    let rawResponse = composeResponse(intentObj.intent, userMessage, aiPersonality);
+	
 
     // Determine persona from aiProfileId (fallback to anna)
     let aiPersonality = aiPersonalities.ai_anna;
