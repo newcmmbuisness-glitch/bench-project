@@ -219,6 +219,14 @@ exports.handler = async (event) => {
     }
 
     const intentObj = detectIntent(userMessage);
+
+    // Determine persona from aiProfileId (fallback to anna)
+    let aiPersonality = aiPersonalities.ai_anna;
+    if (/ai_.*1/.test(aiProfileId) || /anna/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_anna;
+    else if (/ai_.*2/.test(aiProfileId) || /max/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_max;
+    else if (/ai_.*3/.test(aiProfileId) || /lisa/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_lisa;
+    else if (/ai_.*4/.test(aiProfileId) || /tom/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_tom;
+    else if (/ai_.*5/.test(aiProfileId) || /sarah/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_sarah;	  
 	
     // ---------------------------
     // Response Composer mit Short-Message-Handling
@@ -276,15 +284,6 @@ exports.handler = async (event) => {
     
     let rawResponse = composeResponse(intentObj.intent, userMessage, aiPersonality);
 	
-
-    // Determine persona from aiProfileId (fallback to anna)
-    let aiPersonality = aiPersonalities.ai_anna;
-    if (/ai_.*1/.test(aiProfileId) || /anna/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_anna;
-    else if (/ai_.*2/.test(aiProfileId) || /max/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_max;
-    else if (/ai_.*3/.test(aiProfileId) || /lisa/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_lisa;
-    else if (/ai_.*4/.test(aiProfileId) || /tom/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_tom;
-    else if (/ai_.*5/.test(aiProfileId) || /sarah/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_sarah;
-
     // ---------------------------
     // Mood/Substyle picker for persona (adds human-like variability)
     // ---------------------------
