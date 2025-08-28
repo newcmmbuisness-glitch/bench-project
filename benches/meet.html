@@ -1269,6 +1269,9 @@
 		let isSwipeInProgress = false;
 		let selectedHobbies = [];
 		
+		window.aiReplyTimers = {};
+
+		
 		// Global chat state object instead of individual variables
 		let chatState = {
 			currentMatchId: null,
@@ -3211,7 +3214,7 @@
 			}
 		}
 		
-		async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
+async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
 			console.log('🔥 Opening chat - Match ID:', matchId, 'Type:', typeof matchId);
 			
 			// Close any existing chat first
@@ -3247,6 +3250,19 @@
 				chatState.currentMatchId = numericMatchId;
 			}
 
+			// --- NEUE LOGIK HIER EINGEFÜGT ---
+			if (isAIChat) {
+				const timerData = JSON.parse(localStorage.getItem(`ai_timer_${matchId}`));
+				if (timerData && timerData.id) {
+					console.log('⏳ Laufender AI-Timer gefunden. Zeige Warte-UI.');
+					// Stellen Sie sicher, dass `showAiTypingTimer` die Startzeit korrekt verarbeitet,
+					// um die visuelle Wartezeit zu berechnen.
+					showAiTypingTimer(matchId, timerData.startTime);
+				}
+			}
+			// --- ENDE DER NEUEN LOGIK ---
+
+
 			// Create chat modal
 			const chatModalHtml = `
 				<div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" data-chat-modal>
@@ -3255,7 +3271,7 @@
 							<img src="${matchImage || '/default-avatar.png'}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
 							<h3 class="text-lg font-bold flex-grow">${matchName}</h3>
 							<div class="flex items-center space-x-2">
-								<div class="ki-beta-container relative overflow-hidden mr-2"><span class="ki-beta-branding">One-KI Beta</span></div>                                             
+								<div class="ki-beta-container relative overflow-hidden mr-2"><span class="ki-beta-branding">One-KI Beta</span></div>                                             
 								<button onclick="reportChat()" class="text-gray-500 hover:text-red-500">
 									<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
 								</button>
@@ -3380,106 +3396,137 @@
 			localStorage.setItem(`ai_chat_${chatState.currentMatchId}`, JSON.stringify(aiMessages));
 		}
 
-
 		async function sendAIMessage(messageText) {
-		  if (!chatState.currentMatchId) return;
+			if (!chatState.currentMatchId) return;
 
-		  saveAIMessage('user', messageText);
-		  loadAIMessages();
+			// Speichert die Nachricht sofort im Chat-Fenster
+			saveAIMessage('user', messageText);
+			loadAIMessages();
 
-		  const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
-		  const convId = chatState.currentConversationId || aiProfileId;
+			const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
+			const convId = aiProfileId; // Für AI-Chats ist die Konversations-ID die Profil-ID
 
-		  function getDynamicDelay(isFirst) {
-			if (isFirst) {
-			  return Math.floor(Math.random() * (60_000 - 8_000)) + 8_000; // 8–60 Sek
+			// Abrufen oder Erstellen des Timer-Datensatzes aus LocalStorage
+			let timerData = JSON.parse(localStorage.getItem(`ai_timer_${convId}`) || 'null');
+			if (!timerData) {
+				timerData = {
+					dueAt: null,
+					pendingUserMessages: []
+				};
 			}
-			const lastUser = (chatState.chatHistory || []).filter(m => m.sender === 'user').slice(-1)[0];
-			const since = lastUser ? (Date.now() - new Date(lastUser.timestamp).getTime()) : Infinity;
-			const engaged = since < 2*60_000;
 
-			if (engaged) {
-			  return Math.floor(Math.random() * (60_000 - 8_000)) + 8_000; // 8–60 Sek
-			} else {
-			  return Math.floor(Math.random() * (10*60_000 - 2*60_000)) + 2*60_000; // 2–10 Min
+			// Nachricht zur Warteliste hinzufügen
+			timerData.pendingUserMessages.push({ text: messageText, ts: Date.now() });
+
+			// Funktion zur Berechnung der dynamischen Verzögerung
+			function getDynamicDelay(isFirst) {
+				if (isFirst) {
+					return Math.floor(Math.random() * (60000 - 8000)) + 8000; // 8–60 Sek
+				}
+				// Annahme: chatState.chatHistory wird korrekt gefüllt
+				const lastUser = (chatState.chatHistory || []).filter(m => m.sender === 'user').slice(-1)[0];
+				const since = lastUser ? (Date.now() - new Date(lastUser.timestamp).getTime()) : Infinity;
+				const engaged = since < 2 * 60000;
+
+				if (engaged) {
+					return Math.floor(Math.random() * (60000 - 8000)) + 8000; // 8–60 Sek
+				} else {
+					return Math.floor(Math.random() * (10 * 60000 - 2 * 60000)) + 2 * 60000; // 2–10 Min
+				}
 			}
-		  }
 
-		  if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
-			clearTimeout(window.aiReplyTimers[convId].id);
-		  }
-		  if (!window.aiReplyTimers[convId]) {
-			window.aiReplyTimers[convId] = { pendingUserMessages: [] };
-		  }
-		  window.aiReplyTimers[convId].pendingUserMessages.push({ text: messageText, ts: Date.now() });
+			// Alten Timer löschen, falls vorhanden
+			// Die ID ist nun in einem eigenen Objekt gespeichert, das nicht im localStorage liegt
+			if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
+				clearTimeout(window.aiReplyTimers[convId].id);
+			}
 
-		  const isFirst = !(chatState.chatHistory && chatState.chatHistory.length > 0);
-		  const delay = getDynamicDelay(isFirst);
-		  const dueAt = Date.now() + delay;
+			const isFirst = !(chatState.chatHistory && chatState.chatHistory.length > 0);
+			const delay = getDynamicDelay(isFirst);
+			timerData.dueAt = Date.now() + delay;
 
-		  persistTimerToStorage(convId, {
-			dueAt,
-			pendingUserMessages: window.aiReplyTimers[convId].pendingUserMessages
-		  });
+			// Timer-Daten im LocalStorage aktualisieren
+			localStorage.setItem(`ai_timer_${convId}`, JSON.stringify(timerData));
 
-		  console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay/1000)}s`);
+			console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay / 1000)}s`);
 
-		  window.aiReplyTimers[convId].dueAt = dueAt;
-		  window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
+			// Timer im Arbeitsspeicher des Browsers setzen
+			// Die ID kann nicht im localStorage gespeichert werden, da sie spezifisch für das aktuelle Fenster ist
+			window.aiReplyTimers[convId] = window.aiReplyTimers[convId] || {};
+			window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
 		}
-
+				
+		// Angepasste Funktion zum Auslösen der KI-Antwort
 		async function triggerAiReply(convId) {
-		    const t = window.aiReplyTimers[convId];
-		    if (!t) return;
-		
-		    // ✅ Prüfen, ob das Match wirklich ein AI-Match ist
-		    if (!chatState.currentMatchId?.startsWith('ai_match_')) {
-		        console.log("triggerAiReply: Kein AI-Match, überspringe AI-Antwort");
-		        return;
-		    }
-		
-		    // Safe replace
-		    const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
-		
-		    try {
-		        const combinedUserText = (t.pendingUserMessages || []).map(m => m.text).join("\n");
-		        t.pendingUserMessages = [];
-		        removeTimerFromStorage(convId);
-		
-		        const response = await fetch('/.netlify/functions/ai_chat_responses', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({
-		                aiProfileId: aiProfileId,
-		                userMessage: combinedUserText,
-		                userProfile: {
-		                    name: currentUser?.email || null,
-		                    interests: currentProfile?.interests || []
-		                },
-		                conversationId: convId
-		            })
-		        });
-		
-		        const result = await response.json();
-		        if (result && result.success) {
-		            saveAIMessage('ai', result.response);
-		            loadAIMessages();
-		        } else {
-		            saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...");
-		            loadAIMessages();
-		        }
-		    } catch (err) {
-		        console.error('AI reply failed', err);
-		        saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
-		        loadAIMessages();
-		    } finally {
-		        if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
-		            clearTimeout(window.aiReplyTimers[convId].id);
-		        }
-		        removeTimerFromStorage(convId);
-		        delete window.aiReplyTimers[convId];
-		    }
+			// Daten aus dem LocalStorage abrufen
+			const timerData = JSON.parse(localStorage.getItem(`ai_timer_${convId}`));
+			if (!timerData) {
+				console.log("triggerAiReply: Timer-Daten nicht gefunden, überspringe AI-Antwort");
+				return;
+			}
+			
+			// ✅ Prüfung, ob die Daten zu einem AI-Match gehören
+			if (!convId.startsWith('ai_match_')) {
+				console.log("triggerAiReply: Kein AI-Match, überspringe AI-Antwort");
+				removeTimerFromStorage(convId);
+				return;
+			}
+			
+			const aiProfileId = convId.replace('ai_match_', '');
+			
+			try {
+				const combinedUserText = (timerData.pendingUserMessages || []).map(m => m.text).join("\n");
+				removeTimerFromStorage(convId);
+			
+				const response = await fetch('/.netlify/functions/ai_chat_responses', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						aiProfileId: aiProfileId,
+						userMessage: combinedUserText,
+						userProfile: {
+							name: currentUser?.email || null,
+							interests: currentProfile?.interests || []
+						},
+						conversationId: convId
+					})
+				});
+
+				const result = await response.json();
+				
+				if (result && result.success) {
+					saveAIMessage('ai', result.response);
+					loadAIMessages();
+				} else {
+					saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...");
+					loadAIMessages();
+				}
+			} catch (err) {
+				console.error('AI reply failed', err);
+				saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
+				loadAIMessages();
+			} finally {
+				removeTimerFromStorage(convId);
+			}
 		}
+			
+		// Neue Funktion, um Timer-Daten im LocalStorage zu speichern
+		function saveTimerToStorage(convId, data) {
+			try {
+				localStorage.setItem(`ai_timer_${convId}`, JSON.stringify(data));
+			} catch (e) {
+				console.error('Fehler beim Speichern des Timers in LocalStorage:', e);
+			}
+		}
+
+		// Neue Funktion, um Timer-Daten aus LocalStorage zu entfernen
+		function removeTimerFromStorage(convId) {
+			try {
+				localStorage.removeItem(`ai_timer_${convId}`);
+			} catch (e) {
+				console.error('Fehler beim Entfernen des Timers aus LocalStorage:', e);
+			}
+		}		
 
 						
 		// Swipe abschließen
