@@ -3428,61 +3428,64 @@
 		  window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
 		}
 
-		// Helfer: tatsächliche AI-Antwort triggern
 		async function triggerAiReply(convId) {
-		  const t = window.aiReplyTimers[convId];
-		  if (!t) return;
+		    const t = window.aiReplyTimers[convId];
+		    if (!t) return;
 		
-		  const combinedUserText = (t.pendingUserMessages || []).map(m => m.text).join("\n");
-		  t.pendingUserMessages = [];
-		  removeTimerFromStorage(convId);
-		
-		  // 👉 Hole die echte AI-Profil-ID (z. B. "ai_max"), nicht die convId
-		  const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
-		
-		  try {
-		    const response = await fetch('/.netlify/functions/ai_chat_responses', {
-		      method: 'POST',
-		      headers: { 'Content-Type': 'application/json' },
-		      body: JSON.stringify({
-		        aiProfileId: aiProfileId,         // ✅ richtige ID
-		        userMessage: combinedUserText,
-		        userProfile: {
-		          name: currentUser?.email || null,
-		          interests: currentProfile?.interests || []
-		        },
-		        conversationId: convId            // ✅ bleibt als Konversations-ID
-		      })
-		    });
-		
-		    const contentType = response.headers.get("content-type");
-		    if (!contentType || !contentType.includes("application/json")) {
-		      const text = await response.text();
-		      throw new Error("Unexpected non-JSON response: " + text.slice(0, 200));
+		    // ✅ Prüfen, ob das Match wirklich ein AI-Match ist
+		    if (!chatState.currentMatchId?.startsWith('ai_match_')) {
+		        console.log("triggerAiReply: Kein AI-Match, überspringe AI-Antwort");
+		        return;
 		    }
 		
-		    const result = await response.json();
+		    // Safe replace
+		    const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
 		
-		    if (result && result.success) {
-		      saveAIMessage('ai', result.response);
-		      loadAIMessages();
-		    } else {
-		      saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...");
-		      loadAIMessages();
+		    try {
+		        const combinedUserText = (t.pendingUserMessages || []).map(m => m.text).join("\n");
+		        t.pendingUserMessages = [];
+		        removeTimerFromStorage(convId);
+		
+		        const response = await fetch('/.netlify/functions/ai_chat_responses', {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({
+		                aiProfileId: aiProfileId,
+		                userMessage: combinedUserText,
+		                userProfile: {
+		                    name: currentUser?.email || null,
+		                    interests: currentProfile?.interests || []
+		                },
+		                conversationId: convId
+		            })
+		        });
+		
+		        const contentType = response.headers.get("content-type");
+		        if (!contentType || !contentType.includes("application/json")) {
+		            const text = await response.text();
+		            throw new Error("Unexpected non-JSON response: " + text.slice(0, 200));
+		        }
+		
+		        const result = await response.json();
+		        if (result && result.success) {
+		            saveAIMessage('ai', result.response);
+		            loadAIMessages();
+		        } else {
+		            saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...");
+		            loadAIMessages();
+		        }
+		    } catch (err) {
+		        console.error('AI reply failed', err);
+		        saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
+		        loadAIMessages();
+		    } finally {
+		        if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
+		            clearTimeout(window.aiReplyTimers[convId].id);
+		        }
+		        removeTimerFromStorage(convId);
+		        delete window.aiReplyTimers[convId];
 		    }
-		  } catch (err) {
-		    console.error('AI reply failed', err);
-		    saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
-		    loadAIMessages();
-		  } finally {
-		    if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
-		      clearTimeout(window.aiReplyTimers[convId].id);
-		    }
-		    removeTimerFromStorage(convId);
-		    delete window.aiReplyTimers[convId];
-		  }
 		}
-
 
 						
 		// Swipe abschließen
