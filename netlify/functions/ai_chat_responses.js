@@ -326,7 +326,6 @@ exports.handler = async (event) => {
     // Conditions for LLM fallback would be: long message, ambiguous question, or special flags.
     // But since we run rule-only now, we try to craft nicer answers by mixing templates.
     const rule = intentObj.intent;
-    let rawResponse = ''; // FIXED: Removed duplicate declaration
 
     // Short-circuit friendly replies: when message extremely short or greeting -> keep very short
     if (rule === 'greeting') {
