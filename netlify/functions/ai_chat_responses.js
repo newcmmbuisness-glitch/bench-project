@@ -211,7 +211,7 @@ exports.handler = async (event) => {
       if (/(treffen|date|whatsapp|nummer|treffen|slide)/.test(s)) return { intent: 'date', score: 0.95 };
       if (/(wein|wine)/.test(s)) return { intent: 'interest_wine', score: 0.8 };
       if (/(musik|song|band)/.test(s)) return { intent: 'interest_music', score: 0.8 };
-      if /(tätowier|tätowiert|tattoo|augen tätowieren)/.test(s)) return { intent: 'teasing_tattoo', score: 0.85 };
+      if (/(tätowier|tätowiert|tattoo|augen tätowieren)/.test(s)) return { intent: 'teasing_tattoo', score: 0.85 };
       if (/\?/.test(s) || /(warum|wie|wieso|was|welche|wann|wo)/.test(s)) return { intent: 'question', score: 0.7 };
       if (/(spaß|spaßig|vllt|vielleicht|aufmerksamkeit|ehrlich)/.test(s)) return { intent: 'goals', score: 0.6 };
       if (s.length < 20) return { intent: 'short', score: 0.4 };
