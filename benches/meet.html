@@ -3397,77 +3397,64 @@
 		}
 
 		async function sendAIMessage(messageText) {
-			if (!chatState.currentMatchId) return;
-
-			// Speichert die Nachricht sofort im Chat-Fenster
-			saveAIMessage('user', messageText);
-			loadAIMessages();
-
-			const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
-			const convId = aiProfileId; // Für AI-Chats ist die Konversations-ID die Profil-ID
-
-			// Abrufen oder Erstellen des Timer-Datensatzes aus LocalStorage
-			let timerData = JSON.parse(localStorage.getItem(`ai_timer_${convId}`) || 'null');
-			if (!timerData) {
-				timerData = {
-					dueAt: null,
-					pendingUserMessages: []
-				};
-			}
-
-			// Nachricht zur Warteliste hinzufügen
-			timerData.pendingUserMessages.push({ text: messageText, ts: Date.now() });
-
-			// Funktion zur Berechnung der dynamischen Verzögerung
-			function getDynamicDelay(isFirst) {
-				if (isFirst) {
-					return Math.floor(Math.random() * (60000 - 8000)) + 8000; // 8–60 Sek
-				}
-				// Annahme: chatState.chatHistory wird korrekt gefüllt
-				const lastUser = (chatState.chatHistory || []).filter(m => m.sender === 'user').slice(-1)[0];
-				const since = lastUser ? (Date.now() - new Date(lastUser.timestamp).getTime()) : Infinity;
-				const engaged = since < 2 * 60000;
-
-				if (engaged) {
-					return Math.floor(Math.random() * (60000 - 8000)) + 8000; // 8–60 Sek
-				} else {
-					return Math.floor(Math.random() * (10 * 60000 - 2 * 60000)) + 2 * 60000; // 2–10 Min
-				}
-			}
-
-			// Alten Timer löschen, falls vorhanden
-			// Die ID ist nun in einem eigenen Objekt gespeichert, das nicht im localStorage liegt
-			if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
-				clearTimeout(window.aiReplyTimers[convId].id);
-			}
-
-			const isFirst = !(chatState.chatHistory && chatState.chatHistory.length > 0);
-			const delay = getDynamicDelay(isFirst);
-			timerData.dueAt = Date.now() + delay;
-
-			// Timer-Daten im LocalStorage aktualisieren
-			localStorage.setItem(`ai_timer_${convId}`, JSON.stringify(timerData));
-
-			console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay / 1000)}s`);
-
-			// Timer im Arbeitsspeicher des Browsers setzen
-			// Die ID kann nicht im localStorage gespeichert werden, da sie spezifisch für das aktuelle Fenster ist
-			window.aiReplyTimers[convId] = window.aiReplyTimers[convId] || {};
-			window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
+		    if (!chatState.currentMatchId) return;
+		
+		    saveAIMessage('user', messageText);
+		    loadAIMessages();
+		
+		    // KORREKT: Verwenden Sie die vollständige ID aus chatState
+		    const convId = chatState.currentMatchId;
+		    const aiProfileId = convId.replace('ai_match_', '');
+		
+		    // Abrufen oder Erstellen des Timer-Datensatzes aus LocalStorage
+		    let timerData = JSON.parse(localStorage.getItem(`ai_timer_${convId}`) || 'null');
+		    if (!timerData) {
+		        timerData = {
+		            dueAt: null,
+		            pendingUserMessages: []
+		        };
+		    }
+		
+		    timerData.pendingUserMessages.push({ text: messageText, ts: Date.now() });
+		
+		    function getDynamicDelay(isFirst) {
+		        if (isFirst) {
+		            return Math.floor(Math.random() * (60000 - 8000)) + 8000;
+		        }
+		        const lastUser = (chatState.chatHistory || []).filter(m => m.sender === 'user').slice(-1)[0];
+		        const since = lastUser ? (Date.now() - new Date(lastUser.timestamp).getTime()) : Infinity;
+		        const engaged = since < 2 * 60000;
+		
+		        if (engaged) {
+		            return Math.floor(Math.random() * (60000 - 8000)) + 8000;
+		        } else {
+		            return Math.floor(Math.random() * (10 * 60000 - 2 * 60000)) + 2 * 60000;
+		        }
+		    }
+		
+		    if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
+		        clearTimeout(window.aiReplyTimers[convId].id);
+		    }
+		
+		    const isFirst = !(chatState.chatHistory && chatState.chatHistory.length > 0);
+		    const delay = getDynamicDelay(isFirst);
+		    timerData.dueAt = Date.now() + delay;
+		
+		    localStorage.setItem(`ai_timer_${convId}`, JSON.stringify(timerData));
+		
+		    console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay / 1000)}s`);
+		
+		    window.aiReplyTimers[convId] = window.aiReplyTimers[convId] || {};
+		    window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
 		}
 				
-		// Angepasste Funktion zum Auslösen der KI-Antwort
 		async function triggerAiReply(convId) {
-		    // Daten aus dem LocalStorage abrufen
 		    const timerData = JSON.parse(localStorage.getItem(`ai_timer_${convId}`));
 		    if (!timerData) {
 		        console.log("triggerAiReply: Timer-Daten nicht gefunden, überspringe AI-Antwort");
 		        return;
 		    }
-		
-		    // ✅ KORREKT: Prüfung, ob die ID mit 'ai_match_' beginnt
-		    // Dies ist zuverlässig, da convId immer vom Timer kommt,
-		    // der in sendAIMessage gesetzt wurde.
+		    
 		    if (!convId.startsWith('ai_match_')) {
 		        console.log("triggerAiReply: Kein AI-Match, überspringe AI-Antwort");
 		        removeTimerFromStorage(convId);
