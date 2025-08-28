@@ -3020,7 +3020,8 @@
 			
 			try {
 				if (isAIChat) {
-					// Handle AI chat
+					saveAIMessage('user', originalValue, chatState.currentMatchId);
+					loadAIMessages();
 					sendAIMessage(originalValue);
 				} else {
 					// Handle real user chat
