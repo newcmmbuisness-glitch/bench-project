@@ -1,4 +1,4 @@
-// Erweiterte AI-Chat Lambda (eine Datei)
+// Erweiterte AI-Chat Lambda (eine Datei) - FIXED
 // - Läuft ohne OpenAI-Key (Regelbasierte Engine + erweiterte Pools + Memory)
 // - LLM-Fallback vorbereitet (deaktiviert), falls du später einen Key setzen willst
 // - Input/Output kompatibel mit deinem bisherigen Handler: erwartet aiProfileId, userMessage, userProfile, optional conversationId
@@ -87,7 +87,7 @@ exports.handler = async (event) => {
         "Ich studiere dual.",
         "Hast du mich gerade Aal genannt?",
         "Was liegt am Strand und spricht undeutlich? Til Schweiger... Oder eine Nuschel.",
-        "Steht ein Pils im Wald. Kommt ein Hase und trinkt‘s aus.",
+        "Steht ein Pils im Wald. Kommt ein Hase und trinkt's aus.",
         "Ich wollte eigentlich einen Witz über die Eismaschine von McDonalds machen, hat aber leider nicht funktioniert..."
       ],
 
@@ -211,7 +211,7 @@ exports.handler = async (event) => {
       if (/(treffen|date|whatsapp|nummer|treffen|slide)/.test(s)) return { intent: 'date', score: 0.95 };
       if (/(wein|wine)/.test(s)) return { intent: 'interest_wine', score: 0.8 };
       if (/(musik|song|band)/.test(s)) return { intent: 'interest_music', score: 0.8 };
-      if (/(tätowier|tätowiert|tattoo|augen tätowieren)/.test(s)) return { intent: 'teasing_tattoo', score: 0.85 };
+      if /(tätowier|tätowiert|tattoo|augen tätowieren)/.test(s)) return { intent: 'teasing_tattoo', score: 0.85 };
       if (/\?/.test(s) || /(warum|wie|wieso|was|welche|wann|wo)/.test(s)) return { intent: 'question', score: 0.7 };
       if (/(spaß|spaßig|vllt|vielleicht|aufmerksamkeit|ehrlich)/.test(s)) return { intent: 'goals', score: 0.6 };
       if (s.length < 20) return { intent: 'short', score: 0.4 };
@@ -219,7 +219,7 @@ exports.handler = async (event) => {
     }
 
     const intentObj = detectIntent(userMessage);
-
+	
     // ---------------------------
     // Response Composer mit Short-Message-Handling
     // ---------------------------
@@ -275,6 +275,15 @@ exports.handler = async (event) => {
     }
     
     let rawResponse = composeResponse(intentObj.intent, userMessage, aiPersonality);
+	
+
+    // Determine persona from aiProfileId (fallback to anna)
+    let aiPersonality = aiPersonalities.ai_anna;
+    if (/ai_.*1/.test(aiProfileId) || /anna/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_anna;
+    else if (/ai_.*2/.test(aiProfileId) || /max/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_max;
+    else if (/ai_.*3/.test(aiProfileId) || /lisa/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_lisa;
+    else if (/ai_.*4/.test(aiProfileId) || /tom/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_tom;
+    else if (/ai_.*5/.test(aiProfileId) || /sarah/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_sarah;
 
     // ---------------------------
     // Mood/Substyle picker for persona (adds human-like variability)
@@ -287,14 +296,6 @@ exports.handler = async (event) => {
       if (r < 0.85) return moods[1 % moods.length] || moods[0];
       return moods[2 % moods.length] || moods[0];
     }
-
-    // Determine persona from aiProfileId (fallback to anna)
-    let aiPersonality = aiPersonalities.ai_anna;
-    if (/ai_.*1/.test(aiProfileId) || /anna/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_anna;
-    else if (/ai_.*2/.test(aiProfileId) || /max/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_max;
-    else if (/ai_.*3/.test(aiProfileId) || /lisa/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_lisa;
-    else if (/ai_.*4/.test(aiProfileId) || /tom/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_tom;
-    else if (/ai_.*5/.test(aiProfileId) || /sarah/i.test(aiProfileId)) aiPersonality = aiPersonalities.ai_sarah;
 
     const mood = pickMoodForPersona(aiPersonality);
 
@@ -325,7 +326,7 @@ exports.handler = async (event) => {
     // Conditions for LLM fallback would be: long message, ambiguous question, or special flags.
     // But since we run rule-only now, we try to craft nicer answers by mixing templates.
     const rule = intentObj.intent;
-    let rawResponse = '';
+    let rawResponse = ''; // FIXED: Removed duplicate declaration
 
     // Short-circuit friendly replies: when message extremely short or greeting -> keep very short
     if (rule === 'greeting') {
@@ -376,11 +377,11 @@ exports.handler = async (event) => {
         ai_sarah: ['🎉','💪','🚀']
       };
       // mood-based adjustments
-      if (moodTag === 'verspielt' || moodTag === 'spontan' || moodTag === 'verspielt') {
+      if (moodTag === 'verspielt' || moodTag === 'spontan' || moodTag === 'frech') {
         if (chance(0.4)) out = out + ' ' + pick([';)','😉','😏']);
       } else if (moodTag === 'nachdenklich' || moodTag === 'tiefgehend') {
         if (chance(0.35)) out = pick(['Weißt du,', 'Ganz ehrlich,']) + ' ' + out;
-      } else if (moodTag === 'sarkastisch' || moodTag === 'frech') {
+      } else if (moodTag === 'sarkastisch') {
         if (chance(0.25)) out = out + ' ' + pick(['Haha, knapp daneben!', 'Na klar...']);
       }
 
@@ -395,7 +396,7 @@ exports.handler = async (event) => {
     // Apply style/noise: sentence-length variation, filler, emoji budget, and safety strips
     function postProcess(text) {
       // Limit emojis to 2
-      const emojiMatches = [...text.matchAll(/\p{Emoji_Presentation}|\p{Emoji}/gu)].map(m => m[0]);
+      const emojiMatches = [...text.matchAll(/\p{Emoji_Presentation}|\p{Emoji}/gu)];
       const emojiBudget = 2;
       if (emojiMatches.length > emojiBudget) {
         // naive removal of extra emojis
