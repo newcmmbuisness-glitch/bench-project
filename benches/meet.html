@@ -2993,9 +2993,8 @@
 			const messageText = messageInput.value.trim();
 			
 			if (!messageText || !chatState.currentMatchId || !currentUser.uid) {
-				if (!messageText) {
-					showNotification('Bitte gib eine Nachricht ein', 'error');
-				}
+				
+				
 				return;
 			}
 			
