@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>One-T-Meet - Dating mit Bank-Meetings</title>
+    <title>One To Meet</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -496,18 +496,20 @@
 		    margin-bottom: 20px;
 		}
 
-        .swipe-card {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            cursor: grab;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            overflow: hidden;
-            user-select: none;
-        }
+		.swipe-card {
+			position: relative;
+			width: 100%;
+			height: 100%; /* Wichtig: Macht die Karte flexibel, um den Inhalt anzupassen */
+			background: white;
+			border-radius: 15px;
+			box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+			cursor: grab;
+			transition: transform 0.3s ease, opacity 0.3s ease;
+			overflow: hidden;
+			user-select: none;
+			display: flex; /* Neu: Verwenden Sie Flexbox, um den Inhalt zu handhaben */
+			flex-direction: column;
+		}
 
 		.swipe-card.dragging {
 		    pointer-events: none;
@@ -523,22 +525,26 @@
             transform: translateX(100%) rotate(30deg);
             opacity: 0;
         }
-
-        .card-image {
-            width: 100%;
-            height: 60%;
-            object-fit: cover;
-        }
+		.card-image {
+			width: 100%;
+			height: 100%; /* Der entscheidende Punkt: Bild füllt die gesamte Höhe */
+			object-fit: cover;
+			position: absolute; /* Neu: Absolute Position, um das Bild als Hintergrund zu verwenden */
+			top: 0;
+			left: 0;
+			z-index: 1; /* Neu: Stellt sicher, dass das Bild hinter dem Inhalt liegt */
+		}
 
 		.card-content {
-			position: absolute;
-			bottom: 0;
-			left: 0;
-			right: 0;
+			position: relative; /* Neu: Setzen Sie die Position auf relativ, um z-index zu aktivieren */
+			z-index: 2; /* Neu: Stellt sicher, dass der Inhalt über dem Bild liegt */
+			flex-grow: 1; /* Neu: Lässt den Inhalt den verbleibenden Platz ausfüllen */
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-end; /* Schiebt den Inhalt an den unteren Rand */
 			background: linear-gradient(transparent, rgba(0,0,0,0.7));
 			color: white;
 			padding: 20px;
-			border-radius: 0 0 15px 15px;
 		}
 
 		.card-header {
