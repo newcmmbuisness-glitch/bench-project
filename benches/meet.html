@@ -3305,8 +3305,11 @@
 			if (chatModal) {
 				chatModal.remove();
 			}
-	
 			
+			// Clear polling interval
+			if (chatState.messageInterval) {
+				clearInterval(chatState.messageInterval);
+			}
 			
 			// Reset chat state completely
 			chatState = {
