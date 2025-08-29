@@ -3765,13 +3765,11 @@
 		            card.setAttribute('data-gestures-setup', 'true');
 		            
 		            // Klick für Profil-Details
-		            const cardImage = card.querySelector('.card-image');
-		            if (cardImage) {
 		                cardImage.addEventListener('click', (e) => {
 		                    e.stopPropagation();
 		                    showProfileDetails(card.__profile);
 		                });
-		            }
+		            
 		        }
 		    });
 		}
