@@ -1941,6 +1941,32 @@
 		    }
 		}
 
+		function renderPreferences() {
+		    const preferencesDiv = document.getElementById('preferencesIcons');
+		    if (preferencesDiv) {
+		        preferencesDiv.innerHTML = ''; // Vorherige Icons leeren
+		        
+		        // Definiere verfügbare Präferenzen mit ihren Emojis
+		        const preferencesOptions = {
+		            'wine': '🍷',
+		            '420': '🍃', 
+		            'coffee': '☕',
+		            'book': '📚',
+		            'bike': '🚲'
+		        };
+		        
+		        Object.entries(preferencesOptions).forEach(([pref, emoji]) => {
+		            const isSelected = selectedPreferences.includes(pref) ? 'selected' : '';
+		            const option = document.createElement('div');
+		            option.className = `preference-option ${isSelected}`;
+		            option.dataset.value = pref; // WICHTIG: data-value setzen
+		            option.setAttribute('onclick', `togglePreference(this, '${pref}')`);
+		            option.innerHTML = `<span>${emoji}</span><div class="tooltip">${pref}</div>`;
+		            preferencesDiv.appendChild(option);
+		        });
+		    }
+		}		
+
 		// Ihre neue Render-Funktion für Hobbies
 		function renderHobbies() {
 		    const hobbiesDiv = document.getElementById('hobbiesIcons');
