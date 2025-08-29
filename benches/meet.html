@@ -1829,41 +1829,42 @@
 		
 		        if (response.ok && result.profile) {
 		            currentProfile = result.profile;
-		            
-		            // FIX: Interests korrekt verarbeiten (kann null, Array oder String sein)
-		            let interests = [];
-		            if (Array.isArray(currentProfile.interests)) {
-		                interests = currentProfile.interests.filter(i => i !== null && i !== undefined);
-		            } else if (currentProfile.interests) {
-		                interests = [currentProfile.interests];
-		            }
-		                
-		            document.getElementById('popupProfileName').textContent = currentProfile.profile_name;
+		
+		            // ✅ Name + Alter
+		            document.getElementById('popupProfileName').textContent = 
+		                `${currentProfile.profile_name}, ${currentProfile.age || ''}`;
+		
 		            document.getElementById('popupProfileImage').src = currentProfile.profile_image;
 		            document.getElementById('popupProfileDescription').textContent = currentProfile.description;
 		
+		            // ✅ Entfernung berechnen, wenn Koordinaten vorhanden
+		            let distanceText = '';
+		            if (currentProfile.latitude && currentProfile.longitude && currentUser.latitude && currentUser.longitude) {
+		                const dist = calculateDistance(
+		                    currentUser.latitude, currentUser.longitude,
+		                    currentProfile.latitude, currentProfile.longitude
+		                );
+		                distanceText = `${dist} km entfernt`;
+		            }
+		
+		            if (distanceText) {
+		                // Extra Feld für Entfernung anzeigen (falls noch nicht im HTML)
+		                const distElem = document.getElementById('popupProfileDistance') || document.createElement('p');
+		                distElem.id = 'popupProfileDistance';
+		                distElem.className = "text-gray-500 text-sm mb-2";
+		                distElem.textContent = distanceText;
+		                document.getElementById('profilePopup').insertBefore(distElem, document.getElementById('popupProfileDescription'));
+		            }
+		
+		            // ✅ Interessen rendern
 		            const interestsDiv = document.getElementById('popupProfileInterests');
 		            interestsDiv.innerHTML = '';
-		            
-		            // Kombinierte emoji map für alle Interessen
 		            const allEmojis = {
-		                'wine': '🍷',
-		                '420': '🍃',
-		                'coffee': '☕',
-		                'book': '📚',
-		                'bike': '🚲',
-		                'Kochen': '👩‍🍳',
-		                'Gaming': '🎮',
-		                'Wandern': '⛰️',
-		                'Fotografie': '📸',
-		                'Musik': '🎵',
-		                'Filme': '🎬',
-		                'Sport': '🏋️',
-		                'Kunst': '🎨',
-		                'Haustiere': '🐶'
+		                'wine': '🍷','420': '🍃','coffee': '☕','book': '📚','bike': '🚲',
+		                'Kochen': '👩‍🍳','Gaming': '🎮','Wandern': '⛰️','Fotografie': '📸',
+		                'Musik': '🎵','Filme': '🎬','Sport': '🏋️','Kunst': '🎨','Haustiere': '🐶'
 		            };
-		            
-		            interests.forEach(interest => {
+		            (Array.isArray(currentProfile.interests) ? currentProfile.interests : []).forEach(interest => {
 		                const span = document.createElement('span');
 		                const emoji = allEmojis[interest] || '❓';
 		                span.textContent = `${emoji} ${interest}`;
@@ -1882,11 +1883,12 @@
 		    }
 		}
 
+
 		function closeProfilePopup() {
 			document.getElementById('profilePopup').style.display = 'none';
 			document.getElementById('modalOverlay').style.display = 'none';
 		}
-
+		
 		async function editProfile() {
 		    if (!currentProfile) {
 		        showNotification('❌ Profil-Daten nicht verfügbar', 'error');
@@ -1894,28 +1896,25 @@
 		    }
 		    
 		    try {
-		        // Formular mit aktuellen Daten vorausfüllen
 		        document.getElementById('profileName').value = currentProfile.profile_name || '';
 		        document.getElementById('profileDescription').value = currentProfile.description || '';
 		        document.getElementById('postalCode').value = currentProfile.postal_code || '';
-		        
-		        // FIX: Interessen korrekt aufteilen
+		        // ✅ Alter vorausfüllen
+		        document.getElementById('profileAge').value = currentProfile.age || '';
+		
 		        const interests = Array.isArray(currentProfile.interests) 
 		            ? currentProfile.interests 
 		            : (currentProfile.interests ? [currentProfile.interests] : []);
-		            
-		        // Aufteilen in Genussmittel und Hobbies
+		
 		        const preferencesOptions = ['wine', '420', 'coffee', 'book', 'bike'];
 		        const hobbiesOptions = ['Kochen', 'Gaming', 'Wandern', 'Fotografie', 'Musik', 'Filme', 'Sport', 'Kunst', 'Haustiere'];
-		        
+		
 		        selectedPreferences = interests.filter(i => preferencesOptions.includes(i));
 		        selectedHobbies = interests.filter(i => hobbiesOptions.includes(i));
-		        
-		        // UI aktualisieren
+		
 		        renderPreferences();
 		        renderHobbies();
-		        
-		        // Prompts und Antworten setzen
+		
 		        if (currentProfile.prompt_1) {
 		            document.getElementById('prompt1Select').value = currentProfile.prompt_1;
 		            document.getElementById('answer1Input').value = currentProfile.answer_1 || '';
@@ -1924,53 +1923,19 @@
 		            document.getElementById('prompt2Select').value = currentProfile.prompt_2;
 		            document.getElementById('answer2Input').value = currentProfile.answer_2 || '';
 		        }
-		        
-		        // Profile Popup schließen und Edit-Form anzeigen
+		
 		        closeProfilePopup();
 		        showCreateProfileForm();
-		        
-		        // Formular-Titel ändern
+		
 		        const formTitle = document.querySelector('#createProfileModal h2');
-		        if (formTitle) {
-		            formTitle.textContent = '✏️ Profil bearbeiten';
-		        }
-		        
-		        // Submit-Button Text ändern
+		        if (formTitle) formTitle.textContent = '✏️ Profil bearbeiten';
+		
 		        const submitBtn = document.querySelector('#createProfileModal button[type="submit"]');
-		        if (submitBtn) {
-		            submitBtn.innerHTML = '💾 Änderungen speichern';
-		        }
-		        
+		        if (submitBtn) submitBtn.innerHTML = '💾 Änderungen speichern';
+		
 		    } catch (error) {
 		        console.error('Fehler beim Bearbeiten:', error);
 		        showNotification('Fehler beim Laden der Profil-Daten', 'error');
-		    }
-		}
-
-		
-		function renderPreferences() {
-		    const preferencesDiv = document.getElementById('preferencesIcons');
-		    if (preferencesDiv) {
-		        preferencesDiv.innerHTML = ''; // Vorherige Icons leeren
-		        
-		        // Definiere verfügbare Präferenzen mit ihren Emojis
-		        const preferencesOptions = {
-		            'wine': '🍷',
-		            '420': '🍃', 
-		            'coffee': '☕',
-		            'book': '📚',
-		            'bike': '🚲'
-		        };
-		        
-		        Object.entries(preferencesOptions).forEach(([pref, emoji]) => {
-		            const isSelected = selectedPreferences.includes(pref) ? 'selected' : '';
-		            const option = document.createElement('div');
-		            option.className = `preference-option ${isSelected}`;
-		            option.dataset.value = pref; // WICHTIG: data-value setzen
-		            option.setAttribute('onclick', `togglePreference(this, '${pref}')`);
-		            option.innerHTML = `<span>${emoji}</span><div class="tooltip">${pref}</div>`;
-		            preferencesDiv.appendChild(option);
-		        });
 		    }
 		}
 
