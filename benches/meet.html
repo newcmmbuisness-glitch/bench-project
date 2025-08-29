@@ -545,8 +545,7 @@
 			display: flex;
 			justify-content: space-between;
 			align-items: center; 
-			margin-bottom: 8px;
-			display: inline-block;
+			padding: 0 10px;
 		}
 
 		.card-name {
@@ -554,6 +553,12 @@
 			font-weight: 700;
 			margin: 0;
 			text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+		}
+		
+		.card-name-age {
+			display: flex; /* Korrigiert: Macht Name und Alter zu einer Flexbox */
+			align-items: baseline; /* Stellt sicher, dass sie auf der gleichen Grundlinie sind */
+			gap: 8px; /* Fügt einen kleinen Abstand zwischen Name und Alter hinzu */
 		}
 
 		.card-distance {
