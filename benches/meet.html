@@ -3751,27 +3751,29 @@
 			}, 300);
 		}
 
-		// Verbleibende Karten im Stack aktualisieren
 		function updateCardStack() {
-		    const cards = document.querySelectorAll('.swipe-card');
-		    cards.forEach((card, index) => {
-		        card.dataset.stackIndex = index;
-		        card.style.zIndex = 10 - index;
-		        card.style.transform = `scale(${1 - index * 0.03}) translateY(${index * 4}px)`;
-		        
-		        // Event Listeners nur für neue oberste Karte
-		        if (index === 0 && !card.hasAttribute('data-gestures-setup')) {
-		            setupSwipeGestures(card);
-		            card.setAttribute('data-gestures-setup', 'true');
-		            
-		            // Klick für Profil-Details
-		                cardImage.addEventListener('click', (e) => {
-		                    e.stopPropagation();
-		                    showProfileDetails(card.__profile);
-		                });
-		            
-		        }
-		    });
+			const cards = document.querySelectorAll('.swipe-card');
+			cards.forEach((card, index) => {
+				card.dataset.stackIndex = index;
+				card.style.zIndex = 10 - index;
+				card.style.transform = `scale(${1 - index * 0.03}) translateY(${index * 4}px)`;
+				
+				// Event Listeners nur für die neue oberste Karte
+				if (index === 0 && !card.hasAttribute('data-gestures-setup')) {
+					setupSwipeGestures(card);
+					card.setAttribute('data-gestures-setup', 'true');
+					
+					// Klick für Profil-Details - auf der gesamten Karte
+					card.addEventListener('click', (e) => {
+						e.stopPropagation();
+						// Verhindert das Öffnen des Popups, wenn der Swipe-Aktions-Bereich geklickt wird
+						if (e.target.closest('.swipe-actions')) {
+							return;
+						}
+						showProfileDetails(card.__profile);
+					});
+				}
+			});
 		}
 
 		// Like verarbeiten - FIXED VERSION
