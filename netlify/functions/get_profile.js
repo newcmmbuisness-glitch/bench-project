@@ -48,38 +48,43 @@ exports.handler = async (event, context) => {
 
         // ✅ KORREKTUR: Verwenden Sie hier die richtigen Spaltennamen mit Unterstrich
         profiles = await sql`
-            SELECT 
-                mp.user_id, 
-                mp.profile_name, 
-                mp.profile_image, 
-                mp.description, 
-                mp.interests,
-                mp.postal_code,
-                mp.prompt_1,
-                mp.answer_1,
-                mp.prompt_2,
-                mp.answer_2,
-                u.email
-            FROM meet_profiles mp
-            JOIN users u ON mp.user_id = u.id
-            WHERE mp.user_id != ALL(${likedUserIds})
-            ORDER BY RANDOM()
-            LIMIT 10
+          SELECT 
+            mp.user_id, 
+            mp.profile_name, 
+            mp.age,
+            mp.profile_image, 
+            mp.description, 
+            mp.interests,
+            mp.postal_code,
+            mp.latitude,
+            mp.longitude,
+            mp.prompt_1,
+            mp.answer_1,
+            mp.prompt_2,
+            mp.answer_2,
+            u.email
+          FROM meet_profiles mp
+          JOIN users u ON mp.user_id = u.id
+          WHERE mp.user_id != ALL(${likedUserIds})
+          ORDER BY RANDOM()
+          LIMIT 10
         `;
-
+        
         const formattedProfiles = profiles.map(profile => ({
-            user_id: profile.user_id,
-            profile_name: profile.profile_name,
-            profile_image: profile.profile_image,
-            description: profile.description,
-            interests: profile.interests || [],
-            postal_code: profile.postal_code,
-            // ✅ KORREKTUR: Die Namen der Eigenschaften in der Antwort anpassen
-            prompt1: profile.prompt_1,
-            answer1: profile.answer_1,
-            prompt2: profile.prompt_2,
-            answer2: profile.answer_2,
-            email: profile.email
+          user_id: profile.user_id,
+          profile_name: profile.profile_name,
+          age: profile.age,
+          profile_image: profile.profile_image,
+          description: profile.description,
+          interests: profile.interests || [],
+          postal_code: profile.postal_code,
+          latitude: profile.latitude,
+          longitude: profile.longitude,
+          prompt1: profile.prompt_1,
+          answer1: profile.answer_1,
+          prompt2: profile.prompt_2,
+          answer2: profile.answer_2,
+          email: profile.email
         }));
 
         return {
