@@ -2638,18 +2638,45 @@
 		// Neue Funktion für Profil-Details
 		function showProfileDetails(profile) {
 		    const profileName = profile.profile_name || profile.name || "Unbekannt";
+		    const profileAge = profile.age ? `, ${profile.age}` : "";
 		    const profileDescription = profile.description || "Keine Beschreibung verfügbar";
 		    const prefs = profile.interests || profile.preferences || [];
-		    
 		    let profileImage = profile.profile_image || profile.image;
-		    
-		    
+		
+		    // ✅ Entfernung berechnen (falls Koordinaten verfügbar)
+		    let distanceText = "";
+		    if (profile.latitude && profile.longitude && currentUser?.latitude && currentUser?.longitude) {
+		        const dist = calculateDistance(
+		            currentUser.latitude, currentUser.longitude,
+		            profile.latitude, profile.longitude
+		        );
+		        distanceText = `<p class="text-gray-500 text-sm mb-2">📍 ${dist} km entfernt</p>`;
+		    }
+		
+		    // ✅ Prompts & Antworten
+		    let promptsHtml = "";
+		    if (profile.prompt1 && profile.answer1) {
+		        promptsHtml += `
+		            <div class="mb-4">
+		                <h4 class="text-md font-semibold text-gray-700 mb-1">${profile.prompt1}</h4>
+		                <p class="text-gray-600">${profile.answer1}</p>
+		            </div>`;
+		    }
+		    if (profile.prompt2 && profile.answer2) {
+		        promptsHtml += `
+		            <div class="mb-4">
+		                <h4 class="text-md font-semibold text-gray-700 mb-1">${profile.prompt2}</h4>
+		                <p class="text-gray-600">${profile.answer2}</p>
+		            </div>`;
+		    }
+		
+		    // ✅ Interessen rendern
 		    const preferencesHtml = prefs.map(pref => {
-			    const emoji = emojiMap[pref] || hobbiesMap[pref] || '❓';
-
+		        const emoji = emojiMap[pref] || hobbiesMap[pref] || '❓';
 		        return `<span class="inline-block m-1 px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">${emoji} ${pref}</span>`;
 		    }).join('');
-		    
+		
+		    // ✅ Gesamtes Modal
 		    const detailsHtml = `
 		        <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" 
 		             onclick="closeProfileModal()">
@@ -2666,9 +2693,10 @@
 		                    </button>
 		                </div>
 		                <div class="p-6">
-		                    <h2 class="text-2xl font-bold text-gray-800 mb-2">${profileName}</h2>
+		                    <h2 class="text-2xl font-bold text-gray-800 mb-1">${profileName}${profileAge}</h2>
+		                    ${distanceText}
 		                    <p class="text-gray-600 mb-4 leading-relaxed">${profileDescription}</p>
-		                    
+		
 		                    ${prefs.length > 0 ? `
 		                        <div class="mb-6">
 		                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Interessen</h4>
@@ -2677,7 +2705,9 @@
 		                            </div>
 		                        </div>
 		                    ` : ''}
-		                    
+		
+		                    ${promptsHtml}
+		
 		                    <div class="flex space-x-3">
 		                        <button onclick="swipeCard('left'); closeProfileModal();" 
 		                                class="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-6 rounded-full hover:from-red-600 hover:to-red-700 transition-colors font-semibold">
