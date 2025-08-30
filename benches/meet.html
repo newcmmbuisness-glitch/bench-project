@@ -1769,9 +1769,12 @@
 									</div>
 									<div class="flex-1 min-w-0">
 										<h4 class="font-semibold text-lg text-gray-900 truncate">
-											${match.profile_name}, ${match.age || "?"} ❤️ Match
+											${match.profile_name}, ${match.age || "?"} 
 										</h4>
 										<p class="text-sm text-gray-600 truncate">${lastMsg}</p>
+										<span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full">
+											${match.isAI ? '💕 Match' : '💕 Match'}
+									   </span>
 									</div>
 								</div>
 							</div>
