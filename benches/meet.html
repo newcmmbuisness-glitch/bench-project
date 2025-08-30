@@ -1354,7 +1354,9 @@
 		let currentSwipeUser = null;
 		let currentUserId = localStorage.getItem('currentUserId');
 		let isSwipeInProgress = false;
-		let selectedHobbies = [];
+		let selectedHobbies = 
+		let unreadMessageCount = 0;
+		let lastCheckedMessages = {};
 		
 		// Global chat state object instead of individual variables
 		let chatState = {
@@ -1640,11 +1642,18 @@
 		        
 		        // Nach Anmeldung prüfen ob Profil existiert
 		        checkAndRenderUI();
+				setTimeout(initializeNotificationSystem, 1000);
+
 		    } else {
 		        authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
 		        if (userEmailDisplay) {
 		            userEmailDisplay.innerHTML = '';
 		        }
+				
+				unreadMessageCount = 0;
+				lastCheckedMessages = {};
+				updateChatButtonBadge();				
+				
 		        // Floating buttons verstecken wenn nicht angemeldet
 		        document.getElementById('profileButton').classList.add('hidden');
 		        document.getElementById('chatButton').classList.add('hidden');
@@ -1693,6 +1702,18 @@
 		    updateFloatingButtons();
 		    
 		    await loadUserMatches();
+
+			// Mark all messages as read when viewing matches list
+			setTimeout(() => {
+				const allMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+				const now = Date.now();
+				allMatches.forEach(match => {
+					lastCheckedMessages[match.match_id] = now;
+				});
+				localStorage.setItem('lastCheckedMessages', JSON.stringify(lastCheckedMessages));
+				unreadMessageCount = 0;
+				updateChatButtonBadge();
+			}, 500);
 		}
 
 		async function loadUserMatches() {
@@ -3482,6 +3503,7 @@
 
 			// Setup input handler
 			setupMessageInput();
+			markMessagesAsRead(matchId);
 
 			// Load messages based on chat type
 			if (isAIChat) {
@@ -4038,6 +4060,155 @@
 				chatBtn.classList.add('hidden');
 			}
 		}
+				
+
+		function updateChatButtonBadge() {
+			const chatBtn = document.getElementById('chatButton');
+			if (!chatBtn) return;
+			
+			// Remove existing badge
+			const existingBadge = chatBtn.querySelector('.notification-badge');
+			if (existingBadge) {
+				existingBadge.remove();
+			}
+			
+			if (unreadMessageCount > 0) {
+				const badge = document.createElement('div');
+				badge.className = 'notification-badge';
+				badge.textContent = unreadMessageCount > 99 ? '99+' : unreadMessageCount.toString();
+				badge.style.cssText = `
+					position: absolute !important;
+					top: -8px !important;
+					right: -8px !important;
+					background-color: #ff4444 !important;
+					color: white !important;
+					border-radius: 50% !important;
+					width: 24px !important;
+					height: 24px !important;
+					display: flex !important;
+					align-items: center !important;
+					justify-content: center !important;
+					font-size: 12px !important;
+					font-weight: bold !important;
+					border: 2px solid white !important;
+					animation: pulse 2s infinite !important;
+					z-index: 2001 !important;
+				`;
+				chatBtn.appendChild(badge);
+				
+				// Add pulsing animation CSS if not already present
+				if (!document.getElementById('notification-styles')) {
+					const style = document.createElement('style');
+					style.id = 'notification-styles';
+					style.textContent = `
+						@keyframes pulse {
+							0% { transform: scale(1); }
+							50% { transform: scale(1.1); }
+							100% { transform: scale(1); }
+						}
+					`;
+					document.head.appendChild(style);
+				}
+			}
+		}
+
+		// Function to check for new messages across all chats
+		async function checkForNewMessages() {
+			if (!currentUser || !currentUser.uid) return;
+			
+			let newMessageCount = 0;
+			
+			try {
+				// Check real user matches
+				const matchesResponse = await fetch('/.netlify/functions/get_matches', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+				
+				if (matchesResponse.ok) {
+					const matchesResult = await matchesResponse.json();
+					if (matchesResult.success && matchesResult.matches) {
+						
+						for (const match of matchesResult.matches) {
+							const matchId = match.match_id;
+							
+							// Get messages for this match
+							const messagesResponse = await fetch('/.netlify/functions/get_messages', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({ match_id: matchId })
+							});
+							
+							if (messagesResponse.ok) {
+								const messagesResult = await messagesResponse.json();
+								if (messagesResult.success && messagesResult.messages) {
+									const messages = messagesResult.messages;
+									const lastChecked = lastCheckedMessages[matchId] || 0;
+									
+									// Count unread messages from partner
+									const unreadFromPartner = messages.filter(msg => 
+										msg.sender_id !== parseInt(currentUser.uid) && 
+										new Date(msg.sent_at).getTime() > lastChecked
+									).length;
+									
+									newMessageCount += unreadFromPartner;
+								}
+							}
+						}
+					}
+				}
+				
+				// Check AI matches
+				const localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+				const aiMatches = localMatches.filter(m => m.isAI);
+				
+				for (const aiMatch of aiMatches) {
+					const chatId = aiMatch.match_id;
+					const aiMessages = JSON.parse(localStorage.getItem(`ai_chat_${chatId}`) || '[]');
+					const lastChecked = lastCheckedMessages[chatId] || 0;
+					
+					// Count unread messages from AI
+					const unreadFromAI = aiMessages.filter(msg => 
+						msg.sender === 'ai' && 
+						new Date(msg.timestamp).getTime() > lastChecked
+					).length;
+					
+					newMessageCount += unreadFromAI;
+				}
+				
+				unreadMessageCount = newMessageCount;
+				updateChatButtonBadge();
+				
+			} catch (error) {
+				console.error('Error checking for new messages:', error);
+			}
+		}
+
+		// Function to mark messages as read for a specific chat
+		function markMessagesAsRead(matchId) {
+			lastCheckedMessages[matchId] = Date.now();
+			localStorage.setItem('lastCheckedMessages', JSON.stringify(lastCheckedMessages));
+			
+			// Recheck total unread count
+			setTimeout(checkForNewMessages, 100);
+		}
+				
+		function initializeNotificationSystem() {
+			// Load last checked messages from localStorage
+			const stored = localStorage.getItem('lastCheckedMessages');
+			if (stored) {
+				lastCheckedMessages = JSON.parse(stored);
+			}
+			
+			// Check for messages immediately
+			if (currentUser && currentUser.uid) {
+				checkForNewMessages();
+				
+				// Set up periodic checking (every 30 seconds)
+				setInterval(checkForNewMessages, 30000);
+			}
+		}		
 
 
         function addMatch(profile) {
