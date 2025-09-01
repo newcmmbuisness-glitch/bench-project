@@ -1,3 +1,0 @@
-chatterbot
-chatterbot_corpus
-psycopg2-binary
