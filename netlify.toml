@@ -1,6 +1,2 @@
 [build]
   functions = "netlify/functions"
-
-[functions]
-  # explizit Python 3.10 setzen (3.9 kann gehen, 3.10+ ist stabiler)
-  python = "3.10"
