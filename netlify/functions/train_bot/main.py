@@ -10,7 +10,7 @@ def handler(event, context):
         chatbot = ChatBot(
             'MeinChatbot',
             storage_adapter='chatterbot.storage.SQLStorageAdapter',
-            database_uri=os.environ.get("DATABASE_URL")
+            database_uri=os.environ.get("NETLIFY_DATABASE_URL")
         )
 
         # Trainer-Instanz
