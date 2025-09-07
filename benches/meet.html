@@ -1357,6 +1357,9 @@
 		let selectedHobbies = [];
 		let unreadMessageCount = 0;
 		let lastCheckedMessages = {};
+		let lastMatchesHash = null;
+		let matchesRefreshInterval = null;
+
 		
 		// Global chat state object instead of individual variables
 		let chatState = {
@@ -1688,36 +1691,7 @@
 		    document.getElementById('createProfileModal').style.display = 'none';
 		}
 				
-		async function showMatches() {
-		    if (!currentUser) {
-		        showLogin();
-		        showNotification('🔒 Bitte melden Sie sich an!', 'error');
-		        return;
-		    }
-		    
-		    hideAllScreens();
-		    document.getElementById('matchesContainer').style.display = 'block';
-		    
-		    // Floating buttons verstecken
-		    updateFloatingButtons();
-			startMatchesAutoRefresh(); 
-		    
-		    await loadUserMatches();
-
-			// Mark all messages as read when viewing matches list
-			setTimeout(() => {
-				const allMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-				const now = Date.now();
-				allMatches.forEach(match => {
-					lastCheckedMessages[match.match_id] = now;
-				});
-				localStorage.setItem('lastCheckedMessages', JSON.stringify(lastCheckedMessages));
-				unreadMessageCount = 0;
-				updateChatButtonBadge();
-			}, 500);
-		}
-
-		async function loadUserMatches() {
+		async function loadUserMatches(forceRefresh = false) {
 			const matchesList = document.getElementById('matchesList');
 			
 			if (!matchesList) {
@@ -1725,7 +1699,10 @@
 				return;
 			}
 			
-			matchesList.innerHTML = '<div class="text-center p-4">Lade Matches... 🔄</div>';
+			// Nur Loading-Indikator beim ersten Laden zeigen
+			if (!lastMatchesHash || forceRefresh) {
+				matchesList.innerHTML = '<div class="text-center p-4">Lade Matches... 🔄</div>';
+			}
 			
 			try {
 				// Load real matches from server
@@ -1765,84 +1742,97 @@
 				
 				allMatches = [...allMatches, ...aiMatches];
 				
-				if (allMatches.length > 0) {
-					matchesList.innerHTML = allMatches.map(match => {
-						// Letzte Nachricht aus DB/Objekt
-						const lastMsg = match.last_message
-							? (match.last_message.sender_id === currentUser.uid
-								? `Du: ${match.last_message.text}`
-								: `${match.profile_name}: ${match.last_message.text}`)
-							: "Noch keine Nachrichten";
+				// Erstelle Hash der aktuellen Match-Daten zum Vergleich
+				const currentHash = JSON.stringify(allMatches.map(m => ({
+					id: m.match_id || m.matched_user_id,
+					lastMsg: m.last_message?.text || null,
+					lastMsgTime: m.last_message?.sent_at || null
+				})));
+				
+				// Nur UI aktualisieren wenn sich etwas geändert hat
+				if (currentHash !== lastMatchesHash || forceRefresh) {
+					lastMatchesHash = currentHash;
+					
+					if (allMatches.length > 0) {
+						matchesList.innerHTML = allMatches.map(match => {
+							// Letzte Nachricht aus DB/Objekt
+							const lastMsg = match.last_message
+								? (match.last_message.sender_id === currentUser.uid
+									? `Du: ${match.last_message.text}`
+									: `${match.profile_name}: ${match.last_message.text}`)
+								: "Noch keine Nachrichten";
 
-						// Bestimme die richtige match_id für den onclick
-						const matchId = match.isAI ? `ai_match_${match.matched_user_id}` : match.match_id;
+							// Bestimme die richtige match_id für den onclick
+							const matchId = match.isAI ? `ai_match_${match.matched_user_id}` : match.match_id;
 
-						return `
-							<div class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3"
-								onclick="openMatchChat('${matchId}', '${match.matched_user_id}', '${match.profile_name}', '${match.profile_image}')">
-								<div class="flex items-center space-x-4">
-									<div class="flex-shrink-0 relative">
-										<img src="${match.profile_image}"
-											 alt="${match.profile_name}"
-											 class="w-16 h-16 rounded-full object-cover border-2 border-pink-200">
-									</div>
-									<div class="flex-1 min-w-0">
-										<h4 class="font-semibold text-lg text-gray-900 truncate">
-											${match.profile_name}, ${match.age || "?"} 
-										</h4>
-										<p class="text-sm text-gray-600 truncate">${lastMsg}</p>
-										<span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full">
-											${match.isAI ? '💕 Match' : '💕 Match'}
-									   </span>
+							return `
+								<div class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3"
+									onclick="openMatchChat('${matchId}', '${match.matched_user_id}', '${match.profile_name}', '${match.profile_image}')">
+									<div class="flex items-center space-x-4">
+										<div class="flex-shrink-0 relative">
+											<img src="${match.profile_image}"
+												 alt="${match.profile_name}"
+												 class="w-16 h-16 rounded-full object-cover border-2 border-pink-200">
+										</div>
+										<div class="flex-1 min-w-0">
+											<h4 class="font-semibold text-lg text-gray-900 truncate">
+												${match.profile_name}, ${match.age || "?"} 
+											</h4>
+											<p class="text-sm text-gray-600 truncate">${lastMsg}</p>
+											<span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full">
+												${match.isAI ? '💕 Match' : '💕 Match'}
+										   </span>
+										</div>
 									</div>
 								</div>
+							`;
+						}).join('');
+						
+						// Add back button
+						matchesList.innerHTML += `
+							<div class="mt-6 text-center">
+								<button onclick="showSwipeCards()" 
+										class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
+									← Zurück zum Swipen
+								</button>
 							</div>
 						`;
-					}).join('');
-					
-					// Add back button
-					matchesList.innerHTML += `
-						<div class="mt-6 text-center">
-							<button onclick="showSwipeCards()" 
-									class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
-								← Zurück zum Swipen
-							</button>
-						</div>
-					`;
-				} else {
+					} else {
+						matchesList.innerHTML = `
+							<div class="text-center py-16">
+								<div class="text-8xl mb-6">💔</div>
+								<h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
+								<p class="text-gray-500 mb-8 max-w-sm mx-auto">
+									Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
+								</p>
+								<button onclick="showSwipeCards()" 
+										class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors font-semibold text-lg">
+									💖 Jetzt swipen
+								</button>
+							</div>
+						`;
+					}
+				}
+				
+			} catch (error) {
+				console.error('Fehler beim Laden der Matches:', error);
+				if (forceRefresh || !lastMatchesHash) {
 					matchesList.innerHTML = `
 						<div class="text-center py-16">
-							<div class="text-8xl mb-6">💔</div>
-							<h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
-							<p class="text-gray-500 mb-8 max-w-sm mx-auto">
-								Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
-							</p>
-							<button onclick="showSwipeCards()" 
-									class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors font-semibold text-lg">
-								💖 Jetzt swipen
+							<div class="text-6xl mb-4">⚠️</div>
+							<h3 class="text-xl font-semibold text-gray-700 mb-2">Verbindungsfehler</h3>
+							<p class="text-gray-500 mb-6">Matches konnten nicht geladen werden</p>
+							<button onclick="loadUserMatches(true)" 
+									class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
+								🔄 Erneut versuchen
 							</button>
 						</div>
 					`;
 				}
-			} catch (error) {
-				console.error('Fehler beim Laden der Matches:', error);
-				matchesList.innerHTML = `
-					<div class="text-center py-16">
-						<div class="text-6xl mb-4">⚠️</div>
-						<h3 class="text-xl font-semibold text-gray-700 mb-2">Verbindungsfehler</h3>
-						<p class="text-gray-500 mb-6">Matches konnten nicht geladen werden</p>
-						<button onclick="loadUserMatches()" 
-								class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
-							🔄 Erneut versuchen
-						</button>
-					</div>
-				`;
 			}
 		}
 
-		// Auto-Refresh System für bessere UX
-		let matchesRefreshInterval = null;
-
+		// Angepasstes Auto-Refresh System
 		function startMatchesAutoRefresh() {
 			if (matchesRefreshInterval) {
 				clearInterval(matchesRefreshInterval);
@@ -1853,12 +1843,13 @@
 				matchesRefreshInterval = setInterval(() => {
 					const currentMatchesList = document.getElementById('matchesList');
 					if (currentMatchesList && currentMatchesList.offsetParent !== null) {
-						loadUserMatches();
+						loadUserMatches(false); // false = kein force refresh
 					} else {
 						clearInterval(matchesRefreshInterval);
 						matchesRefreshInterval = null;
+						lastMatchesHash = null; // Reset hash when stopping
 					}
-				}, 10000); // Refresh every 10 seconds
+				}, 15000); // Weniger häufig: alle 15 Sekunden
 			}
 		}
 
@@ -1867,6 +1858,7 @@
 				clearInterval(matchesRefreshInterval);
 				matchesRefreshInterval = null;
 			}
+			// Hash nicht resetten, damit beim nächsten Start verglichen werden kann
 		}
 
 		// Verbesserte Error-Behandlung für alle API-Calls
@@ -2287,6 +2279,7 @@
 		
 		function showSwipeCards() {
 			hideAllScreens();
+			stopMatchesAutoRefresh();
 			const swipeContainer = document.getElementById('swipeContainer');
 			swipeContainer.style.display = 'block';
 			
@@ -3095,41 +3088,6 @@
 		    }
 		}
 
-		// Funktion zum Laden und Anzeigen der Matches des Benutzers
-		async function loadMatches() {
-			if (!currentUser) return;
-			const matchesList = document.getElementById('matchesList');
-
-			try {
-				const response = await fetch('/.netlify/functions/get_matches', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ userId: currentUser.uid })
-				});
-				const result = await response.json();
-	
-				if (result.success) {
-					matchesList.innerHTML = '';
-					result.matches.forEach(match => {
-						const matchItem = document.createElement('div');
-						matchItem.classList.add('match-item', 'p-4', 'flex', 'items-center', 'border-b', 'border-gray-200', 'cursor-pointer', 'hover:bg-gray-100');
-						matchItem.innerHTML = `
-							<img src="${match.profile_image}" alt="${match.name}" class="match-avatar w-12 h-12 rounded-full mr-4">
-							<div class="match-info flex-1">
-								<h4 class="font-semibold text-lg">${match.name}</h4>
-								<p class="text-sm text-gray-500">Letzte Nachricht...</p>
-							</div>
-						`;
-						matchItem.onclick = () => openChat(match.match_id, match.name);
-						matchesList.appendChild(matchItem);
-					});
-				}
-			} catch (error) {
-				console.error('Fehler beim Laden der Matches:', error);
-			}
-		}
-		
-		
 
 		async function loadMessages() {
 			const container = document.getElementById('chatMessages');
@@ -3574,10 +3532,9 @@
 				messageInterval: null
 			};
 			
-			// Refresh matches if visible (am Ende, damit das State Reset schon passiert ist)
 			const matchesList = document.getElementById('matchesList');
 			if (matchesList && matchesList.offsetParent !== null) {
-				loadUserMatches();
+				loadUserMatches(true); // force refresh nach Chat
 			}
 		}
 		
@@ -4275,36 +4232,9 @@
         function showMatchesList() {
             document.getElementById('matchesList').style.display = 'block';
             document.getElementById('individualChat').style.display = 'none';
-            loadMatches();
+            loadUserMatches(true);
+			startMatchesAutoRefresh();
         }
-
-        function loadMatches() {
-            const container = document.getElementById('matchesListContent');
-            
-            if (matches.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; color: #666; margin-top: 50px;">
-                        <h3>💔 Noch keine Matches</h3>
-                        <p>Swipe nach rechts, um Matches zu finden!</p>
-                        <button class="action-btn btn-primary" onclick="showSwipeCards()">
-                            💖 Jetzt swipen
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = matches.map(match => `
-                <div class="match-item" onclick="openChat(${match.id})">
-                    <img src="${match.image}" alt="${match.name}" class="match-avatar">
-                    <div class="match-info">
-                        <h4>${match.name}</h4>
-                        <p>Letztes Match: ${new Date(match.matchedAt).toLocaleDateString('de-DE')}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-
 
 		
 		   async function uploadImageToCloudinary(file) {
