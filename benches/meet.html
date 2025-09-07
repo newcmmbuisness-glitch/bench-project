@@ -1690,7 +1690,35 @@
 		    document.getElementById('createProfileSection').style.display = 'flex';
 		    document.getElementById('createProfileModal').style.display = 'none';
 		}
-				
+			
+		async function showMatches() {
+		    if (!currentUser) {
+		        showLogin();
+		        showNotification('🔒 Bitte melden Sie sich an!', 'error');
+		        return;
+		    }
+		    
+		    hideAllScreens();
+		    document.getElementById('matchesContainer').style.display = 'block';
+		    
+		    // Floating buttons verstecken
+		    updateFloatingButtons();
+		    
+		    await loadUserMatches();
+
+			// Mark all messages as read when viewing matches list
+			setTimeout(() => {
+				const allMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+				const now = Date.now();
+				allMatches.forEach(match => {
+					lastCheckedMessages[match.match_id] = now;
+				});
+				localStorage.setItem('lastCheckedMessages', JSON.stringify(lastCheckedMessages));
+				unreadMessageCount = 0;
+				updateChatButtonBadge();
+			}, 500);
+		}
+			
 		async function loadUserMatches(forceRefresh = false) {
 			const matchesList = document.getElementById('matchesList');
 			
