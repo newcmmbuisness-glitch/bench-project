@@ -1692,20 +1692,21 @@
 		}
 			
 		async function showMatches() {
-		    if (!currentUser) {
-		        showLogin();
-		        showNotification('🔒 Bitte melden Sie sich an!', 'error');
-		        return;
-		    }
-		    
-		    hideAllScreens();
-		    document.getElementById('matchesContainer').style.display = 'block';
-		    
-		    // Floating buttons verstecken
-		    updateFloatingButtons();
-		    
-		    await loadUserMatches();
-
+			if (!currentUser) {
+				showLogin();
+				showNotification('🔒 Bitte melden Sie sich an!', 'error');
+				return;
+			}
+			
+			hideAllScreens();
+			document.getElementById('matchesContainer').style.display = 'block';
+			
+			// Floating buttons verstecken
+			updateFloatingButtons();
+			
+			await loadUserMatches(true); // force refresh hinzufügen
+			startMatchesAutoRefresh(); // Auto-refresh starten
+			
 			// Mark all messages as read when viewing matches list
 			setTimeout(() => {
 				const allMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
