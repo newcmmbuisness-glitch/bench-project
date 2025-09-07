@@ -2338,9 +2338,10 @@
 				const result = await response.json();
 
 				if (result.hasProfile) {
-					// Zeige den Swipe-Container an
+					// Initialize UserPlus features after successful profile check
+					await initializeUserPlusFeatures();
+					
 					showSwipeCards();
-					// Starte danach das Laden der Profile
 					await loadProfiles();
 				} else {
 					showCreateProfileSection();
