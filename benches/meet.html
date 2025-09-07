@@ -1700,6 +1700,7 @@
 		    
 		    // Floating buttons verstecken
 		    updateFloatingButtons();
+			startMatchesAutoRefresh(); 
 		    
 		    await loadUserMatches();
 
@@ -1744,9 +1745,24 @@
 					}
 				}
 				
-				// Add AI matches from localStorage
+				// Add AI matches from localStorage WITH their last messages
 				const localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-				const aiMatches = localMatches.filter(m => m.isAI);
+				const aiMatches = localMatches.filter(m => m.isAI).map(match => {
+					// Get last message from AI chat
+					const aiChatKey = `ai_chat_ai_match_${match.matched_user_id}`;
+					const aiMessages = JSON.parse(localStorage.getItem(aiChatKey) || '[]');
+					const lastAIMessage = aiMessages.length > 0 ? aiMessages[aiMessages.length - 1] : null;
+					
+					return {
+						...match,
+						last_message: lastAIMessage ? {
+							sender_id: lastAIMessage.sender === 'user' ? currentUser.uid : match.matched_user_id,
+							text: lastAIMessage.text,
+							sent_at: lastAIMessage.timestamp
+						} : null
+					};
+				});
+				
 				allMatches = [...allMatches, ...aiMatches];
 				
 				if (allMatches.length > 0) {
@@ -1758,9 +1774,12 @@
 								: `${match.profile_name}: ${match.last_message.text}`)
 							: "Noch keine Nachrichten";
 
+						// Bestimme die richtige match_id für den onclick
+						const matchId = match.isAI ? `ai_match_${match.matched_user_id}` : match.match_id;
+
 						return `
 							<div class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3"
-								onclick="openMatchChat('${match.match_id}', '${match.matched_user_id}', '${match.profile_name}', '${match.profile_image}')">
+								onclick="openMatchChat('${matchId}', '${match.matched_user_id}', '${match.profile_name}', '${match.profile_image}')">
 								<div class="flex items-center space-x-4">
 									<div class="flex-shrink-0 relative">
 										<img src="${match.profile_image}"
@@ -1821,8 +1840,34 @@
 			}
 		}
 
+		// Auto-Refresh System für bessere UX
+		let matchesRefreshInterval = null;
 
+		function startMatchesAutoRefresh() {
+			if (matchesRefreshInterval) {
+				clearInterval(matchesRefreshInterval);
+			}
+			
+			const matchesList = document.getElementById('matchesList');
+			if (matchesList && matchesList.offsetParent !== null) {
+				matchesRefreshInterval = setInterval(() => {
+					const currentMatchesList = document.getElementById('matchesList');
+					if (currentMatchesList && currentMatchesList.offsetParent !== null) {
+						loadUserMatches();
+					} else {
+						clearInterval(matchesRefreshInterval);
+						matchesRefreshInterval = null;
+					}
+				}, 10000); // Refresh every 10 seconds
+			}
+		}
 
+		function stopMatchesAutoRefresh() {
+			if (matchesRefreshInterval) {
+				clearInterval(matchesRefreshInterval);
+				matchesRefreshInterval = null;
+			}
+		}
 
 		// Verbesserte Error-Behandlung für alle API-Calls
 		async function safeApiCall(url, options, fallbackMessage) {
@@ -3509,9 +3554,6 @@
 				chatState.messageInterval = setInterval(loadMessages, 3000);
 			}
 		}
-
-
-
 		
 		function closeChat() {
 			const chatModal = document.querySelector('[data-chat-modal]');
@@ -3531,6 +3573,12 @@
 				lastLoadedMessageCount: 0,
 				messageInterval: null
 			};
+			
+			// Refresh matches if visible (am Ende, damit das State Reset schon passiert ist)
+			const matchesList = document.getElementById('matchesList');
+			if (matchesList && matchesList.offsetParent !== null) {
+				loadUserMatches();
+			}
 		}
 		
 		// AI Chat specific functions
