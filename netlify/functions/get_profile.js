@@ -1,4 +1,3 @@
-// netlify/functions/get_profile.js
 const { neon } = require('@neondatabase/serverless');
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
@@ -40,13 +39,18 @@ exports.handler = async (event, context) => {
             };
         }
 
-        let profiles;
-        const likedMatches = await sql`
-            SELECT user_id_2 FROM matches WHERE user_id_1 = ${userId}
-        `;
-        const likedUserIds = [userId, ...likedMatches.map(m => m.user_id_2)];
+        // --- Korrektur beginnt hier ---
 
-        // ✅ KORREKTUR: Verwenden Sie hier die richtigen Spaltennamen mit Unterstrich
+        // 1. Alle Profile abfragen, die der Nutzer bereits geswipt hat
+        const swipedUsers = await sql`
+            SELECT swiped_user_id FROM swipe_history WHERE user_id = ${userId}
+        `;
+        const swipedUserIds = swipedUsers.map(s => s.swiped_user_id);
+        
+        // 2. Den Nutzer selbst und alle geswipten Profile von der Abfrage ausschließen
+        const excludedUserIds = [userId, ...swipedUserIds];
+
+        let profiles;
         profiles = await sql`
           SELECT 
             mp.user_id, 
@@ -65,11 +69,13 @@ exports.handler = async (event, context) => {
             u.email
           FROM meet_profiles mp
           JOIN users u ON mp.user_id = u.id
-          WHERE mp.user_id != ALL(${likedUserIds})
+          WHERE mp.user_id != ALL(${excludedUserIds})
           ORDER BY RANDOM()
           LIMIT 10
         `;
         
+        // --- Korrektur endet hier ---
+
         const formattedProfiles = profiles.map(profile => ({
           user_id: profile.user_id,
           profile_name: profile.profile_name,
