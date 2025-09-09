@@ -66,7 +66,7 @@ exports.handler = async (event, context) => {
                 u.email
             FROM meet_profiles mp
             JOIN users u ON mp.user_id = u.id
-            WHERE mp.user_id NOT IN (${sql.array(swipedUserIds)})
+            WHERE mp.user_id != ANY(${swipedUserIds})
             ORDER BY RANDOM()
             LIMIT 10
         `;
