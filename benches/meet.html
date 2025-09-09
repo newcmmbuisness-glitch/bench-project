@@ -4074,16 +4074,14 @@
 		        if (result.success) {
 		            if (result.newMatch) {
 		                showNotification('🎉 Es ist ein Match!', 'success');
-		            } else {
-		                showNotification(`💖 Like gesendet an ${profile.profile_name || profile.name}!`, 'success');
-		            }
+		            } 
+					
 		        } else {
 		            console.error('Match-Fehler:', result.error);
 		        }
 		        
 			} catch (error) {
 				console.error('Fehler beim Like:', error);
-				showNotification(`💖 Like für ${profile.profile_name || profile.name}!`, 'success');
 			}
 		}
 
