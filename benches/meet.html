@@ -4071,20 +4071,17 @@
 
 				const result = await response.json();
 				
-				if (response.ok && result.success) {
-					if (result.newMatch) {
-						showNotification('🎉 Es ist ein Match! 💕', 'success');
-						showMatchAnimation(profile);
-					} else {
-						showNotification(`💖 Like gesendet an ${profile.profile_name}!`, 'success');
-					}
-				} else {
-					showNotification(`💖 Like für ${profile.profile_name}!`, 'success');
-				}
-				
+		        if (result.success) {
+		            if (result.newMatch) {
+		                showNotification('🎉 Es ist ein Match!', 'success');
+		            } 
+					
+		        } else {
+		            console.error('Match-Fehler:', result.error);
+		        }
+		        
 			} catch (error) {
 				console.error('Fehler beim Like:', error);
-				showNotification(`💖 Like für ${profile.profile_name || profile.name}!`, 'success');
 			}
 		}
 
