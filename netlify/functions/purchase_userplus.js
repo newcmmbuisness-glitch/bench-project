@@ -116,7 +116,11 @@ exports.handler = async (event, context) => {
 
 // Echte PayPal-Verifikation implementiert
 async function verifyPayPalPayment(paymentToken) {
-    if (!paymentToken || !PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+    const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+    const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+    const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL; // Beispiel: 'https://api-m.sandbox.paypal.com' oder 'https://api-m.paypal.com'
+    
+    if (!paymentToken || !PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET || !PAYPAL_BASE_URL) {
         console.error('PayPal Konfiguration unvollständig');
         return false;
     }
