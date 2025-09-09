@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UserPlus - Upgrade jetzt!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; 
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, #aaa, #ddd, #aaa);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 6s infinite linear;
+            font-weight: normal;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .purchase-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #ccc;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .price-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 10px 0;
+        }
+
+        .price-period {
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+
+        .features {
+            text-align: left;
+            margin: 30px 0;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .feature::before {
+            content: "✓";
+            color: #4CAF50;
+            font-weight: bold;
+            width: 30px;
+            margin-right: 10px;
+        }
+
+        .white-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .white-btn:hover {
+            background: #ddd;
+            transform: scale(1.02);
+        }
+
+        .white-btn:disabled {
+            background: #666;
+            color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .paypal-btn {
+            background: #0070ba;
+            color: white;
+        }
+
+        .paypal-btn:hover {
+            background: #005ea6;
+        }
+
+        .test-mode-info {
+            background: #ff9800;
+            color: #000;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: none;
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .error {
+            background: #f44336;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .success {
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .back-link {
+            color: #aaa;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        .back-link:hover {
+            color: #fff;
+        }
+
+        @media (max-width: 600px) {
+            .purchase-container {
+                padding: 30px 20px;
+            }
+            
+            .price {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="purchase-container">
+        <h1 class="logo shimmer">UserPlus</h1>
+        <p class="subtitle">Schalte exklusive Features frei!</p>
+        
+        <div class="price-section">
+            <div class="price">4,99€</div>
+            <div class="price-period">Einmalzahlung</div>
+        </div>
+
+        <div class="features">
+            <div class="feature">7 Tage Premium-Zugang</div>
+            <div class="feature">Swipe Back - Mache den letzten Swipe rückgängig</div>
+            <div class="feature">InstaMatch - Erstelle sofort ein Match</div>
+            <div class="feature">Erweiterte Filter und Einstellungen</div>
+            <div class="feature">Automatische Verlängerung - NEIN!</div>
+        </div>
+
+        <div id="testModeInfo" class="test-mode-info" style="display: none;">
+            <strong>TEST-MODUS AKTIV:</strong> PayPal wird übersprungen, du erhältst UserPlus direkt!
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+        <div class="success" id="successMessage"></div>
+        <div class="loading" id="loadingMessage">Verarbeitung läuft...</div>
+
+        <!-- PayPal Button Container -->
+        <div id="paypal-button-container" style="margin: 20px 0;"></div>
+        
+        <!-- Test Mode Button -->
+        <button class="white-btn" id="testPurchaseBtn" onclick="testPurchase()" style="display: none;">
+            🧪 Test-Kauf (ohne PayPal)
+        </button>
+
+        <a href="https://onebenches.dpdns.org/meet.html#" class="back-link">← Zurück zur Hauptseite</a>
+    </div>
+
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=EUR"></script>
+    
+    <script>
+        // KONFIGURATION - Ändere diese Werte
+        const CONFIG = {
+            testMode: true, // true = Test-Modus, false = echte PayPal-Zahlungen
+            backendUrl: 'https://deine-netlify-domain.netlify.app/.netlify/functions/userplus-purchase',
+            paypalClientId: 'YOUR_PAYPAL_CLIENT_ID' // Ersetze mit deiner echten PayPal Client ID
+        };
+
+        // URL Parameter auslesen
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+
+        if (!userId) {
+            showError('Benutzer-ID fehlt. Bitte über die Hauptseite aufrufen.');
+        }
+
+        // Test-Modus Setup
+        if (CONFIG.testMode) {
+            document.getElementById('testModeInfo').style.display = 'block';
+            document.getElementById('testPurchaseBtn').style.display = 'block';
+            document.getElementById('paypal-button-container').style.display = 'none';
+        } else {
+            // PayPal Button Setup
+            setupPayPalButton();
+        }
+
+        function setupPayPalButton() {
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: '4.99',
+                                currency_code: 'EUR'
+                            },
+                            description: 'UserPlus Upgrade'
+                        }]
+                    });
+                },
+                
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        console.log('PayPal Zahlung erfolgreich:', details);
+                        processPayment(details.id);
+                    });
+                },
+                
+                onError: function(err) {
+                    console.error('PayPal Fehler:', err);
+                    showError('PayPal-Zahlung fehlgeschlagen. Bitte versuche es erneut.');
+                },
+                
+                onCancel: function(data) {
+                    console.log('PayPal Zahlung abgebrochen');
+                    showError('Zahlung wurde abgebrochen.');
+                }
+            }).render('#paypal-button-container');
+        }
+
+        // Test-Kauf (ohne PayPal)
+        async function testPurchase() {
+            if (!CONFIG.testMode) {
+                showError('Test-Modus ist deaktiviert');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch(CONFIG.backendUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        paymentToken: null, // Kein Token im Test-Modus
+                        testMode: true
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('UserPlus erfolgreich aktiviert! Weiterleitung...');
+                    setTimeout(() => {
+                        window.location.href = 'https://onebenches.dpdns.org/meet.html#';
+                    }, 2000);
+                } else {
+                    showError(data.message || 'Kauf fehlgeschlagen');
+                }
+            } catch (error) {
+                console.error('Fehler beim Test-Kauf:', error);
+                showError('Verbindungsfehler. Bitte versuche es erneut.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Echte PayPal-Zahlung verarbeiten
+        async function processPayment(paypalOrderId) {
+            showLoading(true);
+            
+            try {
+                const response = await fetch(CONFIG.backendUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        paymentToken: 'PAYPAL_' + paypalOrderId,
+                        testMode: false
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('UserPlus erfolgreich aktiviert! Weiterleitung...');
+                    setTimeout(() => {
+                        window.location.href = 'https://onebenches.dpdns.org/meet.html#';
+                    }, 2000);
+                } else {
+                    showError(data.message || 'Aktivierung fehlgeschlagen');
+                }
+            } catch (error) {
+                console.error('Fehler beim Verarbeiten der Zahlung:', error);
+                showError('Verbindungsfehler. Bitte kontaktiere den Support.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // UI Helper Functions
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingMessage').style.display = show ? 'block' : 'none';
+            document.getElementById('testPurchaseBtn').disabled = show;
+        }
+
+        // Auto-hide messages after 5 seconds
+        setTimeout(() => {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }, 5000);
+    </script>
+</body>
+</html>
