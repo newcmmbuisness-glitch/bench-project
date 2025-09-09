@@ -2,7 +2,7 @@ const { neon } = require('@neondatabase/serverless');
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 // WICHTIG: Setze hier TEST_MODE auf true für Tests, false für echte PayPal-Zahlungen
-const TEST_MODE = true; // true = überspringt PayPal, false = echte PayPal-Zahlung erforderlich
+const TEST_MODE = false; // true = überspringt PayPal, false = echte PayPal-Zahlung erforderlich
 
 exports.handler = async (event, context) => {
     const headers = {
