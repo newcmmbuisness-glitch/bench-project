@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>One-T-Meet - Dating mit Bank-Meetings</title>
+    <title>One To Meet</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 	<script src="https://www.paypal.com/sdk/js?client-id=Adk-v-jGvp2KRbnoJkSvcKNsPqhdlj4tC_pEWtpBMhZrgbOw7h_MeV94UbYvwspxFidq2mpcAYxbedT5&currency=EUR"></script>
@@ -14,7 +14,6 @@
 			background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); /* schwarz-grau Hintergrund */
 			color: #000;
 			min-height: 100vh;
-			overflow: hidden;
 		}
 
 		/* leichter Silber-Schimmer-Effekt für Überschriften */
@@ -1468,9 +1467,6 @@
 				<button class="swipe-btn dislike" onclick="swipeCard('left')">❌</button>
 				<button class="swipe-btn like" onclick="swipeCard('right')">💖</button>
 			</div>
-			<div style="text-align: center; margin-top: 20px;">
-				<button class="action-btn btn-secondary" onclick="checkAndRenderUI()">↩️ Zurück</button>
-			</div>
 		</div>
 	
 	    <div id="matchesContainer" class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg mx-auto" style="display: none;">
@@ -2323,10 +2319,17 @@
 			hideAllScreens();
 			
 			if (!currentUser || !currentUser.uid) {
+				// Zustand: Nicht angemeldet
 				document.getElementById('welcomeScreen').style.display = 'block';
 				updateFloatingButtons();
+				// NEU: Scrollen für den Willkommensbildschirm aktivieren
+				document.body.style.overflow = 'auto';
 				return;
 			}
+
+			// Zustand: Angemeldet (unabhängig vom Profilstatus)
+			// NEU: Scrollen für alle folgenden Ansichten deaktivieren
+			document.body.style.overflow = 'hidden';
 
 			try {
 				const response = await fetch('/.netlify/functions/check_profile', {
@@ -2338,10 +2341,8 @@
 				const result = await response.json();
 
 				if (result.hasProfile) {
-					// Initialize UserPlus features after successful profile check
-					await initializeUserPlusFeatures();
-					
 					showSwipeCards();
+					await initializeUserPlusFeatures();
 					await loadProfiles();
 				} else {
 					showCreateProfileSection();
@@ -2353,6 +2354,8 @@
 				showNotification('⚠️ Fehler beim Laden. Bitte versuchen Sie es erneut.', 'error');
 				document.getElementById('welcomeScreen').style.display = 'block';
 				updateFloatingButtons();
+				// NEU: Scrollen im Fehlerfall wieder aktivieren, da der Welcome Screen angezeigt wird
+				document.body.style.overflow = 'auto';
 			}
 		}
 		
