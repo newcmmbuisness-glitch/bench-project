@@ -1256,10 +1256,14 @@
             <div class="sidebar-title">One-T-Meet</div>
         </div>
         <div class="sidebar-content">
-            <a href="#" class="sidebar-item" onclick="showWelcome()">
-                <span class="sidebar-icon">🏠</span>
-                <span>Startseite</span>
-            </a>
+			<a href="#" class="sidebar-item" id="loginSidebarBtn" onclick="showLogin()">
+				<span class="sidebar-icon">🔐</span>
+				<span>Anmelden</span>
+			</a>
+			<a href="#" class="sidebar-item" id="logoutSidebarBtn" style="display: none;" onclick="logout()">
+				<span class="sidebar-icon">🚪</span>
+				<span>Abmelden</span>
+			</a>
             <a href="index.html" class="sidebar-item">
                 <span class="sidebar-icon">🗺️</span>
                 <span>Zur Bench-Karte</span>
@@ -1272,9 +1276,6 @@
         <div class="sidebar-footer" id="user-email-display"></div>
     </div>
 	
-    <div id="authButtons" class="auth-buttons">
-        <button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>
-    </div>
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeLogin()">&times;</span>
@@ -1805,37 +1806,49 @@
         }
 
 		function updateAuthButtons() {
-		    const authDiv = document.getElementById('authButtons');
-		    const userEmailDisplay = document.getElementById('user-email-display');
-		
-		    if (currentUser) {
-		        if (userEmailDisplay) {
-		            userEmailDisplay.innerHTML = `
-		                <span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
-		                    👤 ${currentUser.email}
-		                </span>
-		            `;
-		        }
-		        authDiv.innerHTML = '<button class="logout-btn" onclick="logout()">🚪 Abmelden</button>';
-		        
-		        // Nach Anmeldung prüfen ob Profil existiert
-		        checkAndRenderUI();
+			const sidebarAuth = document.getElementById('sidebarAuth');
+			const userEmailDisplay = document.getElementById('user-email-display');
+			
+			if (currentUser) {
+				// Angemeldet: Abmelden-Link erstellen
+				sidebarAuth.innerHTML = `
+					<a href="#" class="sidebar-item" onclick="logout()">
+						<span class="sidebar-icon">🚪</span>
+						<span>Abmelden</span>
+					</a>
+				`;
+				if (userEmailDisplay) {
+					userEmailDisplay.innerHTML = `
+						<span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
+							👤 ${currentUser.email}
+						</span>
+					`;
+				}
+				
+				// Nach Anmeldung prüfen ob Profil existiert
+				checkAndRenderUI();
 				setTimeout(initializeNotificationSystem, 1000);
 
-		    } else {
-		        authDiv.innerHTML = '<button class="login-btn" onclick="showLogin()">🔐 Anmelden</button>';
-		        if (userEmailDisplay) {
-		            userEmailDisplay.innerHTML = '';
-		        }
+			} else {
+				// Nicht angemeldet: Anmelden-Link erstellen
+				sidebarAuth.innerHTML = `
+					<a href="#" class="sidebar-item" onclick="showLogin()">
+						<span class="sidebar-icon">🔐</span>
+						<span>Anmelden</span>
+					</a>
+				`;
+				if (userEmailDisplay) {
+					userEmailDisplay.innerHTML = '';
+				}
 				
 				unreadMessageCount = 0;
 				lastCheckedMessages = {};
-				updateChatButtonBadge();				
+				updateChatButtonBadge();              
 				
-		        // Floating buttons verstecken wenn nicht angemeldet
-		        document.getElementById('profileButton').classList.add('hidden');
-		        document.getElementById('chatButton').classList.add('hidden');
-		    }
+				// Floating buttons verstecken wenn nicht angemeldet
+				document.getElementById('profileButton').classList.add('hidden');
+				document.getElementById('chatButton').classList.add('hidden');
+			}
 		}
 
         // Navigation Functions
