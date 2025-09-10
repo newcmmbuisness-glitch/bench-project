@@ -1806,6 +1806,7 @@
         }
 
 		function updateAuthButtons() {
+			// Suchen Sie den neuen Sidebar-Container
 			const sidebarAuth = document.getElementById('sidebarAuth');
 			const userEmailDisplay = document.getElementById('user-email-display');
 			
@@ -1856,6 +1857,7 @@
             hideAllScreens();
             document.getElementById('welcomeScreen').style.display = 'block';
         }
+		
 
         function showProfileCreation() {
             if (!currentUser) {
