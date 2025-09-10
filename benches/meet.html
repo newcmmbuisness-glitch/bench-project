@@ -6,6 +6,7 @@
     <title>One-T-Meet - Dating mit Bank-Meetings</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://www.paypal.com/sdk/js?client-id=Adk-v-jGvp2KRbnoJkSvcKNsPqhdlj4tC_pEWtpBMhZrgbOw7h_MeV94UbYvwspxFidq2mpcAYxbedT5&currency=EUR"></script>
     <style>
 		body { 
 			margin: 0; 
@@ -4517,16 +4518,13 @@
 								</div>
 							</div>
 							
-							<div class="space-y-3">
-								<button onclick="purchaseUserPlus()" 
-										class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-6 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
-									Jetzt für €4,99 kaufen
-								</button>
-								<button onclick="closeUserPlusPurchase()" 
-										class="w-full bg-gray-200 text-gray-700 py-2 px-6 rounded-full hover:bg-gray-300 transition-colors">
-									Später
-								</button>
-							</div>
+							<!-- PayPal Button Container -->
+							<div id="paypal-button-container" class="my-4"></div>
+							
+							<button onclick="closeUserPlusPurchase()" 
+									class="w-full bg-gray-200 text-gray-700 py-2 px-6 rounded-full hover:bg-gray-300 transition-colors">
+								Später
+							</button>
 						</div>
 					</div>
 				</div>
@@ -4541,6 +4539,9 @@
 			modalDiv.setAttribute('data-userplus-modal', 'true');
 			modalDiv.innerHTML = modalHtml;
 			document.body.appendChild(modalDiv);
+			
+			purchaseUserPlus();
+
 		}
 
 		function closeUserPlusPurchase() {
@@ -4550,42 +4551,69 @@
 			}
 		}
 
-		// Purchase UserPlus
+		// Purchase UserPlus via PayPal Sandbox
 		async function purchaseUserPlus() {
 			if (!currentUser || !currentUser.uid) {
 				showNotification('❌ Bitte melden Sie sich an', 'error');
 				return;
 			}
-			
-			try {
-				// In a real implementation, integrate with payment provider here
-				// For demo purposes, we'll simulate a successful payment
-				const paymentToken = 'demo_success'; // This would come from actual payment flow
-				
-				const response = await fetch('/.netlify/functions/purchase_userplus', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						userId: currentUser.uid,
-						paymentToken: paymentToken
-					})
-				});
-				
-				const result = await response.json();
-				
-				if (result.success) {
-					isUserPlus = true;
-					updatePremiumButtons();
-					closeUserPlusPurchase();
-					showNotification('🎉 UserPlus erfolgreich aktiviert!', 'success');
-				} else {
-					showNotification('❌ Kauf fehlgeschlagen: ' + result.message, 'error');
+
+			// Render PayPal-Button in den Container
+			paypal.Buttons({
+				style: {
+					shape: 'pill',
+					color: 'blue',
+					layout: 'vertical',
+					label: 'paypal'
+				},
+				createOrder: function(data, actions) {
+					return actions.order.create({
+						purchase_units: [{
+							amount: {
+								value: '4.99',
+								currency_code: 'EUR'
+							}
+						}]
+					});
+				},
+				onApprove: function(data, actions) {
+					return actions.order.capture().then(async function(details) {
+						try {
+							const orderId = data.orderID;
+
+							// Order-ID an dein Netlify Backend schicken
+							const response = await fetch('/.netlify/functions/purchase_userplus', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({
+									userId: currentUser.uid,
+									paymentToken: orderId
+								})
+							});
+
+							const result = await response.json();
+
+							if (result.success) {
+								isUserPlus = true;
+								updatePremiumButtons();
+								closeUserPlusPurchase();
+								showNotification('🎉 UserPlus erfolgreich aktiviert!', 'success');
+							} else {
+								showNotification('❌ Kauf fehlgeschlagen: ' + result.error, 'error');
+							}
+						} catch (error) {
+							console.error('Fehler beim UserPlus Kauf:', error);
+							showNotification('❌ Fehler beim Kauf', 'error');
+						}
+					});
+				},
+				onError: function(err) {
+					console.error('PayPal-Fehler:', err);
+					showNotification('❌ PayPal-Fehler beim Kauf', 'error');
 				}
-			} catch (error) {
-				console.error('Fehler beim UserPlus Kauf:', error);
-				showNotification('❌ Fehler beim Kauf', 'error');
-			}
+			}).render('#paypal-button-container');
 		}
+
 
 		// Update premium buttons styling
 		function updatePremiumButtons() {
