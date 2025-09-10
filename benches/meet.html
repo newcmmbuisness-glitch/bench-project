@@ -1806,18 +1806,21 @@
         }
 
 		function updateAuthButtons() {
-			// Suchen Sie den neuen Sidebar-Container
-			const sidebarAuth = document.getElementById('sidebarAuth');
 			const userEmailDisplay = document.getElementById('user-email-display');
+			const loginBtn = document.getElementById('loginSidebarBtn');
+			const logoutBtn = document.getElementById('logoutSidebarBtn');
 			
+			// Prüfen, ob die Sidebar-Buttons existieren
+			if (!loginBtn || !logoutBtn) {
+				console.error('Login- oder Logout-Button in der Sidebar wurde nicht gefunden!');
+				return;
+			}
+
 			if (currentUser) {
-				// Angemeldet: Abmelden-Link erstellen
-				sidebarAuth.innerHTML = `
-					<a href="#" class="sidebar-item" onclick="logout()">
-						<span class="sidebar-icon">🚪</span>
-						<span>Abmelden</span>
-					</a>
-				`;
+				// Angemeldet: Logout-Button anzeigen, Login-Button ausblenden
+				loginBtn.style.display = 'none';
+				logoutBtn.style.display = 'flex'; // Wichtig: flex, um das icon und den Text nebeneinander zu halten
+				
 				if (userEmailDisplay) {
 					userEmailDisplay.innerHTML = `
 						<span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
@@ -1831,13 +1834,10 @@
 				setTimeout(initializeNotificationSystem, 1000);
 
 			} else {
-				// Nicht angemeldet: Anmelden-Link erstellen
-				sidebarAuth.innerHTML = `
-					<a href="#" class="sidebar-item" onclick="showLogin()">
-						<span class="sidebar-icon">🔐</span>
-						<span>Anmelden</span>
-					</a>
-				`;
+				// Nicht angemeldet: Anmelden-Button anzeigen, Logout-Button ausblenden
+				loginBtn.style.display = 'flex'; // Wieder flex
+				logoutBtn.style.display = 'none';
+				
 				if (userEmailDisplay) {
 					userEmailDisplay.innerHTML = '';
 				}
@@ -1851,13 +1851,11 @@
 				document.getElementById('chatButton').classList.add('hidden');
 			}
 		}
-
         // Navigation Functions
         function showWelcome() {
             hideAllScreens();
             document.getElementById('welcomeScreen').style.display = 'block';
         }
-		
 
         function showProfileCreation() {
             if (!currentUser) {
