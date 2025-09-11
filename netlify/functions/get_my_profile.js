@@ -36,6 +36,7 @@ exports.handler = async (event, context) => {
         answer_1,
         prompt_2,
         answer_2
+        gender
       FROM meet_profiles
       WHERE user_id = ${userId}
     `;
