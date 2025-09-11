@@ -54,15 +54,18 @@ if (fs.existsSync(usedImagesFile)) {
 exports.handler = async () => {
   const profiles = [];
 
-  // Freie Bilder auswählen
-  const freeImages = images.filter(img => !usedImages.includes(img));
+for (let i = 0; i < numProfiles; i++) {
+  const gender = i % 2 === 0 ? 'female' : 'male';
+  const freeImages = images[gender].filter(img => !usedImages.includes(img));
+  if (freeImages.length === 0) continue; // keine freien Bilder mehr für dieses Gender
 
-  for (let i = 0; i < freeImages.length; i++) {
-    const gender = i % 2 === 0 ? 'female' : 'male';
-    const location = randomFromArray(locations);
-    const name = faker.person.firstName(gender === 'male' ? 'male' : 'female');
-    const age = Math.floor(Math.random() * (31 - 18 + 1)) + 18;
-    const description = randomFromArray(descriptions);
+  const profileImage = randomFromArray(freeImages);
+  usedImages.push(profileImage);
+
+  const location = randomFromArray(locations);
+  const name = faker.person.firstName(gender === 'male' ? 'male' : 'female');
+  const age = Math.floor(Math.random() * (31 - 18 + 1)) + 18;
+  const description = randomFromArray(descriptions);
 
     profiles.push({
       user_id: `ai_${i}_${Date.now()}`, // eindeutige ID
@@ -73,7 +76,7 @@ exports.handler = async () => {
       profile_image: freeImages[i],
       interests: faker.helpers.arrayElements(['wine','420','Sport','Filme','Wandern','Musik','Fotografie'], 3),
       postal_code: location.postalCode,
-      latitude: location.lat + (Math.random() - 0.5) * 0.05,
+      latitude: location.lat + (  Math.random() - 0.5) * 0.05,
       longitude: location.lng + (Math.random() - 0.5) * 0.05,
       isAI: true
     });
