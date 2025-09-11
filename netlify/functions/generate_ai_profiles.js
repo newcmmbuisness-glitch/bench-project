@@ -3,7 +3,7 @@ const { faker } = require('@faker-js/faker');
 
 const client = new Client({
   connectionString: process.env.NEON_DATABASE_URL
-});
+}); // kein connect()/end() hier
 
 const images = {
   female: [
@@ -41,26 +41,20 @@ exports.handler = async () => {
     const profiles = [];
 
     for (const gender of ['female','male']) {
-      // Unbenutzte Bilder aus DB abfragen
       const res = await client.query(
         `SELECT profile_image FROM ai_profiles WHERE gender=$1 AND (used IS NULL OR used=false)`,
         [gender]
       );
       const usedImages = res.rows.map(r => r.profile_image);
-
       const freeImages = images[gender].filter(img => !usedImages.includes(img));
 
       for (const img of freeImages) {
         const location = randomFromArray(locations);
-        const name = faker.person.firstName({ gender }); // ✅ neue Syntax
-        const age = Math.floor(Math.random() * (31 - 18 + 1)) + 18;
-        const description = randomFromArray(descriptions);
-
         const profile = {
-          profile_name: name,
-          age,
+          profile_name: faker.person.firstName({ gender }),
+          age: Math.floor(Math.random() * (31 - 18 + 1)) + 18,
           gender,
-          description,
+          description: randomFromArray(descriptions),
           profile_image: img,
           postal_code: location.postalCode,
           latitude: location.lat + (Math.random() - 0.5) * 0.05,
@@ -93,7 +87,6 @@ exports.handler = async () => {
       statusCode: 200,
       body: JSON.stringify({ profiles })
     };
-
   } catch (err) {
     console.error("Fehler in generate_ai_profiles:", err);
     return {
