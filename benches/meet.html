@@ -2658,8 +2658,8 @@
 			const answer1 = document.getElementById('answer1Input').value;
 			const prompt2 = document.getElementById('prompt2Select').value;
 			const answer2 = document.getElementById('answer2Input').value;
-			const selectedGender = document.getElementById('profileGender').value; // 👈 Gender aus UI
-
+			const gender = selectedGender; 
+			
 			if (!imageFile) {
 				showNotification('Bitte wählen Sie ein Profilbild aus!', 'error');
 				return;
