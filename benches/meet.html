@@ -242,48 +242,6 @@
 			width: 90%;
 			max-width: 500px;
 		}
-		
-		.gender-selection {
-			display: flex;
-			gap: 10px;
-			margin-bottom: 20px;
-		}
-
-		.gender-btn {
-			flex: 1;
-			padding: 12px;
-			border: 2px solid #e1e5e9;
-			border-radius: 8px;
-			background: white;
-			cursor: pointer;
-			font-weight: bold;
-			text-align: center;
-			transition: all 0.3s;
-		}
-
-		.gender-btn:hover {
-			border-color: #667eea;
-		}
-
-		.gender-btn.selected {
-			background: #667eea;
-			color: white;
-			border-color: #667eea;
-		}
-
-		.error {
-			color: #dc3545;
-			font-size: 14px;
-			margin-top: 5px;
-			display: none;
-		}
-
-		.character-count {
-			font-size: 12px;
-			color: #666;
-			text-align: right;
-			margin-top: 5px;
-		}		
 
         /* Auth buttons - übernommen */
         .auth-buttons {
@@ -1027,23 +985,9 @@
 			transform: translate(-50%, -50%) !important;
 			z-index: 2000 !important;
 			width: 90% !important;
-			max-width: 600px !important;
+			max-width: 400px !important;
 			max-height: 90vh !important;
 			overflow-y: auto !important;
-		}
-		
-		/* Neue Klasse für zweispaltige Anordnung hinzufügen */
-		.form-row {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: 15px;
-			margin-bottom: 20px;
-		}
-
-		@media (max-width: 768px) {
-			.form-row {
-				grid-template-columns: 1fr;
-			}
 		}
 
 		@keyframes shimmer {
@@ -1432,105 +1376,86 @@
 			<blockquote style="font-style:italic; opacity:0.8; font-size:0.9rem;">“Peace can’t be found without searching”</blockquote>
 		</div>
 
-    
-    <div id="createProfileSection">
-        <div id="createProfileModal" class="profile-creation">
-            <h2>📝 Profil erstellen</h2>
-            <form id="profileForm">
-                <!-- Gender Selection -->
-                <div class="form-group">
-                    <label>Geschlecht:</label>
-                    <div class="gender-selection">
-                        <div class="gender-btn" data-gender="male">👨 Männlich</div>
-                        <div class="gender-btn" data-gender="female">👩 Weiblich</div>
-                    </div>
-                    <div id="genderError" class="error" style="display: none;"></div>
-                </div>
 
-                <!-- Profile Image -->
-                <div class="form-group">
-                    <label>📷 Profilbild:</label>
-                    <input type="file" id="profileImage" accept="image/*" required>
-                </div>
 
-                <!-- Name and Age Row -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>👤 Name:</label>
-                        <input type="text" id="profileName" placeholder="Dein Name" maxlength="16" required>
-                        <div id="nameError" class="error" style="display: none;"></div>
-                        <div id="nameCount" class="character-count">0/16</div>
-                    </div>
-                    <div class="form-group">
-                        <label>🎂 Alter:</label>
-                        <input type="number" id="profileAge" placeholder="Dein Alter" min="18" max="99" required>
-                        <div id="ageError" class="error" style="display: none;"></div>
-                    </div>
-                </div>
-
-                <!-- Postal Code -->
-                <div class="form-group">
-                    <label for="postalCode">Postleitzahl:</label>
-                    <input type="text" id="postalCode" placeholder="z.B. 10115" maxlength="10">
-                </div>
-
-                <!-- Description -->
-                <div class="form-group">
-                    <label>📝 Kurze Beschreibung (max. 2 Sätze):</label>
-                    <textarea id="profileDescription" rows="3" placeholder="Erzähl etwas über dich..." maxlength="200" required></textarea>
-                    <div id="descriptionError" class="error" style="display: none;"></div>
-                    <div id="descriptionCount" class="character-count">0/200</div>
-                </div>
-
-                <!-- Genussmittel -->
-                <div class="form-group">
-                    <label>Genussmittel:</label>
-                    <div id="preferencesIcons" class="preferences-icons"></div>
-                </div>
-
-                <!-- Hobbies -->
-                <div class="form-group">
-                    <label>Wähle deine Interessen:</label>
-                    <div id="hobbiesIcons" class="preferences-icons"></div>
-                </div>
-
-                <!-- Questions -->
-                <div class="form-group">
-                    <label>Wähle 2 Fragen über dich:</label>
-                    <select id="prompt1Select" required>
-                        <option value="">Wähle eine Frage aus...</option>
-                        <option value="Ein perfekter erster Date ist...">Ein perfekter erster Date ist...</option>
-                        <option value="Ich bin gerade besessen von...">Ich bin gerade besessen von...</option>
-                        <option value="Zwei Wahrheiten und eine Lüge...">Zwei Wahrheiten und eine Lüge...</option>
-                        <option value="Mein liebstes Reiseziel ist...">Mein liebstes Reiseziel ist...</option>
-                        <option value="Was ich in meiner Freizeit tue...">Was ich in meiner Freizeit tue...</option>
-                    </select>
-                    <input type="text" id="answer1Input" placeholder="Deine Antwort..." style="margin-top: 10px;">
-                </div>
-
-                <div class="form-group">
-                    <select id="prompt2Select" required>
-                        <option value="">Wähle eine zweite Frage aus...</option>
-                        <option value="Ein perfekter erster Date ist...">Ein perfekter erster Date ist...</option>
-                        <option value="Ich bin gerade besessen von...">Ich bin gerade besessen von...</option>
-                        <option value="Zwei Wahrheiten und eine Lüge...">Zwei Wahrheiten und eine Lüge...</option>
-                        <option value="Mein liebstes Reiseziel ist...">Mein liebstes Reiseziel ist...</option>
-                        <option value="Was ich in meiner Freizeit tue...">Was ich in meiner Freizeit tue...</option>
-                    </select>
-                    <input type="text" id="answer2Input" placeholder="Deine Antwort..." style="margin-top: 10px;">
-                </div>
-
-                <div class="action-buttons">
-                    <button type="submit" class="action-btn btn-primary">
-                        ✅ Profil speichern
-                    </button>
-                    <button type="button" class="action-btn btn-secondary" onclick="closeForm()">
-                        ↩️ Zurück
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+	    
+	    <div id="createProfileSection" class="relative z-0 p-4 w-full h-screen flex flex-col items-center justify-center" style="display: none;">
+	        <button onclick="showCreateProfileForm()" class="bg-white text-blue-600 font-bold py-4 px-8 rounded-full shadow-lg hover:bg-gray-200 transition duration-300 transform scale-105 hover:scale-110">
+	            <span class="text-xl">Profil erstellen</span>
+	        </button>
+	    </div>
+	
+		<div id="createProfileModal" class="profile-creation" style="display: none;">
+		    <h2>📝 Profil erstellen</h2>
+		    <form onsubmit="createProfile(event)">
+		        <div class="form-group">
+		            <label>📷 Profilbild:</label>
+		            <input type="file" id="profileImage" accept="image/*" required>
+		        </div>
+		        <div class="mb-4">
+		            <label for="postalCode" class="block text-gray-700 font-bold mb-2">Ihre Postleitzahl</label>
+		            <input type="text" id="postalCode" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="z.B. 10115" maxlength="10">
+		        </div>
+		        <div class="form-group">
+		            <label>👤 Name:</label>
+		            <input type="text" id="profileName" placeholder="Dein Name" required>
+		        </div>
+				<div class="form-group">
+					<label>🎂 Alter:</label>
+					<input type="number" id="profileAge" placeholder="Dein Alter" min="18" max="99" required>
+				</div>
+		        <div class="form-group">
+		            <label>📝 Kurze Beschreibung:</label>
+		            <textarea id="profileDescription" rows="3" placeholder="Erzähl etwas über dich..." required></textarea>
+		        </div>
+		        
+		        <div class="preferences-section">
+		            <label>Genussmittel:</label>
+		            <div id="preferencesIcons" class="preferences-icons">
+		                </div>
+		        </div>
+		
+			  <div class="mb-4">
+					<label class="block text-gray-700 font-bold mb-2">Wähle deine Interessen</label>
+					<div id="hobbiesIcons" class="preferences-icons">
+						</div>
+				</div>
+		
+		        <div class="mb-4">
+		            <label class="block text-gray-700 font-bold mb-2">Wähle 2 Fragen über dich</label>
+		            <select id="prompt1Select" class="w-full px-4 py-2 mb-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+		                <option value="">Wähle eine Frage aus...</option>
+		                <option value="Ein perfekter erster Date ist...">Ein perfekter erster Date ist...</option>
+		                <option value="Ich bin gerade besessen von...">Ich bin gerade besessen von...</option>
+		                <option value="Zwei Wahrheiten und eine Lüge...">Zwei Wahrheiten und eine Lüge...</option>
+		                <option value="Mein liebstes Reiseziel ist...">Mein liebstes Reiseziel ist...</option>
+		                <option value="Was ich in meiner Freizeit tue...">Was ich in meiner Freizeit tue...</option>
+		            </select>
+		            <input type="text" id="answer1Input" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Deine Antwort...">
+		        </div>
+		
+		        <div class="mb-4">
+		            <select id="prompt2Select" class="w-full px-4 py-2 mb-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+		                <option value="">Wähle eine zweite Frage aus...</option>
+		                <option value="Ein perfekter erster Date ist...">Ein perfekter erster Date ist...</option>
+		                <option value="Ich bin gerade besessen von...">Ich bin gerade besessen von...</option>
+		                <option value="Zwei Wahrheiten und eine Lüge...">Zwei Wahrheiten und eine Lüge...</option>
+		                <option value="Mein liebstes Reiseziel ist...">Mein liebstes Reiseziel ist...</option>
+		                <option value="Was ich in meiner Freizeit tue...">Was ich in meiner Freizeit tue...</option>
+		            </select>
+		            <input type="text" id="answer2Input" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Deine Antwort...">
+		        </div>
+		
+		        <div class="action-buttons">
+		            <button type="submit" class="action-btn btn-primary">
+		                ✅ Profil speichern
+		            </button>
+		            <button type="button" class="action-btn btn-secondary" onclick="closeCreateProfile()">
+		                ↩️ Zurück
+		            </button>
+		        </div>
+		    </form>
+		</div>
 	    
 		<div id="swipeContainer" class="swipe-container" style="display: none;">
 			<div class="card-stack" id="cardStack">
@@ -1611,7 +1536,6 @@
 		let isUserPlus = false;
 		let isAdmin = false;
 		let lastSwipedProfile = null;
-		let selectedGender = null;
 		
 		// Global chat state object instead of individual variables
 		let chatState = {
@@ -1621,6 +1545,7 @@
 			messageInterval: null
 		};
 
+	
 		const emojiMap = {
 			'wine': '🍷',
 			'420': '🍃',
@@ -2705,7 +2630,6 @@
 					answer1: answer1,
 					prompt2: prompt2,
 					answer2: answer2
-					gender: selectedGender
 				};
 
 				console.log('📤 Sende Profil-Daten:', profileData);
@@ -5119,53 +5043,6 @@
 		        }, 500);
 		    }
 		});
-		
-		// Gender-Auswahl Event Listener
-		document.querySelectorAll('.gender-btn').forEach(btn => {
-			btn.addEventListener('click', function() {
-				document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
-				this.classList.add('selected');
-				selectedGender = this.dataset.gender;
-				document.getElementById('genderError').style.display = 'none';
-			});
-		});
-
-		// Name-Validierung (nur Buchstaben, max 16 Zeichen)
-		document.getElementById('profileName').addEventListener('input', function() {
-			const value = this.value;
-			const cleanValue = value.replace(/[^a-zA-ZäöüÄÖÜß\s]/g, '');
-			if (cleanValue !== value) {
-				this.value = cleanValue;
-			}
-			document.getElementById('nameCount').textContent = `${cleanValue.length}/16`;
-		});
-
-		// Alter-Validierung (18-99)
-		document.getElementById('profileAge').addEventListener('input', function() {
-			const age = parseInt(this.value);
-			const ageError = document.getElementById('ageError');
-			if (age < 18) {
-				ageError.textContent = 'Mindestalter ist 18 Jahre';
-				ageError.style.display = 'block';
-			} else {
-				ageError.style.display = 'none';
-			}
-		});
-
-		// Beschreibung-Validierung (max 2 Sätze, 200 Zeichen)
-		document.getElementById('profileDescription').addEventListener('input', function() {
-			const value = this.value;
-			const sentences = value.split(/[.!?]+/).filter(s => s.trim().length > 0);
-			document.getElementById('descriptionCount').textContent = `${value.length}/200`;
-			
-			const descError = document.getElementById('descriptionError');
-			if (sentences.length > 2) {
-				descError.textContent = 'Maximal 2 Sätze erlaubt';
-				descError.style.display = 'block';
-			} else {
-				descError.style.display = 'none';
-			}
-		});		
     </script>
 </body>
 </html>
