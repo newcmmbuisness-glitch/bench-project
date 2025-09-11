@@ -1,9 +1,11 @@
-const fs = require('fs');
-const path = require('path');
+const { Client } = require('@neondatabase/serverless');
 const { faker } = require('@faker-js/faker');
 
-const usedImagesFile = path.join(__dirname, 'used_images.json');
+const client = new Client({
+  connectionString: process.env.NEON_DATABASE_URL
+});
 
+// Hier trägst du deine Bilder ein
 const images = {
   female: [
     "https://images.unsplash.com/photo-1699474072277-aeccb6e17263?q=80&w=2061&auto=format&fit=crop",
@@ -15,6 +17,7 @@ const images = {
   ]
 };
 
+// PLZ/GPS-Beispiele Deutschland
 const locations = [
   { postalCode: '10115', lat: 52.532, lng: 13.384 },
   { postalCode: '20095', lat: 53.550, lng: 10.000 },
@@ -35,45 +38,63 @@ function randomFromArray(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-let usedImages = [];
-if (fs.existsSync(usedImagesFile)) {
-  usedImages = JSON.parse(fs.readFileSync(usedImagesFile, 'utf-8'));
-}
-
 exports.handler = async () => {
+  await client.connect();
+
   const profiles = [];
 
-  for (const gender of ['female','male']) {
-    const freeImages = images[gender].filter(img => !usedImages.includes(img));
-    for (let i = 0; i < freeImages.length; i++) {
-      const profileImage = freeImages[i];
-      usedImages.push(profileImage);
+  for (const gender of ['female', 'male']) {
+    // Hol alle noch ungenutzten Bilder aus DB
+    const freeImages = images[gender].slice(); // Kopie
+    for (const img of freeImages) {
+      // Prüfen, ob Bild schon in DB existiert
+      const res = await client.query(
+        `SELECT COUNT(*) FROM ai_profiles WHERE profile_image=$1`,
+        [img]
+      );
+      if (parseInt(res.rows[0].count) > 0) continue; // schon benutzt
 
       const location = randomFromArray(locations);
       const name = faker.person.firstName(gender);
       const age = Math.floor(Math.random() * (31 - 18 + 1)) + 18;
       const description = randomFromArray(descriptions);
 
-      profiles.push({
-        user_id: `ai_${gender}_${i}_${Date.now()}`,
+      const profile = {
         profile_name: name,
         age,
         gender,
         description,
-        profile_image: profileImage,
-        interests: faker.helpers.arrayElements(['wine','420','Sport','Filme','Wandern','Musik','Fotografie'], 3),
+        profile_image: img,
         postal_code: location.postalCode,
         latitude: location.lat + (Math.random() - 0.5) * 0.05,
-        longitude: location.lng + (Math.random() - 0.5) * 0.05,
-        isAI: true
-      });
+        longitude: location.lng + (Math.random() - 0.5) * 0.05
+      };
+
+      // In DB speichern
+      await client.query(
+        `INSERT INTO ai_profiles 
+        (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true)`,
+        [
+          profile.profile_name,
+          profile.age,
+          profile.gender,
+          profile.description,
+          profile.profile_image,
+          profile.postal_code,
+          profile.latitude,
+          profile.longitude
+        ]
+      );
+
+      profiles.push({ ...profile, isAI: true });
     }
   }
 
-  fs.writeFileSync(usedImagesFile, JSON.stringify(usedImages, null, 2));
+  await client.end();
 
   return {
     statusCode: 200,
-    body: JSON.stringify({ profiles }),
+    body: JSON.stringify({ profiles })
   };
 };
