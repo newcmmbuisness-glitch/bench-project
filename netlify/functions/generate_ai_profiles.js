@@ -3,8 +3,9 @@ const { faker } = require('@faker-js/faker');
 
 const client = new Client({
   connectionString: process.env.NEON_DATABASE_URL
-}); // kein connect()/end() hier
+});
 
+// Deine Bilder nach Gender
 const images = {
   female: [
     "https://images.unsplash.com/photo-1699474072277-aeccb6e17263?q=80&w=2061&auto=format&fit=crop",
@@ -16,6 +17,7 @@ const images = {
   ]
 };
 
+// PLZ/GPS Beispiele Deutschland
 const locations = [
   { postalCode: '10115', lat: 52.532, lng: 13.384 },
   { postalCode: '20095', lat: 53.550, lng: 10.000 },
@@ -40,15 +42,20 @@ exports.handler = async () => {
   try {
     const profiles = [];
 
-    for (const gender of ['female','male']) {
-      const res = await client.query(
+    // Generiere für beide Genders
+    for (const gender of ['female', 'male']) {
+      // Prüfe bereits genutzte Bilder
+      const { rows } = await client.query(
         `SELECT profile_image FROM ai_profiles WHERE gender=$1 AND (used IS NULL OR used=false)`,
         [gender]
       );
-      const usedImages = res.rows.map(r => r.profile_image);
+      const usedImages = rows.map(r => r.profile_image);
+
+      // Freie Bilder aus Array
       const freeImages = images[gender].filter(img => !usedImages.includes(img));
 
-      for (const img of freeImages) {
+      // Parallel speichern, nicht sequential
+      const insertPromises = freeImages.map(img => {
         const location = randomFromArray(locations);
         const profile = {
           profile_name: faker.person.firstName({ gender }),
@@ -62,10 +69,10 @@ exports.handler = async () => {
           used: true
         };
 
-        await client.query(
+        return client.query(
           `INSERT INTO ai_profiles 
-          (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+            (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
             profile.profile_name,
             profile.age,
@@ -77,16 +84,19 @@ exports.handler = async () => {
             profile.longitude,
             profile.used
           ]
-        );
+        ).then(() => {
+          profiles.push({ ...profile, isAI: true });
+        });
+      });
 
-        profiles.push({ ...profile, isAI: true });
-      }
+      await Promise.all(insertPromises);
     }
 
     return {
       statusCode: 200,
       body: JSON.stringify({ profiles })
     };
+
   } catch (err) {
     console.error("Fehler in generate_ai_profiles:", err);
     return {
