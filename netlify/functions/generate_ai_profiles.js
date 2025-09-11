@@ -5,7 +5,6 @@ const client = new Client({
   connectionString: process.env.NEON_DATABASE_URL
 });
 
-// Deine Bilder hier einfügen
 const images = {
   female: [
     "https://images.unsplash.com/photo-1699474072277-aeccb6e17263?q=80&w=2061&auto=format&fit=crop",
@@ -17,7 +16,6 @@ const images = {
   ]
 };
 
-// PLZ/GPS Beispiele Deutschland
 const locations = [
   { postalCode: '10115', lat: 52.532, lng: 13.384 },
   { postalCode: '20095', lat: 53.550, lng: 10.000 },
@@ -40,23 +38,21 @@ function randomFromArray(arr) {
 
 exports.handler = async () => {
   try {
-    await client.connect();
     const profiles = [];
 
     for (const gender of ['female','male']) {
       // Unbenutzte Bilder aus DB abfragen
       const res = await client.query(
-        `SELECT profile_image FROM ai_profiles WHERE gender=$1 AND used=false`,
+        `SELECT profile_image FROM ai_profiles WHERE gender=$1 AND (used IS NULL OR used=false)`,
         [gender]
       );
-      const unusedImagesInDB = res.rows.map(r => r.profile_image);
-      
-      // Falls noch freie Bilder in Array
-      const freeImages = images[gender].filter(img => !unusedImagesInDB.includes(img));
+      const usedImages = res.rows.map(r => r.profile_image);
+
+      const freeImages = images[gender].filter(img => !usedImages.includes(img));
 
       for (const img of freeImages) {
         const location = randomFromArray(locations);
-        const name = faker.person.firstName(gender);
+        const name = faker.person.firstName({ gender }); // ✅ neue Syntax
         const age = Math.floor(Math.random() * (31 - 18 + 1)) + 18;
         const description = randomFromArray(descriptions);
 
@@ -72,7 +68,6 @@ exports.handler = async () => {
           used: true
         };
 
-        // In DB speichern
         await client.query(
           `INSERT INTO ai_profiles 
           (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used)
@@ -93,8 +88,6 @@ exports.handler = async () => {
         profiles.push({ ...profile, isAI: true });
       }
     }
-
-    await client.end();
 
     return {
       statusCode: 200,
