@@ -1529,7 +1529,7 @@
 						<button type="submit" class="action-btn btn-primary">
 							✅ Profil speichern
 						</button>
-						<button type="button" class="action-btn btn-secondary" onclick="closeForm()">
+						<button type="button" class="action-btn btn-secondary" onclick="closeCreateProfile()">
 							↩️ Zurück
 						</button>
 					</div>
@@ -2486,7 +2486,6 @@
 		}
 				
 		
-		// Profile laden
 		async function loadProfiles() {
 			console.log('🔄 Profile werden geladen...');
 			const cardStack = document.getElementById('cardStack');
@@ -2518,23 +2517,19 @@
 				// Lokale Matches laden (für AI-Profile)
 				let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
 				const now = Date.now();
+				const AI_BLOCK_DAYS = 7;
 
-				// Dauer in Tagen, wie lange AI-Matches blockiert bleiben sollen
-				const AI_BLOCK_DAYS = 7; // 🔧 hier ändern für 1 Tag, 3 Tage, 7 Tage usw.
-
-				// IDs von echten Matches aus der API (dauerhaft blockiert)
 				const matchedUserIds = matchesResult.success && matchesResult.matches 
 					? matchesResult.matches
-						.filter(m => !m.isAI) // nur echte
+						.filter(m => !m.isAI)
 						.map(m => m.matched_user_id || m.user_id)
 					: [];
 
-				// IDs von AI-Matches, die jünger als AI_BLOCK_DAYS sind
 				const blockedAIIds = localMatches
 					.filter(m => m.isAI && now - m.matched_at < AI_BLOCK_DAYS * 24 * 60 * 60 * 1000)
 					.map(m => m.matched_user_id);
 
-				// --- Echte Profile filtern ---
+				// --- Echte Profile ---
 				let realProfiles = [];
 				if (profilesResponse.ok && profilesResult.success && profilesResult.profiles) {
 					realProfiles = profilesResult.profiles.filter(p => 
@@ -2543,22 +2538,27 @@
 					);
 				}
 
-				// --- AI Profile hinzufügen ---
+				// --- AI Profile ---
 				let aiProfiles = [];
 				if (realProfiles.length < 5) {
 					generateSampleProfiles();
 
+					// eigenes Gender aus localStorage holen
+					const myProfile = JSON.parse(localStorage.getItem('currentProfile') || '{}');
+					const userGender = myProfile.gender;
+					const targetGender = userGender === 'male' ? 'female' : 'male';
+
 					aiProfiles = sampleProfiles
 						.map((profile, index) => ({
 							...profile,
-							user_id: `ai_${profile.name}_${index}`, // stabile ID pro AI-Profil
+							user_id: `ai_${profile.name}_${index}`,
 							profile_name: profile.name,
 							profile_image: profile.image,
 							interests: profile.preferences,
 							isAI: true
 						}))
-						// blockierte AI-Profile (innerhalb AI_BLOCK_DAYS) ausfiltern
-						.filter(p => !blockedAIIds.includes(p.user_id));
+						.filter(p => !blockedAIIds.includes(p.user_id))
+						.filter(p => p.gender === targetGender); // 👈 nur gewünschtes Gender
 				}
 
 				const allProfiles = [...realProfiles, ...aiProfiles];
@@ -2575,9 +2575,7 @@
 			} catch (error) {
 				console.error('Fehler beim Laden der Profile:', error);
 				showNoMoreProfilesInCardStack();
-			}
-		}
-		
+			}		
 		
 		function showCreateProfileSection() {
 			hideAllScreens();
@@ -2652,7 +2650,7 @@
 			}
 
 			const name = document.getElementById('profileName').value;
-			const age = document.getElementById('profileAge').value; // NEW: Age field
+			const age = document.getElementById('profileAge').value;
 			const description = document.getElementById('profileDescription').value;
 			const imageFile = document.getElementById('profileImage').files[0];
 			const postalCode = document.getElementById('postalCode').value;
@@ -2660,23 +2658,23 @@
 			const answer1 = document.getElementById('answer1Input').value;
 			const prompt2 = document.getElementById('prompt2Select').value;
 			const answer2 = document.getElementById('answer2Input').value;
+			const selectedGender = document.getElementById('profileGender').value; // 👈 Gender aus UI
 
 			if (!imageFile) {
 				showNotification('Bitte wählen Sie ein Profilbild aus!', 'error');
 				return;
 			}
-			
+
 			if (!age || age < 18 || age > 99) {
 				showNotification('Bitte geben Sie ein gültiges Alter ein (18-99)!', 'error');
 				return;
 			}
-			
+
 			if ((prompt1 && !answer1) || (prompt2 && !answer2)) {
 				showNotification('Bitte beantworte deine ausgewählten Fragen.', 'error');
 				return;
 			}
 
-			// Get GPS coordinates from postal code
 			let coordinates = null;
 			try {
 				coordinates = await getCoordinatesFromPostalCode(postalCode);
@@ -2684,11 +2682,10 @@
 				console.warn('GPS-Koordinaten konnten nicht ermittelt werden:', error);
 			}
 
-			// Get selected preferences and hobbies
 			const selectedGenussmittel = Array.from(document.querySelectorAll('#preferencesIcons .selected'))
 				.map(el => el.dataset.value)
 				.filter(val => val);
-				
+
 			const selectedHobbiesFromUI = Array.from(document.querySelectorAll('#hobbiesIcons .selected'))
 				.map(el => el.dataset.value)
 				.filter(val => val);
@@ -2697,31 +2694,32 @@
 
 			try {
 				const profileImageUrl = await uploadImageToCloudinary(imageFile);
-				
+
 				const profileData = {
 					userId: currentUser.uid, 
 					name: name,
-					age: parseInt(age), // NEW: Include age
+					age: parseInt(age),
 					description: description,
 					interests: allInterests,
 					profileImage: profileImageUrl,
 					postalCode: postalCode,
-					latitude: coordinates?.lat || null, // NEW: GPS coordinates
-					longitude: coordinates?.lng || null, // NEW: GPS coordinates
+					latitude: coordinates?.lat || null,
+					longitude: coordinates?.lng || null,
 					prompt1: prompt1,
 					answer1: answer1,
 					prompt2: prompt2,
-					answer2: answer2
+					answer2: answer2,
+					gender: selectedGender // 👈 an Backend senden
 				};
 
 				console.log('📤 Sende Profil-Daten:', profileData);
-				
+
 				const response = await fetch('/.netlify/functions/create_profile', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(profileData)
 				});
-				
+
 				const result = await response.json();
 
 				if (response.ok && result.success) {
@@ -2733,10 +2731,11 @@
 						interests: allInterests,
 						profileImage: profileImageUrl,
 						latitude: coordinates?.lat,
-						longitude: coordinates?.lng
+						longitude: coordinates?.lng,
+						gender: selectedGender // 👈 auch lokal speichern
 					};
 					localStorage.setItem('currentProfile', JSON.stringify(currentProfile));
-					
+
 					showNotification('✅ Profil erfolgreich erstellt!', 'success');
 					checkAndRenderUI();
 				} else {
@@ -2748,6 +2747,7 @@
 				showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
 			}
 		}
+
 
 		// NEW: Function to get coordinates from postal code
 		async function getCoordinatesFromPostalCode(postalCode) {
@@ -2793,16 +2793,18 @@
 					id: 1,
 					name: "Anna",
 					age: 26,
+					gender: "female",
 					description: "Liebe Spaziergänge in der Natur und romantische Sonnenuntergänge auf Bänken 🌅 Suche jemanden für tiefe Gespräche bei einem Glas Wein.",
-					image: "https://images.unsplash.com/photo-1699474072277-aeccb6e17263?q=80&w=2061&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+					image: "https://images.unsplash.com/photo-1699474072277-aeccb6e17263?q=80&w=2061&auto=format&fit=crop",
 					preferences: ["wine", "Wandern", "Fotografie"],
-					latitude: 49.0069 + (Math.random() - 0.5) * 0.1, // Karlsruhe area with variation
+					latitude: 49.0069 + (Math.random() - 0.5) * 0.1,
 					longitude: 8.4037 + (Math.random() - 0.5) * 0.1
 				},
 				{
 					id: 2,
 					name: "Max",
 					age: 29,
+					gender: "male",
 					description: "Entspannte Gespräche bei einem Glas Wein sind das Beste! 🍷 Musik-Liebhaber der gerne chillt und das Leben genießt.",
 					image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
 					preferences: ["wine", "420", "Musik"],
@@ -2813,6 +2815,7 @@
 					id: 3,
 					name: "Lisa",
 					age: 24,
+					gender: "female",
 					description: "Naturliebhaberin, die gerne neue Orte entdeckt und chillige Momente genießt 🍃 Bin immer für spontane Abenteuer zu haben!",
 					image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
 					preferences: ["420", "Wandern", "Haustiere"],
@@ -2823,6 +2826,7 @@
 					id: 4,
 					name: "Tom",
 					age: 31,
+					gender: "male",
 					description: "Romantiker mit Herz für schöne Aussichten und tiefe Gespräche 💕 Kunst und Kultur sind meine Leidenschaft.",
 					image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
 					preferences: ["wine", "Kunst", "Musik"],
@@ -2833,6 +2837,7 @@
 					id: 5,
 					name: "Sarah",
 					age: 27,
+					gender: "female",
 					description: "Lebenslustig und immer für Abenteuer zu haben! Lass uns die Welt entdecken 🌍 Sport, Filme und gute Vibes!",
 					image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
 					preferences: ["wine", "420", "Sport", "Filme"],
