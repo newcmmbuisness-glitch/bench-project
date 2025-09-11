@@ -2541,25 +2541,23 @@
 				// --- AI Profile ---
 				let aiProfiles = [];
 				if (realProfiles.length < 5) {
-					generateSampleProfiles();
-
-					// eigenes Gender aus localStorage holen
 					const myProfile = JSON.parse(localStorage.getItem('currentProfile') || '{}');
 					const userGender = myProfile.gender;
 					const targetGender = userGender === 'male' ? 'female' : 'male';
 
-					aiProfiles = sampleProfiles
-						.map((profile, index) => ({
-							...profile,
-							user_id: `ai_${profile.name}_${index}`,
-							profile_name: profile.name,
-							profile_image: profile.image,
-							interests: profile.preferences,
-							isAI: true
-						}))
-						.filter(p => !blockedAIIds.includes(p.user_id))
-						.filter(p => p.gender === targetGender); // 👈 nur gewünschtes Gender
+					try {
+						const res = await fetch('/.netlify/functions/generate_ai_profiles');
+						const data = await res.json();
+
+						aiProfiles = data.profiles
+							.filter(p => p.gender === targetGender)
+							.filter(p => !blockedAIIds.includes(p.user_id))
+							.map(p => ({ ...p, isAI: true }));
+					} catch (err) {
+						console.error("Fehler beim Laden der AI-Profile:", err);
+					}
 				}
+
 
 				const allProfiles = [...realProfiles, ...aiProfiles];
 				currentProfiles = allProfiles;
