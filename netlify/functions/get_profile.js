@@ -11,11 +11,10 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
-
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, headers, body: 'Method Not Allowed' };
     }
-
+    
     try {
         const { userId } = JSON.parse(event.body);
         
@@ -26,11 +25,10 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ error: 'Fehlende Benutzer-ID' }) 
             };
         }
-
+        
         const userExists = await sql`
             SELECT id FROM users WHERE id = ${userId}
         `;
-
         if (userExists.length === 0) {
             return { 
                 statusCode: 404, 
@@ -39,17 +37,41 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // --- Korrektur beginnt hier ---
+        // 1. Das eigene Profil laden um Gender zu ermitteln
+        const userProfile = await sql`
+            SELECT gender FROM meet_profiles WHERE user_id = ${userId}
+        `;
+        
+        if (userProfile.length === 0) {
+            return { 
+                statusCode: 404, 
+                headers, 
+                body: JSON.stringify({ error: 'Benutzerprofil nicht gefunden' }) 
+            };
+        }
 
-        // 1. Alle Profile abfragen, die der Nutzer bereits geswipt hat
+        const userGender = userProfile[0]?.gender;
+        if (!userGender) {
+            return { 
+                statusCode: 400, 
+                headers, 
+                body: JSON.stringify({ error: 'Gender nicht im Profil gesetzt' }) 
+            };
+        }
+
+        // 2. Bestimme das Ziel-Gender (Männer sehen nur Frauen und umgekehrt)
+        const targetGender = userGender === 'male' ? 'female' : 'male';
+        
+        // 3. Alle Profile abfragen, die der Nutzer bereits geswipt hat
         const swipedUsers = await sql`
             SELECT swiped_user_id FROM swipe_history WHERE user_id = ${userId}
         `;
         const swipedUserIds = swipedUsers.map(s => s.swiped_user_id);
         
-        // 2. Den Nutzer selbst und alle geswipten Profile von der Abfrage ausschließen
+        // 4. Den Nutzer selbst und alle geswipten Profile von der Abfrage ausschließen
         const excludedUserIds = [userId, ...swipedUserIds];
-
+        
+        // 5. Profile mit Gender-Filter laden
         let profiles;
         profiles = await sql`
           SELECT 
@@ -66,16 +88,16 @@ exports.handler = async (event, context) => {
             mp.answer_1,
             mp.prompt_2,
             mp.answer_2,
+            mp.gender,
             u.email
           FROM meet_profiles mp
           JOIN users u ON mp.user_id = u.id
           WHERE mp.user_id != ALL(${excludedUserIds})
+          AND mp.gender = ${targetGender}
           ORDER BY RANDOM()
           LIMIT 10
         `;
         
-        // --- Korrektur endet hier ---
-
         const formattedProfiles = profiles.map(profile => ({
           user_id: profile.user_id,
           profile_name: profile.profile_name,
@@ -90,19 +112,21 @@ exports.handler = async (event, context) => {
           answer1: profile.answer_1,
           prompt2: profile.prompt_2,
           answer2: profile.answer_2,
+          gender: profile.gender,
           email: profile.email
         }));
-
+        
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({ 
                 success: true, 
                 profiles: formattedProfiles,
-                totalFound: formattedProfiles.length
+                totalFound: formattedProfiles.length,
+                userGender: userGender,
+                targetGender: targetGender
             }),
         };
-
     } catch (error) {
         console.error('Get profiles error:', error);
         return { 
