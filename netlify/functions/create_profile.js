@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
 
     try {
         // ⬇️ Jetzt auch Alter + Koordinaten entgegennehmen
-        const { userId, name, age, description, interests, profileImage, postalCode, latitude, longitude, prompt1, answer1, prompt2, answer2 } = JSON.parse(event.body);
+        const { userId, name, age, description, interests, profileImage, postalCode, latitude, longitude, prompt1, answer1, prompt2, answer2, gender } = JSON.parse(event.body);
 
         if (!userId || !name || !profileImage || !age) {
             return { 
@@ -39,8 +39,8 @@ exports.handler = async (event, context) => {
         }
 
         const result = await sql`
-            INSERT INTO meet_profiles (user_id, profile_name, age, description, interests, profile_image, postal_code, latitude, longitude, prompt_1, answer_1, prompt_2, answer_2)
-            VALUES (${userId}, ${name}, ${age}, ${description}, ${interests}, ${profileImage}, ${postalCode}, ${latitude}, ${longitude}, ${prompt1}, ${answer1}, ${prompt2}, ${answer2})
+            INSERT INTO meet_profiles (user_id, profile_name, age, description, interests, profile_image, postal_code, latitude, longitude, prompt_1, answer_1, prompt_2, answer_2, gender)
+            VALUES (${userId}, ${name}, ${age}, ${description}, ${interests}, ${profileImage}, ${postalCode}, ${latitude}, ${longitude}, ${prompt1}, ${answer1}, ${prompt2}, ${answer2},  ${gender})
             ON CONFLICT (user_id) DO UPDATE SET
                 profile_name = EXCLUDED.profile_name,
                 age = EXCLUDED.age,
@@ -54,6 +54,7 @@ exports.handler = async (event, context) => {
                 answer_1 = EXCLUDED.answer_1,
                 prompt_2 = EXCLUDED.prompt_2,
                 answer_2 = EXCLUDED.answer_2
+                gender = EXCLUDED.gender
             RETURNING id;
         `;
 
