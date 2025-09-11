@@ -53,7 +53,7 @@ exports.handler = async (event, context) => {
                 prompt_1 = EXCLUDED.prompt_1,
                 answer_1 = EXCLUDED.answer_1,
                 prompt_2 = EXCLUDED.prompt_2,
-                answer_2 = EXCLUDED.answer_2
+                answer_2 = EXCLUDED.answer_2,
                 gender = EXCLUDED.gender
             RETURNING id;
         `;
