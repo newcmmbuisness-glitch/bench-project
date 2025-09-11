@@ -5148,7 +5148,12 @@
 		    renderPreferences();
 		    checkAndRenderUI(); // Diese Funktion sollte alle weiteren Schritte auslösen
 			renderHobbies();
-			
+
+			const profileForm = document.getElementById('profileForm');
+			if (profileForm) {
+				profileForm.addEventListener('submit', createProfile);
+			}
+					
 		    // Event-Listener für Buttons
 		    const profileBtn = document.getElementById('profileButton');
 		    const chatBtn = document.getElementById('chatButton');
