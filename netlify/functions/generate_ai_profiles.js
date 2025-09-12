@@ -1,20 +1,27 @@
 const { Client } = require('@neondatabase/serverless');
 const { faker } = require('@faker-js/faker');
-const axios = require('axios');
 
-// === Cloudinary Loader ===
+// === Cloudinary Loader (mit native fetch) ===
 async function getCloudinaryImages(folder) {
-  const res = await axios.get(
-    `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/resources/search`,
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/resources/search?expression=folder="${folder}"&max_results=100`,
     {
-      params: { expression: `folder="${folder}"`, max_results: 100 },
-      auth: {
-        username: process.env.CLOUDINARY_API_KEY,
-        password: process.env.CLOUDINARY_API_SECRET
+      headers: {
+        Authorization:
+          "Basic " +
+          Buffer.from(
+            process.env.CLOUDINARY_API_KEY + ":" + process.env.CLOUDINARY_API_SECRET
+          ).toString("base64")
       }
     }
   );
-  return res.data.resources.map(r => r.secure_url);
+
+  if (!res.ok) {
+    throw new Error(`Cloudinary API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.resources.map(r => r.secure_url);
 }
 
 // === Clustered locations across Germany ===
@@ -105,7 +112,6 @@ exports.handler = async () => {
       for (const img of freeImages) {
         let profile;
 
-        // prüfen, ob existiert (zur Sicherheit)
         const existingRes = await client.query(
           `SELECT * FROM ai_profiles WHERE profile_image=$1`,
           [img]
