@@ -34,7 +34,7 @@ function randomFromArray(arr) {
 
 exports.handler = async (event, context) => {
   const client = new Client({
-    connectionString: process.env.NEON_DATABASE_URL
+    connectionString: process.env.NETLIFY_DATABASE_URL
   });
 
   try {
