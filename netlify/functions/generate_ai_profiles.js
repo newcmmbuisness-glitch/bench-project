@@ -1,28 +1,40 @@
 const { Client } = require('@neondatabase/serverless');
 const { faker } = require('@faker-js/faker');
 
+
+function parseCloudinaryURL() {
+  const url = new URL(process.env.CLOUDINARY_URL);
+  return {
+    cloudName: url.hostname,
+    apiKey: url.username,
+    apiSecret: url.password,
+  };
+}
 // === Cloudinary Loader (mit native fetch) ===
 async function getCloudinaryImages(folder) {
+  const { cloudName, apiKey, apiSecret } = parseCloudinaryURL();
+  const expression = `folder="${encodeURIComponent("home/" + folder)}"`;
+
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/resources/search?expression=folder="${folder}"&max_results=100`,
+    `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${expression}&max_results=100`,
     {
       headers: {
         Authorization:
           "Basic " +
-          Buffer.from(
-            process.env.CLOUDINARY_API_KEY + ":" + process.env.CLOUDINARY_API_SECRET
-          ).toString("base64")
+          Buffer.from(apiKey + ":" + apiSecret).toString("base64")
       }
     }
   );
 
   if (!res.ok) {
-    throw new Error(`Cloudinary API error: ${res.status} ${res.statusText}`);
+    const txt = await res.text();
+    throw new Error(`Cloudinary API error: ${res.status} ${res.statusText} → ${txt}`);
   }
 
   const data = await res.json();
   return data.resources.map(r => r.secure_url);
 }
+
 
 // === Clustered locations across Germany ===
 const cityClusters = [
