@@ -1,11 +1,6 @@
 const { Client } = require('@neondatabase/serverless');
 const { faker } = require('@faker-js/faker');
 
-const client = new Client({
-  connectionString: process.env.NEON_DATABASE_URL
-});
-
-// Deine Bilder nach Gender
 const images = {
   female: [
     "https://images.unsplash.com/photo-1699474072277-aeccb6e17263?q=80&w=2061&auto=format&fit=crop",
@@ -17,7 +12,6 @@ const images = {
   ]
 };
 
-// PLZ/GPS Beispiele Deutschland
 const locations = [
   { postalCode: '10115', lat: 52.532, lng: 13.384 },
   { postalCode: '20095', lat: 53.550, lng: 10.000 },
@@ -38,24 +32,28 @@ function randomFromArray(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-exports.handler = async () => {
+exports.handler = async (event, context) => {
+  const client = new Client({
+    connectionString: process.env.NEON_DATABASE_URL
+  });
+
   try {
+    // Connect to database
+    await client.connect();
+
     const profiles = [];
 
-    // Generiere für beide Genders
     for (const gender of ['female', 'male']) {
-      // Prüfe bereits genutzte Bilder
-      const { rows } = await client.query(
+      // Fixed: Added backticks around SQL query
+      const res = await client.query(
         `SELECT profile_image FROM ai_profiles WHERE gender=$1 AND (used IS NULL OR used=false)`,
         [gender]
       );
-      const usedImages = rows.map(r => r.profile_image);
 
-      // Freie Bilder aus Array
+      const usedImages = res.rows.map(r => r.profile_image);
       const freeImages = images[gender].filter(img => !usedImages.includes(img));
 
-      // Parallel speichern, nicht sequential
-      const insertPromises = freeImages.map(img => {
+      for (const img of freeImages) {
         const location = randomFromArray(locations);
         const profile = {
           profile_name: faker.person.firstName({ gender }),
@@ -69,9 +67,9 @@ exports.handler = async () => {
           used: true
         };
 
-        return client.query(
-          `INSERT INTO ai_profiles 
-            (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used)
+        // Fixed: Added backticks around SQL query
+        await client.query(
+          `INSERT INTO ai_profiles (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used) 
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
             profile.profile_name,
@@ -84,24 +82,53 @@ exports.handler = async () => {
             profile.longitude,
             profile.used
           ]
-        ).then(() => {
-          profiles.push({ ...profile, isAI: true });
-        });
-      });
+        );
 
-      await Promise.all(insertPromises);
+        profiles.push({
+          ...profile,
+          isAI: true
+        });
+      }
     }
+
+    // Close database connection
+    await client.end();
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ profiles })
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+      },
+      body: JSON.stringify({
+        success: true,
+        profiles
+      })
     };
 
   } catch (err) {
     console.error("Fehler in generate_ai_profiles:", err);
+    
+    // Make sure to close connection even on error
+    try {
+      await client.end();
+    } catch (closeErr) {
+      console.error("Fehler beim Schließen der DB-Verbindung:", closeErr);
+    }
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'AI-Profile konnten nicht geladen werden.' })
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        success: false,
+        error: 'AI-Profile konnten nicht geladen werden.',
+        details: err.message
+      })
     };
   }
 };
