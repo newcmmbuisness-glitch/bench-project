@@ -22,10 +22,10 @@ function parseCloudinaryURL() {
 async function getCloudinaryImages(folder) {
   const { cloudName, apiKey, apiSecret } = parseCloudinaryURL();
 
-  // Folder direkt im Expression-String, nicht URL-encoded
-  const expression = `folder="home/${folder}"`;
-
+  // Cloudinary erwartet den Ordner-Namen exakt so wie in der Media Library (ohne "home/")
+  const expression = `folder="${folder}"`;
   const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${encodeURIComponent(expression)}&max_results=100`;
+
   console.log("Fetching Cloudinary Search API URL:", url);
 
   const res = await fetch(url, {
@@ -44,7 +44,6 @@ async function getCloudinaryImages(folder) {
 
   return data.resources.map(r => r.secure_url);
 }
-
 
 
 // === Clustered locations across Germany ===
