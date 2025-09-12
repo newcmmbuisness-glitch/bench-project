@@ -12,7 +12,7 @@ const images = {
     "https://images.pexels.com/photos/227288/pexels-photo-227288.jpeg",
     "https://images.pexels.com/photos/33870333/pexels-photo-33870333.jpeg",
     "https://images.pexels.com/photos/33858735/pexels-photo-33858735.jpeg",
-    "https://live.staticflickr.com/65535/53832689223_75aa944c96_b.jpg"
+    "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757679980/53832689223_8f7ae6292b_o_wadtce.jpg"
   ],
   male: [
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face"
