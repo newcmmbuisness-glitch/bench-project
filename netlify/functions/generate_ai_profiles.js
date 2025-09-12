@@ -19,20 +19,19 @@ function parseCloudinaryURL() {
   };
 }
 
-// === Cloudinary Loader (mit native fetch) ===
+// === Cloudinary Loader (robust) ===
 async function getCloudinaryImages(folder) {
   const { cloudName, apiKey, apiSecret } = parseCloudinaryURL();
 
-  // URL-encode die ganze Expression
-  const expression = encodeURIComponent(`folder="home/${folder}"`);
-  const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${expression}&max_results=100`;
-
-  console.log("🔎 Cloudinary search URL:", url);
+  // Foldernamen anpassen: keine Leerzeichen, nur Unterstrich
+  const safeFolder = folder.replace(/\s+/g, "_"); // z.B. "pic f" -> "pic_f"
+  
+  const url = `https://res.cloudinary.com/${cloudName}/image/list/home_${safeFolder}.json`;
+  console.log("Fetching Cloudinary list URL:", url);
 
   const res = await fetch(url, {
     headers: {
-      Authorization:
-        "Basic " + Buffer.from(apiKey + ":" + apiSecret).toString("base64")
+      Authorization: "Basic " + Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")
     }
   });
 
@@ -42,11 +41,14 @@ async function getCloudinaryImages(folder) {
   }
 
   const data = await res.json();
+  
+  if (!data.resources) {
+    console.warn("⚠️ Keine Ressourcen gefunden in Cloudinary Folder:", folder);
+    return [];
+  }
 
-  console.log(`✅ Found ${data.resources.length} images in folder "${folder}"`);
-
-  // Gib nur die URLs zurück
-  return data.resources.map(r => r.secure_url);
+  // Jedes Objekt enthält url oder secure_url
+  return data.resources.map(r => r.secure_url || r.url);
 }
 
 // === Clustered locations across Germany ===
