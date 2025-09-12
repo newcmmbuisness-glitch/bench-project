@@ -22,12 +22,11 @@ function parseCloudinaryURL() {
 async function getCloudinaryImages(folder) {
   const { cloudName, apiKey, apiSecret } = parseCloudinaryURL();
 
-  // Folder korrekt URL-encoden, auch Leerzeichen
-  const encodedFolder = encodeURIComponent(`home/${folder}`);
-  const expression = `folder="${encodedFolder}"`;
+  // Folder direkt im Expression-String, nicht URL-encoded
+  const expression = `folder="home/${folder}"`;
 
-  const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${expression}&max_results=100`;
-  console.log("Fetching Cloudinary list URL:", url);
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${encodeURIComponent(expression)}&max_results=100`;
+  console.log("Fetching Cloudinary Search API URL:", url);
 
   const res = await fetch(url, {
     headers: {
@@ -45,6 +44,7 @@ async function getCloudinaryImages(folder) {
 
   return data.resources.map(r => r.secure_url);
 }
+
 
 
 // === Clustered locations across Germany ===
