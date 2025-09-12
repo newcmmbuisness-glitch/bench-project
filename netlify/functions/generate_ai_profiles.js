@@ -91,8 +91,7 @@ exports.handler = async (event, context) => {
       }
     }
 
-    // Close database connection
-    await client.end();
+    // No need to close connection with neon() pattern
 
     console.log(`Generated ${profiles.length} AI profiles`);
 
@@ -114,12 +113,7 @@ exports.handler = async (event, context) => {
     console.error("Fehler in generate_ai_profiles:", err);
     console.error("Stack trace:", err.stack);
     
-    // Make sure to close connection even on error
-    try {
-      await client.end();
-    } catch (closeErr) {
-      console.error("Fehler beim Schließen der DB-Verbindung:", closeErr);
-    }
+    // No need to close connection with neon() pattern
 
     return {
       statusCode: 500,
