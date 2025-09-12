@@ -4,17 +4,16 @@ const { faker } = require('@faker-js/faker');
 
 function parseCloudinaryURL() {
   const raw = process.env.CLOUDINARY_URL;
-  if (!raw) throw new Error("CLOUDINARY_URL not set");
-
-  // replace 'cloudinary://' with 'https://'
-  const url = new URL(raw.replace(/^cloudinary:\/\//, 'https://'));
+  const match = raw.match(/^cloudinary:\/\/(.*):(.*)@(.*)$/);
+  if (!match) throw new Error("Invalid CLOUDINARY_URL format");
 
   return {
-    cloudName: url.hostname,
-    apiKey: url.username,
-    apiSecret: url.password,
+    apiKey: match[1],
+    apiSecret: match[2],
+    cloudName: match[3]
   };
 }
+
 
 // === Cloudinary Loader (mit native fetch) ===
 async function getCloudinaryImages(folder) {
