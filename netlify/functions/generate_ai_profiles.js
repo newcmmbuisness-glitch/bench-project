@@ -200,7 +200,10 @@ exports.handler = async () => {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
       },
-      body: JSON.stringify({ success: true, profiles })
+      body: JSON.stringify({
+        success: true,
+        profiles
+      })
     };
 
   } catch (err) {
@@ -215,5 +218,11 @@ exports.handler = async () => {
         profiles: []
       })
     };
+  }
+};
+
+  } finally {
+    // ✨ Wird immer ausgeführt, egal ob success oder error
+    await client.end();
   }
 };
