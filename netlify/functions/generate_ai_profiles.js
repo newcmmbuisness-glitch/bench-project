@@ -94,6 +94,8 @@ exports.handler = async (event, context) => {
     // Close database connection
     await client.end();
 
+    console.log(`Generated ${profiles.length} AI profiles`);
+
     return {
       statusCode: 200,
       headers: {
@@ -104,12 +106,13 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         success: true,
-        profiles
+        profiles: profiles // Ensure profiles is always an array
       })
     };
 
   } catch (err) {
     console.error("Fehler in generate_ai_profiles:", err);
+    console.error("Stack trace:", err.stack);
     
     // Make sure to close connection even on error
     try {
@@ -127,7 +130,8 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         success: false,
         error: 'AI-Profile konnten nicht geladen werden.',
-        details: err.message
+        details: process.env.NODE_ENV === 'development' ? err.message : undefined,
+        profiles: [] // Always provide empty array as fallback
       })
     };
   }
