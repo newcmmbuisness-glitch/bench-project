@@ -22,17 +22,19 @@ function parseCloudinaryURL() {
 // === Cloudinary Loader (mit native fetch) ===
 async function getCloudinaryImages(folder) {
   const { cloudName, apiKey, apiSecret } = parseCloudinaryURL();
-  const expression = `folder="home/${folder}"`;
 
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${expression}&max_results=100`,
-    {
-      headers: {
-        Authorization:
-          "Basic " + Buffer.from(apiKey + ":" + apiSecret).toString("base64")
-      }
+  // URL-encode die ganze Expression
+  const expression = encodeURIComponent(`folder="home/${folder}"`);
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${expression}&max_results=100`;
+
+  console.log("🔎 Cloudinary search URL:", url);
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization:
+        "Basic " + Buffer.from(apiKey + ":" + apiSecret).toString("base64")
     }
-  );
+  });
 
   if (!res.ok) {
     const txt = await res.text();
@@ -40,6 +42,10 @@ async function getCloudinaryImages(folder) {
   }
 
   const data = await res.json();
+
+  console.log(`✅ Found ${data.resources.length} images in folder "${folder}"`);
+
+  // Gib nur die URLs zurück
   return data.resources.map(r => r.secure_url);
 }
 
