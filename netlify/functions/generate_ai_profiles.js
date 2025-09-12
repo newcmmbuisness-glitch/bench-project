@@ -22,7 +22,7 @@ function parseCloudinaryURL() {
 // === Cloudinary Loader (mit native fetch) ===
 async function getCloudinaryImages(folder) {
   const { cloudName, apiKey, apiSecret } = parseCloudinaryURL();
-  const expression = `folder="${encodeURIComponent("home/" + folder)}"`;
+  const expression = `folder="home/${folder}"`;
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${expression}&max_results=100`,
