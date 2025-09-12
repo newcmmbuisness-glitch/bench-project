@@ -1,4 +1,5 @@
 const { Client } = require('@neondatabase/serverless');
+const sql = neon(process.env.NETLIFY_DATABASE_URL);
 const { faker } = require('@faker-js/faker');
 
 const images = {
