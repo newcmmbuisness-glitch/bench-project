@@ -5,8 +5,7 @@ const images = {
   female: [
     "https://images.unsplash.com/photo-1699474072277-aeccb6e17263?q=80&w=2061&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
-    "https://images.unsplash.com/photo-1534865007446-5214dca11db4?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face"
   ],
   male: [
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face"
@@ -29,6 +28,19 @@ const descriptions = [
   "Humorvoll, entspannt und immer für Abenteuer zu haben."
 ];
 
+const hobbyPool = [
+  "Kochen", "Gaming", "Wandern", "Fotografie",
+  "Musik", "Filme", "Sport", "Kunst", "Haustiere"
+];
+
+const prompts = [
+  { q: "Ein perfekter erster Date ist...", a: "Ein Spaziergang am Fluss mit Kaffee." },
+  { q: "Ich bin gerade besessen von...", a: "Neuen Rezepten und Serien." },
+  { q: "Zwei Wahrheiten und eine Lüge...", a: "Ich liebe Hunde, ich hasse Pizza, ich spiele Gitarre." },
+  { q: "Mein liebstes Reiseziel ist...", a: "Die Berge in Südtirol." },
+  { q: "Was ich in meiner Freizeit tue...", a: "Sport treiben und Freunde treffen." }
+];
+
 function randomFromArray(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -39,51 +51,70 @@ exports.handler = async (event, context) => {
   });
 
   try {
-    // Connect to database
     await client.connect();
-
     const profiles = [];
 
     for (const gender of ['female', 'male']) {
-      // Fixed: Added backticks around SQL query
-      const res = await client.query(
-        `SELECT profile_image FROM ai_profiles WHERE gender=$1 AND (used IS NULL OR used=false)`,
-        [gender]
-      );
-
-      const usedImages = res.rows.map(r => r.profile_image);
-      const freeImages = images[gender].filter(img => !usedImages.includes(img));
-
-      for (const img of freeImages) {
-        const location = randomFromArray(locations);
-        const profile = {
-          profile_name: faker.person.firstName({ gender }),
-          age: Math.floor(Math.random() * (31 - 18 + 1)) + 18,
-          gender,
-          description: randomFromArray(descriptions),
-          profile_image: img,
-          postal_code: location.postalCode,
-          latitude: location.lat + (Math.random() - 0.5) * 0.05,
-          longitude: location.lng + (Math.random() - 0.5) * 0.05,
-          used: true
-        };
-
-        // Fixed: Added backticks around SQL query
-        await client.query(
-          `INSERT INTO ai_profiles (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used) 
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-          [
-            profile.profile_name,
-            profile.age,
-            profile.gender,
-            profile.description,
-            profile.profile_image,
-            profile.postal_code,
-            profile.latitude,
-            profile.longitude,
-            profile.used
-          ]
+      for (const img of images[gender]) {
+        // Prüfen, ob schon ein Profil mit diesem Bild existiert
+        const existingRes = await client.query(
+          `SELECT * FROM ai_profiles WHERE profile_image=$1`,
+          [img]
         );
+
+        let profile;
+        if (existingRes.rows.length > 0) {
+          // bereits vorhandenes Profil zurückgeben
+          profile = existingRes.rows[0];
+        } else {
+          // neues Profil erstellen
+          const location = randomFromArray(locations);
+          const shuffledHobbies = faker.helpers.shuffle(hobbyPool);
+          const selectedHobbies = shuffledHobbies.slice(0, faker.number.int({ min: 2, max: 4 }));
+          const [prompt1, prompt2] = faker.helpers.shuffle(prompts).slice(0, 2);
+
+          profile = {
+            profile_name: faker.person.firstName({ sex: gender }),
+            age: faker.number.int({ min: 18, max: 31 }),
+            gender,
+            description: randomFromArray(descriptions),
+            profile_image: img,
+            postal_code: location.postalCode,
+            latitude: location.lat + (Math.random() - 0.5) * 0.05,
+            longitude: location.lng + (Math.random() - 0.5) * 0.05,
+            used: true,
+            interests: selectedHobbies,
+            prompt_1: prompt1.q,
+            answer_1: prompt1.a,
+            prompt_2: prompt2.q,
+            answer_2: prompt2.a
+          };
+
+          const insertRes = await client.query(
+            `INSERT INTO ai_profiles 
+              (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used, interests, prompt_1, answer_1, prompt_2, answer_2) 
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+             RETURNING *`,
+            [
+              profile.profile_name,
+              profile.age,
+              profile.gender,
+              profile.description,
+              profile.profile_image,
+              profile.postal_code,
+              profile.latitude,
+              profile.longitude,
+              profile.used,
+              profile.interests,
+              profile.prompt_1,
+              profile.answer_1,
+              profile.prompt_2,
+              profile.answer_2
+            ]
+          );
+
+          profile = insertRes.rows[0];
+        }
 
         profiles.push({
           ...profile,
@@ -91,10 +122,6 @@ exports.handler = async (event, context) => {
         });
       }
     }
-
-    // No need to close connection with neon() pattern
-
-    console.log(`Generated ${profiles.length} AI profiles`);
 
     return {
       statusCode: 200,
@@ -106,16 +133,12 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         success: true,
-        profiles: profiles // Ensure profiles is always an array
+        profiles
       })
     };
 
   } catch (err) {
     console.error("Fehler in generate_ai_profiles:", err);
-    console.error("Stack trace:", err.stack);
-    
-    // No need to close connection with neon() pattern
-
     return {
       statusCode: 500,
       headers: {
@@ -126,7 +149,7 @@ exports.handler = async (event, context) => {
         success: false,
         error: 'AI-Profile konnten nicht geladen werden.',
         details: process.env.NODE_ENV === 'development' ? err.message : undefined,
-        profiles: [] // Always provide empty array as fallback
+        profiles: []
       })
     };
   }
