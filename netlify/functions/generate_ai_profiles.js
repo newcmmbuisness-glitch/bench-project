@@ -19,14 +19,14 @@ function parseCloudinaryURL() {
   };
 }
 
-// === Cloudinary Loader (robust) ===
 async function getCloudinaryImages(folder) {
   const { cloudName, apiKey, apiSecret } = parseCloudinaryURL();
 
-  // Foldernamen anpassen: keine Leerzeichen, nur Unterstrich
-  const safeFolder = folder.replace(/\s+/g, "_"); // z.B. "pic f" -> "pic_f"
-  
-  const url = `https://res.cloudinary.com/${cloudName}/image/list/home_${safeFolder}.json`;
+  // Folder korrekt URL-encoden, auch Leerzeichen
+  const encodedFolder = encodeURIComponent(`home/${folder}`);
+  const expression = `folder="${encodedFolder}"`;
+
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${expression}&max_results=100`;
   console.log("Fetching Cloudinary list URL:", url);
 
   const res = await fetch(url, {
@@ -41,15 +41,11 @@ async function getCloudinaryImages(folder) {
   }
 
   const data = await res.json();
-  
-  if (!data.resources) {
-    console.warn("⚠️ Keine Ressourcen gefunden in Cloudinary Folder:", folder);
-    return [];
-  }
+  console.log(`Found ${data.resources.length} images in folder "${folder}"`);
 
-  // Jedes Objekt enthält url oder secure_url
-  return data.resources.map(r => r.secure_url || r.url);
+  return data.resources.map(r => r.secure_url);
 }
+
 
 // === Clustered locations across Germany ===
 const cityClusters = [
