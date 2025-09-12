@@ -12,7 +12,7 @@ const images = {
     "https://images.pexels.com/photos/227288/pexels-photo-227288.jpeg",
     "https://images.pexels.com/photos/33870333/pexels-photo-33870333.jpeg",
     "https://images.pexels.com/photos/33858735/pexels-photo-33858735.jpeg",
-    "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757679980/53832689223_8f7ae6292b_o_wadtce.jpg"
+    "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757679980/53832689223_8f7ae6292b_o_wadtce.jpg",
     "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757680591/48630725273_ef8e25be1c_o_bsdn9m.jpg",
     "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757680589/52727165107_1ffac09f51_o_qnozho.jpg",
     "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757680589/52660373404_ce554394d5_o_n1qjw9.jpg",
