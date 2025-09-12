@@ -4,7 +4,9 @@ const { faker } = require('@faker-js/faker');
 
 function parseCloudinaryURL() {
   const raw = process.env.CLOUDINARY_URL;
-  const match = raw.match(/^cloudinary:\/\/(.*):(.*)@(.*)$/);
+  if (!raw) throw new Error("CLOUDINARY_URL ist nicht gesetzt");
+
+  const match = raw.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/);
   if (!match) throw new Error("Invalid CLOUDINARY_URL format");
 
   return {
