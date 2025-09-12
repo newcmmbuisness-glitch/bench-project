@@ -1,27 +1,21 @@
 const { Client } = require('@neondatabase/serverless');
 const { faker } = require('@faker-js/faker');
+const axios = require('axios');
 
-// === Images for AI profiles ===
-const images = {
-  female: [
-    "https://images.unsplash.com/photo-1699474072277-aeccb6e17263?q=80&w=2061&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
-    "https://images.unsplash.com/photo-1534865007446-5214dca11db4?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.pexels.com/photos/33852037/pexels-photo-33852037.jpeg",
-    "https://images.pexels.com/photos/227288/pexels-photo-227288.jpeg",
-    "https://images.pexels.com/photos/33870333/pexels-photo-33870333.jpeg",
-    "https://images.pexels.com/photos/33858735/pexels-photo-33858735.jpeg",
-    "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757679980/53832689223_8f7ae6292b_o_wadtce.jpg",
-    "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757680591/48630725273_ef8e25be1c_o_bsdn9m.jpg",
-    "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757680589/52727165107_1ffac09f51_o_qnozho.jpg",
-    "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757680589/52660373404_ce554394d5_o_n1qjw9.jpg",
-    "https://res.cloudinary.com/dp3t4ctxz/image/upload/v1757680589/52650326288_2b378ae367_o_krymmi.jpg"
-  ],
-  male: [
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face"
-  ]
-};
+// === Cloudinary Loader ===
+async function getCloudinaryImages(folder) {
+  const res = await axios.get(
+    `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/resources/search`,
+    {
+      params: { expression: `folder="${folder}"`, max_results: 100 },
+      auth: {
+        username: process.env.CLOUDINARY_API_KEY,
+        password: process.env.CLOUDINARY_API_SECRET
+      }
+    }
+  );
+  return res.data.resources.map(r => r.secure_url);
+}
 
 // === Clustered locations across Germany ===
 const cityClusters = [
@@ -39,7 +33,6 @@ const cityClusters = [
   { name: 'Bremen', postalCode: '28195', lat: 53.075, lng: 8.807, count: 4 },
 ];
 
-// Expand clusters into many locations with small jitter (~2km)
 function buildExpandedLocations(clusters) {
   const expanded = [];
   clusters.forEach(c => {
@@ -86,7 +79,7 @@ function randomFromArray(arr) {
 }
 
 // === Lambda Handler ===
-exports.handler = async (event, context) => {
+exports.handler = async () => {
   const client = new Client({
     connectionString: process.env.NETLIFY_DATABASE_URL
   });
@@ -96,18 +89,31 @@ exports.handler = async (event, context) => {
     const profiles = [];
 
     for (const gender of ['female', 'male']) {
-      for (const img of images[gender]) {
-        // Prüfen, ob es das Bild schon gibt
+      const folder = gender === 'female' ? 'pic f' : 'pic m';
+      const cloudinaryImages = await getCloudinaryImages(folder);
+
+      // schon benutzte Bilder aus DB
+      const res = await client.query(
+        `SELECT profile_image FROM ai_profiles WHERE gender=$1`,
+        [gender]
+      );
+      const usedImages = res.rows.map(r => r.profile_image);
+
+      // nur freie Bilder
+      const freeImages = cloudinaryImages.filter(img => !usedImages.includes(img));
+
+      for (const img of freeImages) {
+        let profile;
+
+        // prüfen, ob existiert (zur Sicherheit)
         const existingRes = await client.query(
           `SELECT * FROM ai_profiles WHERE profile_image=$1`,
           [img]
         );
 
-        let profile;
         if (existingRes.rows.length > 0) {
           profile = existingRes.rows[0];
         } else {
-          // Neues Profil erzeugen
           const location = randomFromArray(locationsExpanded);
           const shuffledHobbies = faker.helpers.shuffle(hobbyPool);
           const selectedHobbies = shuffledHobbies.slice(0, faker.number.int({ min: 2, max: 4 }));
@@ -156,10 +162,7 @@ exports.handler = async (event, context) => {
           profile = insertRes.rows[0];
         }
 
-        profiles.push({
-          ...profile,
-          isAI: true
-        });
+        profiles.push({ ...profile, isAI: true });
       }
     }
 
@@ -171,20 +174,14 @@ exports.handler = async (event, context) => {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
       },
-      body: JSON.stringify({
-        success: true,
-        profiles
-      })
+      body: JSON.stringify({ success: true, profiles })
     };
 
   } catch (err) {
     console.error("Fehler in generate_ai_profiles:", err);
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({
         success: false,
         error: 'AI-Profile konnten nicht geladen werden.',
