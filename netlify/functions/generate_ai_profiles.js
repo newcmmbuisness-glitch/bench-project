@@ -1,9 +1,12 @@
 const { Client } = require('@neondatabase/serverless');
 const { faker } = require('@faker-js/faker');
 
-
+// === Cloudinary URL Parser mit Trim ===
 function parseCloudinaryURL() {
-  const raw = process.env.CLOUDINARY_URL;
+  const raw = (process.env.CLOUDINARY_URL || "").trim(); // Entfernt unsichtbare Zeichen
+  console.log("RAW CLOUDINARY_URL:", JSON.stringify(process.env.CLOUDINARY_URL));
+  console.log("TRIMMED CLOUDINARY_URL:", JSON.stringify(raw));
+
   if (!raw) throw new Error("CLOUDINARY_URL ist nicht gesetzt");
 
   const match = raw.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/);
@@ -16,7 +19,6 @@ function parseCloudinaryURL() {
   };
 }
 
-
 // === Cloudinary Loader (mit native fetch) ===
 async function getCloudinaryImages(folder) {
   const { cloudName, apiKey, apiSecret } = parseCloudinaryURL();
@@ -27,8 +29,7 @@ async function getCloudinaryImages(folder) {
     {
       headers: {
         Authorization:
-          "Basic " +
-          Buffer.from(apiKey + ":" + apiSecret).toString("base64")
+          "Basic " + Buffer.from(apiKey + ":" + apiSecret).toString("base64")
       }
     }
   );
@@ -41,7 +42,6 @@ async function getCloudinaryImages(folder) {
   const data = await res.json();
   return data.resources.map(r => r.secure_url);
 }
-
 
 // === Clustered locations across Germany ===
 const cityClusters = [
@@ -118,14 +118,12 @@ exports.handler = async () => {
       const folder = gender === 'female' ? 'pic f' : 'pic m';
       const cloudinaryImages = await getCloudinaryImages(folder);
 
-      // schon benutzte Bilder aus DB
       const res = await client.query(
         `SELECT profile_image FROM ai_profiles WHERE gender=$1`,
         [gender]
       );
       const usedImages = res.rows.map(r => r.profile_image);
 
-      // nur freie Bilder
       const freeImages = cloudinaryImages.filter(img => !usedImages.includes(img));
 
       for (const img of freeImages) {
