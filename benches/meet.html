@@ -2608,17 +2608,14 @@
 		        }
 		
 		        closeProfilePopup();
-				
-				document.getElementById('createProfileModal').style.display = 'block';
+		        showCreateProfileForm();
 
-				document.getElementById('createProfileModal').style.display = 'block';
-
-		
 		        const formTitle = document.querySelector('#createProfileModal h2');
 		        if (formTitle) formTitle.textContent = '✏️ Profil bearbeiten';
 		
 		        const submitBtn = document.querySelector('#createProfileModal button[type="submit"]');
-		        if (submitBtn) submitBtn.innerHTML = '💾 Änderungen speichern';
+		        if (submitBtn) suL = ''; // Vorherige Icons leeren
+		        bmitBtn.innerHTML = '💾 Änderungen speichern';
 		
 		    } catch (error) {
 		        console.error('Fehler beim Bearbeiten:', error);
@@ -2629,8 +2626,7 @@
 		function renderPreferences() {
 		    const preferencesDiv = document.getElementById('preferencesIcons');
 		    if (preferencesDiv) {
-		        preferencesDiv.innerHTML = ''; // Vorherige Icons leeren
-		        
+		        preferencesDiv.innerHTM
 		        // Definiere verfügbare Präferenzen mit ihren Emojis
 		        const preferencesOptions = {
 					'alcohol': '🍷',
