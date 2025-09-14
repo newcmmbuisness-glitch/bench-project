@@ -2608,15 +2608,11 @@
 		        }
 		
 		        closeProfilePopup();
-				// Zeige Modal direkt
-				const modal = document.getElementById('createProfileModal');
-				const overlay = document.getElementById('modalOverlay');
-				const createSection = document.getElementById('createProfileSection');
+				showCreateProfileForm();  
 				
-				if (modal) modal.style.display = 'block';
-				if (overlay) overlay.style.display = 'block';
-				if (createSection) createSection.style.display = 'none'; // Button ausblende
-		
+				// Direkt danach Button ausblenden, weil wir vom Swipe kommen
+				document.getElementById('createProfileSection').style.display = 'none';
+						
 		        const formTitle = document.querySelector('#createProfileModal h2');
 		        if (formTitle) formTitle.textContent = '✏️ Profil bearbeiten';
 		
