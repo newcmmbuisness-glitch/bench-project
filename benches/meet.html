@@ -782,12 +782,11 @@
 			transform: scale(0.95);
 		}
 
-		/* Container: dunkler wie beim Profil-Popup */
-		.profile-creation {
-			background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%) !important;
+		/* Profile Creation */
+        .profile-creation {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%) !important;
 			border: 1px solid rgba(255, 255, 255, 0.15) !important;
 			backdrop-filter: blur(20px) !important;
-		}
 
 		/* Überschrift: Shimmer ohne Emoji */
 		.profile-creation h2 {
@@ -796,163 +795,158 @@
 			-webkit-background-clip: text;
 			-webkit-text-fill-color: transparent;
 			animation: shimmer 6s infinite linear;
-			font-weight: 600;
-			color: transparent !important;
+			font-weight: 600 !important;
+			text-align: center;
+			font-size: 2rem;
+			margin-bottom: 30px;
 		}
 
-		/* Labels: weiß statt schwarz */
-		.form-group label {
-			color: #ffffff !important;
-		}
 
-		/* Inputs: dunkler Hintergrund, weiße Schrift */
-		.form-group input, 
-		.form-group textarea {
-			background: rgba(255, 255, 255, 0.08) !important;
-			border: 1px solid rgba(255, 255, 255, 0.2) !important;
-			color: #ffffff !important;
-		}
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-		.form-group input::placeholder, 
-		.form-group textarea::placeholder {
-			color: #b0b0b0;
-		}
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
 
-		.form-group input:focus, 
-		.form-group textarea:focus {
-			border-color: rgba(255, 255, 255, 0.4) !important;
-			background: rgba(255, 255, 255, 0.12) !important;
-		}
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
 
-		/* PLZ-Feld kleiner machen */
-		#postalCode {
-			max-width: 200px !important;
-		}
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #4caf50;
+        }
 
-		/* Gender Buttons: dunkel */
-		.gender-btn {
-			background: rgba(255, 255, 255, 0.08) !important;
-			border: 1px solid rgba(255, 255, 255, 0.2) !important;
-			color: #ffffff !important;
-		}
+        .preferences-section {
+            margin: 20px 0;
+        }
 
-		.gender-btn.selected {
-			background: rgba(255, 255, 255, 0.15) !important;
-			border-color: rgba(255, 255, 255, 0.4) !important;
-		}
+        .preferences-icons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+        }
 
-		/* Character Count */
-		.character-count {
-			color: #b0b0b0 !important;
-		}
+        .preference-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
 
-		/* Error Messages */
-		.error {
-			color: #ff6b6b !important;
-			background: rgba(255, 107, 107, 0.1);
-			border: 1px solid rgba(255, 107, 107, 0.2);
-			border-radius: 5px;
-			padding: 5px 8px;
-		}
+        .preference-option:hover {
+            background: rgba(76, 175, 80, 0.1);
+            transform: scale(1.05);
+        }
 
-		/* Moderner File Upload */
-		.modern-file-upload {
+        .preference-option.selected {
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .preference-option span {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .preference-option small {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .preference-option:hover .tooltip {
+            opacity: 1;
+        }
+		
+		.file-upload-container {
 			position: relative;
 			display: inline-block;
+			width: 100%;
 		}
 
 		.file-upload-btn {
 			background: linear-gradient(135deg, #667eea, #764ba2);
-			color: white;
-			padding: 12px 20px;
 			border: none;
-			border-radius: 10px;
-			cursor: pointer;
+			padding: 15px 25px;
+			border-radius: 12px;
+			color: white;
 			font-weight: 600;
+			cursor: pointer;
+			width: 100%;
+			text-align: center;
 			transition: all 0.3s ease;
 			display: flex;
 			align-items: center;
-			gap: 8px;
+			justify-content: center;
+			gap: 10px;
 		}
 
 		.file-upload-btn:hover {
 			background: linear-gradient(135deg, #5a6fd8, #6a4190);
 			transform: translateY(-2px);
+			box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 		}
 
 		.file-upload-btn.has-file {
 			background: linear-gradient(135deg, #4caf50, #45a049);
 		}
 
-		/* Select Felder modernisieren */
-		.form-group select {
-			background: rgba(255, 255, 255, 0.08) !important;
-			border: 1px solid rgba(255, 255, 255, 0.2) !important;
-			color: #ffffff !important;
-			padding: 12px;
-			border-radius: 10px;
-			font-size: 1rem;
-			transition: all 0.3s ease;
+		.file-input-hidden {
+			position: absolute;
+			opacity: 0;
+			width: 0;
+			height: 0;
 		}
 
-		.form-group select:focus {
-			border-color: rgba(255, 255, 255, 0.4) !important;
-			background: rgba(255, 255, 255, 0.12) !important;
+		.file-preview {
+			margin-top: 10px;
+			text-align: center;
 		}
 
-		.form-group select option {
-			background: #2a2a2a;
-			color: #ffffff;
+		.file-preview img {
+			width: 80px;
+			height: 80px;
+			border-radius: 50%;
+			object-fit: cover;
+			border: 3px solid rgba(255, 255, 255, 0.2);
 		}
 
-		/* Action Buttons: moderne weiße Hover-Effekte */
-		.action-buttons {
-			display: flex;
-			gap: 15px;
-			margin-top: 30px;
-			justify-content: center;
-		}
-
-		.action-btn {
-			padding: 15px 30px !important;
-			border: none !important;
-			border-radius: 25px !important;
-			font-size: 1.1rem !important;
-			font-weight: 600 !important;
-			cursor: pointer !important;
-			transition: all 0.3s ease !important;
-			box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-			min-width: 160px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 8px;
-		}
-
-		.btn-primary {
-			background: linear-gradient(135deg, #4caf50, #45a049) !important;
-			color: white !important;
-		}
-
-		.btn-primary:hover {
-			background: rgba(255, 255, 255, 0.9) !important;
-			color: #333 !important;
-			transform: translateY(-3px) !important;
-			box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3) !important;
-		}
-
-		.btn-secondary {
-			background: rgba(255, 255, 255, 0.1) !important;
-			color: #ffffff !important;
-			border: 1px solid rgba(255, 255, 255, 0.2) !important;
-		}
-
-		.btn-secondary:hover {
-			background: rgba(255, 255, 255, 0.9) !important;
-			color: #333 !important;
-			border-color: rgba(255, 255, 255, 0.4) !important;
-			transform: translateY(-2px) !important;
-		}
+		.file-name {
+			color: #b0b0b0;
+			font-size: 0.85rem;
+			margin-top: 5px;
+		}		
 		
 		/* UserPlus Premium Button Styles */
 		.premium-btn {
