@@ -3,28 +3,48 @@ const { faker } = require('@faker-js/faker');
 
 // === Cloudinary URL Parser mit Trim ===
 function parseCloudinaryURL() {
-  const raw = (process.env.CLOUDINARY_URL || "").trim();
+  const raw = (process.env.CLOUDINARY_URL || "").trim(); // Entfernt unsichtbare Zeichen
+  console.log("RAW CLOUDINARY_URL:", JSON.stringify(process.env.CLOUDINARY_URL));
+  console.log("TRIMMED CLOUDINARY_URL:", JSON.stringify(raw));
+
   if (!raw) throw new Error("CLOUDINARY_URL ist nicht gesetzt");
 
   const match = raw.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/);
   if (!match) throw new Error("Invalid CLOUDINARY_URL format");
 
-  return { apiKey: match[1], apiSecret: match[2], cloudName: match[3] };
+  return {
+    apiKey: match[1],
+    apiSecret: match[2],
+    cloudName: match[3]
+  };
 }
 
 async function getCloudinaryImages(folder) {
   const { cloudName, apiKey, apiSecret } = parseCloudinaryURL();
+
+  // Cloudinary erwartet den Ordner-Namen exakt so wie in der Media Library (ohne "home/")
   const expression = `folder="${folder}"`;
   const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/search?expression=${encodeURIComponent(expression)}&max_results=100`;
 
+  console.log("Fetching Cloudinary Search API URL:", url);
+
   const res = await fetch(url, {
-    headers: { Authorization: "Basic " + Buffer.from(`${apiKey}:${apiSecret}`).toString("base64") }
+    headers: {
+      Authorization: "Basic " + Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")
+    }
   });
-  if (!res.ok) throw new Error(`Cloudinary API error: ${res.status} ${res.statusText}`);
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Cloudinary API error: ${res.status} ${res.statusText} → ${txt}`);
+  }
 
   const data = await res.json();
+  console.log(`Found ${data.resources.length} images in folder "${folder}"`);
+
   return data.resources.map(r => r.secure_url);
 }
+
 
 // === Clustered locations across Germany ===
 const cityClusters = [
@@ -42,22 +62,25 @@ const cityClusters = [
   { name: 'Bremen', postalCode: '28195', lat: 53.075, lng: 8.807, count: 4 },
 ];
 
-
-// === Locations ===
 function buildExpandedLocations(clusters) {
   const expanded = [];
   clusters.forEach(c => {
     for (let i = 0; i < c.count; i++) {
       const latJitter = (Math.random() - 0.5) * 0.03;
       const lngJitter = (Math.random() - 0.5) * 0.03;
-      expanded.push({ city: c.name, postalCode: c.postalCode, lat: c.lat + latJitter, lng: c.lng + lngJitter });
+      expanded.push({
+        city: c.name,
+        postalCode: c.postalCode,
+        lat: c.lat + latJitter,
+        lng: c.lng + lngJitter
+      });
     }
   });
   return expanded;
 }
+
 const locationsExpanded = buildExpandedLocations(cityClusters);
 
-// === Profile data ===
 // === Profile texts ===
 const descriptions = [
   "Liebe Spaziergänge und gemütliche Abende.",
@@ -79,11 +102,17 @@ const prompts = [
   { q: "Mein liebstes Reiseziel ist...", a: "Die Berge in Südtirol." },
   { q: "Was ich in meiner Freizeit tue...", a: "Sport treiben und Freunde treffen." }
 ];
-function randomFromArray(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function randomFromArray(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 // === Lambda Handler ===
 exports.handler = async () => {
-  const client = new Client({ connectionString: process.env.NETLIFY_DATABASE_URL });
+  const client = new Client({
+    connectionString: process.env.NETLIFY_DATABASE_URL
+  });
+
   try {
     await client.connect();
     const profiles = [];
@@ -92,66 +121,85 @@ exports.handler = async () => {
       const folder = gender === 'female' ? 'pic f' : 'pic m';
       const cloudinaryImages = await getCloudinaryImages(folder);
 
-      // Alle Profile für das Gender laden
-      const existingRes = await client.query(`SELECT * FROM ai_profiles WHERE gender=$1`, [gender]);
-      const existingProfiles = existingRes.rows;
-      profiles.push(...existingProfiles.map(p => ({ ...p, isAI: true })));
+      const res = await client.query(
+        `SELECT profile_image FROM ai_profiles WHERE gender=$1`,
+        [gender]
+      );
+      const usedImages = res.rows.map(r => r.profile_image);
 
-      // Neue Profile nur erstellen, wenn Cloudinary-Bild noch nicht in DB ist
-      for (const img of cloudinaryImages) {
-        const alreadyExists = existingProfiles.find(p => p.profile_image === img);
-        if (alreadyExists) continue;
+      const freeImages = cloudinaryImages.filter(img => !usedImages.includes(img));
 
-        const location = randomFromArray(locationsExpanded);
-        const shuffledHobbies = faker.helpers.shuffle(hobbyPool);
-        const selectedHobbies = shuffledHobbies.slice(0, faker.number.int({ min: 2, max: 4 }));
-        const [prompt1, prompt2] = faker.helpers.shuffle(prompts).slice(0, 2);
+      for (const img of freeImages) {
+        let profile;
 
-        const profile = {
-          profile_name: faker.person.firstName({ sex: gender }),
-          age: faker.number.int({ min: 18, max: 31 }),
-          gender,
-          description: randomFromArray(descriptions),
-          profile_image: img,
-          postal_code: location.postalCode,
-          latitude: location.lat,
-          longitude: location.lng,
-          used: true, // bleibt true, Bild gehört dauerhaft zu Profil
-          interests: selectedHobbies,
-          prompt_1: prompt1.q,
-          answer_1: prompt1.a,
-          prompt_2: prompt2.q,
-          answer_2: prompt2.a
-        };
-
-        const insertRes = await client.query(
-          `INSERT INTO ai_profiles 
-          (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used, interests, prompt_1, answer_1, prompt_2, answer_2) 
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
-          [
-            profile.profile_name,
-            profile.age,
-            profile.gender,
-            profile.description,
-            profile.profile_image,
-            profile.postal_code,
-            profile.latitude,
-            profile.longitude,
-            profile.used,
-            profile.interests,
-            profile.prompt_1,
-            profile.answer_1,
-            profile.prompt_2,
-            profile.answer_2
-          ]
+        const existingRes = await client.query(
+          `SELECT * FROM ai_profiles WHERE profile_image=$1`,
+          [img]
         );
-        profiles.push({ ...insertRes.rows[0], isAI: true });
+
+        if (existingRes.rows.length > 0) {
+          profile = existingRes.rows[0];
+        } else {
+          const location = randomFromArray(locationsExpanded);
+          const shuffledHobbies = faker.helpers.shuffle(hobbyPool);
+          const selectedHobbies = shuffledHobbies.slice(0, faker.number.int({ min: 2, max: 4 }));
+          const [prompt1, prompt2] = faker.helpers.shuffle(prompts).slice(0, 2);
+
+          profile = {
+            profile_name: faker.person.firstName({ sex: gender }),
+            age: faker.number.int({ min: 18, max: 31 }),
+            gender,
+            description: randomFromArray(descriptions),
+            profile_image: img,
+            postal_code: location.postalCode,
+            latitude: location.lat,
+            longitude: location.lng,
+            used: true,
+            interests: selectedHobbies,
+            prompt_1: prompt1.q,
+            answer_1: prompt1.a,
+            prompt_2: prompt2.q,
+            answer_2: prompt2.a
+          };
+
+          const insertRes = await client.query(
+            `INSERT INTO ai_profiles 
+              (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used, interests, prompt_1, answer_1, prompt_2, answer_2) 
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+             RETURNING *`,
+            [
+              profile.profile_name,
+              profile.age,
+              profile.gender,
+              profile.description,
+              profile.profile_image,
+              profile.postal_code,
+              profile.latitude,
+              profile.longitude,
+              profile.used,
+              profile.interests,
+              profile.prompt_1,
+              profile.answer_1,
+              profile.prompt_2,
+              profile.answer_2
+            ]
+          );
+
+          profile = insertRes.rows[0];
+        }
+
+        profiles.push({ ...profile, isAI: true });
       }
     }
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+      },
       body: JSON.stringify({ success: true, profiles })
     };
 
