@@ -109,10 +109,7 @@ function randomFromArray(arr) {
 
 // === Lambda Handler ===
 exports.handler = async () => {
-  const client = new Client({
-    connectionString: process.env.NETLIFY_DATABASE_URL
-  });
-
+  const client = new Client({ connectionString: process.env.NETLIFY_DATABASE_URL });
   try {
     await client.connect();
     const profiles = [];
@@ -121,85 +118,66 @@ exports.handler = async () => {
       const folder = gender === 'female' ? 'pic f' : 'pic m';
       const cloudinaryImages = await getCloudinaryImages(folder);
 
-      const res = await client.query(
-        `SELECT profile_image FROM ai_profiles WHERE gender=$1`,
-        [gender]
-      );
-      const usedImages = res.rows.map(r => r.profile_image);
+      // Alle Profile für das Gender laden
+      const existingRes = await client.query(`SELECT * FROM ai_profiles WHERE gender=$1`, [gender]);
+      const existingProfiles = existingRes.rows;
+      profiles.push(...existingProfiles.map(p => ({ ...p, isAI: true })));
 
-      const freeImages = cloudinaryImages.filter(img => !usedImages.includes(img));
+      // Neue Profile nur erstellen, wenn Cloudinary-Bild noch nicht in DB ist
+      for (const img of cloudinaryImages) {
+        const alreadyExists = existingProfiles.find(p => p.profile_image === img);
+        if (alreadyExists) continue;
 
-      for (const img of freeImages) {
-        let profile;
+        const location = randomFromArray(locationsExpanded);
+        const shuffledHobbies = faker.helpers.shuffle(hobbyPool);
+        const selectedHobbies = shuffledHobbies.slice(0, faker.number.int({ min: 2, max: 4 }));
+        const [prompt1, prompt2] = faker.helpers.shuffle(prompts).slice(0, 2);
 
-        const existingRes = await client.query(
-          `SELECT * FROM ai_profiles WHERE profile_image=$1`,
-          [img]
+        const profile = {
+          profile_name: faker.person.firstName({ sex: gender }),
+          age: faker.number.int({ min: 18, max: 31 }),
+          gender,
+          description: randomFromArray(descriptions),
+          profile_image: img,
+          postal_code: location.postalCode,
+          latitude: location.lat,
+          longitude: location.lng,
+          used: true, // bleibt true, Bild gehört dauerhaft zu Profil
+          interests: selectedHobbies,
+          prompt_1: prompt1.q,
+          answer_1: prompt1.a,
+          prompt_2: prompt2.q,
+          answer_2: prompt2.a
+        };
+
+        const insertRes = await client.query(
+          `INSERT INTO ai_profiles 
+          (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used, interests, prompt_1, answer_1, prompt_2, answer_2) 
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+          [
+            profile.profile_name,
+            profile.age,
+            profile.gender,
+            profile.description,
+            profile.profile_image,
+            profile.postal_code,
+            profile.latitude,
+            profile.longitude,
+            profile.used,
+            profile.interests,
+            profile.prompt_1,
+            profile.answer_1,
+            profile.prompt_2,
+            profile.answer_2
+          ]
         );
-
-        if (existingRes.rows.length > 0) {
-          profile = existingRes.rows[0];
-        } else {
-          const location = randomFromArray(locationsExpanded);
-          const shuffledHobbies = faker.helpers.shuffle(hobbyPool);
-          const selectedHobbies = shuffledHobbies.slice(0, faker.number.int({ min: 2, max: 4 }));
-          const [prompt1, prompt2] = faker.helpers.shuffle(prompts).slice(0, 2);
-
-          profile = {
-            profile_name: faker.person.firstName({ sex: gender }),
-            age: faker.number.int({ min: 18, max: 31 }),
-            gender,
-            description: randomFromArray(descriptions),
-            profile_image: img,
-            postal_code: location.postalCode,
-            latitude: location.lat,
-            longitude: location.lng,
-            used: true,
-            interests: selectedHobbies,
-            prompt_1: prompt1.q,
-            answer_1: prompt1.a,
-            prompt_2: prompt2.q,
-            answer_2: prompt2.a
-          };
-
-          const insertRes = await client.query(
-            `INSERT INTO ai_profiles 
-              (profile_name, age, gender, description, profile_image, postal_code, latitude, longitude, used, interests, prompt_1, answer_1, prompt_2, answer_2) 
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-             RETURNING *`,
-            [
-              profile.profile_name,
-              profile.age,
-              profile.gender,
-              profile.description,
-              profile.profile_image,
-              profile.postal_code,
-              profile.latitude,
-              profile.longitude,
-              profile.used,
-              profile.interests,
-              profile.prompt_1,
-              profile.answer_1,
-              profile.prompt_2,
-              profile.answer_2
-            ]
-          );
-
-          profile = insertRes.rows[0];
-        }
-
-        profiles.push({ ...profile, isAI: true });
+        profiles.push({ ...insertRes.rows[0], isAI: true });
       }
     }
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
-      },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ success: true, profiles })
     };
 
