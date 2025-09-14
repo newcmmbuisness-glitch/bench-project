@@ -2608,7 +2608,8 @@
 		        }
 		
 		        closeProfilePopup();
-		        showCreateProfileForm();
+				document.getElementById('createProfileModal').style.display = 'block';
+
 		
 		        const formTitle = document.querySelector('#createProfileModal h2');
 		        if (formTitle) formTitle.textContent = '✏️ Profil bearbeiten';
