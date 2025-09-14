@@ -532,44 +532,57 @@
 			background: #ddd;
 			transform: scale(1.05);
 		}
-					
 
         .action-buttons {
             display: flex;
             flex-direction: column;
             gap: 15px;
             width: 100%;
+            margin-top: 30px;
         }
 
         .action-btn {
             padding: 15px 30px;
             border: none;
-            border-radius: 25px;
+            border-radius: 12px;
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-            color: white;
+            background: #ffffff;
+            color: #000000;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
         }
 
         .btn-primary:hover {
+            background: #f0f0f0;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(238, 90, 82, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
         }
 
         .btn-secondary {
-            background: rgba(255,255,255,0.9);
-            color: #333;
+            background: rgba(255,255,255,0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255,255,255,0.3);
+            box-shadow: 0 8px 25px rgba(255,255,255,0.1);
+        }
+
+        /* Error Styling */
+        .error {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
         }
 
 		.swipe-container {
@@ -783,48 +796,131 @@
 		}
 
         /* Profile Creation */
-        .profile-creation {
-            display: none;
-            background: rgba(255,255,255,0.95);
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 400px;
-            width: 100%;
-            backdrop-filter: blur(10px);
-        }
+		.profile-creation {
+			background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			border-radius: 20px;
+			padding: 30px;
+			max-width: 600px;
+			width: 90%;
+			max-height: 90vh;
+			overflow-y: auto;
+			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+			backdrop-filter: blur(20px);
+			color: #ffffff;
+		}
 
-        .profile-creation h2 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 1.8rem;
-        }
+		.profile-creation h2 {
+			background: linear-gradient(90deg, #aaa, #ddd, #aaa);
+			background-size: 200% 100%;
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			animation: shimmer 6s infinite linear;
+			font-weight: 600;
+			text-align: center;
+			font-size: 2rem;
+			margin-bottom: 30px;
+		}
 
         .form-group {
             margin-bottom: 20px;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
+		.form-group label {
+			display: block;
+			margin-bottom: 8px;
+			font-weight: 600;
+			color: #e0e0e0;
+			font-size: 0.95rem;
+		}
 
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.3s ease;
-        }
+		.form-group input, 
+		.form-group textarea {
+			width: 100%;
+			padding: 15px;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 12px;
+			font-size: 1rem;
+			box-sizing: border-box;
+			transition: all 0.3s ease;
+			background: rgba(255, 255, 255, 0.05);
+			color: #ffffff;
+			backdrop-filter: blur(10px);
+		}
 
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #4caf50;
-        }
+		.form-group input:focus, 
+		.form-group textarea:focus {
+			outline: none;
+			border-color: rgba(102, 126, 234, 0.6);
+			background: rgba(255, 255, 255, 0.08);
+			box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+		}
+
+		.form-group input::placeholder,
+		.form-group textarea::placeholder {
+			color: rgba(255, 255, 255, 0.5);
+		}
+		
+		.modern-file-upload { position: relative; width: 100%; }
+
+		.file-upload-btn {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			border: none;
+			padding: 15px 25px;
+			border-radius: 12px;
+			color: white;
+			font-weight: 600;
+			cursor: pointer;
+			width: 100%;
+			text-align: center;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			backdrop-filter: blur(10px);
+			box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+		}
+
+		.file-upload-btn:hover {
+			background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+			transform: translateY(-2px);
+			box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+		}
+
+		.file-upload-btn.has-file {
+			background: linear-gradient(135deg, #4caf50, #45a049);
+		}
+
+		.form-group select {
+			width: 100%;
+			padding: 15px;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 12px;
+			font-size: 1rem;
+			background: rgba(255, 255, 255, 0.05);
+			color: #ffffff;
+			backdrop-filter: blur(10px);
+			cursor: pointer;
+			transition: all 0.3s ease;
+			appearance: none;
+			background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+			background-repeat: no-repeat;
+			background-position: right 15px center;
+			background-size: 16px;
+		}
+
+		.form-group select:focus {
+			outline: none;
+			border-color: rgba(102, 126, 234, 0.6);
+			background: rgba(255, 255, 255, 0.08);
+			box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+		}
+
+		.form-group select option {
+			background: #2a2a2a;
+			color: #ffffff;
+			padding: 10px;
+		}		
 
         .preferences-section {
             margin: 20px 0;
@@ -835,6 +931,7 @@
             gap: 20px;
             justify-content: center;
             margin-top: 10px;
+            flex-wrap: wrap;
         }
 
         .preference-option {
@@ -843,28 +940,30 @@
             align-items: center;
             cursor: pointer;
             padding: 10px;
-            border-radius: 10px;
+            border-radius: 12px;
             transition: all 0.3s ease;
             position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .preference-option:hover {
-            background: rgba(76, 175, 80, 0.1);
+            background: rgba(255, 255, 255, 0.1);
             transform: scale(1.05);
         }
 
         .preference-option.selected {
-            background: rgba(76, 175, 80, 0.2);
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
         }
-
         .preference-option span {
             font-size: 2rem;
             margin-bottom: 5px;
         }
 
-        .preference-option small {
-            font-size: 0.8rem;
-            color: #666;
+        .preference-option.selected {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
         }
 
         .tooltip {
@@ -1105,44 +1204,68 @@
 		.gender-selection {
 			display: flex;
 			gap: 10px;
-			margin-bottom: 20px;
+			margin-bottom: 10px;
 		}
 
 		.gender-btn {
 			flex: 1;
 			padding: 12px;
-			border: 2px solid #e1e5e9;
-			border-radius: 8px;
-			background: white;
+			border: 2px solid rgba(255, 255, 255, 0.2);
+			border-radius: 12px;
+			background: rgba(255, 255, 255, 0.05);
 			cursor: pointer;
 			font-weight: bold;
 			text-align: center;
-			transition: all 0.3s;
+			transition: all 0.3s ease;
+			color: #ffffff;
+			backdrop-filter: blur(10px);
 		}
 
 		.gender-btn:hover {
-			border-color: #667eea;
+			border-color: rgba(102, 126, 234, 0.6);
+			background: rgba(255, 255, 255, 0.08);
 		}
 
 		.gender-btn.selected {
-			background: #667eea;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 			color: white;
 			border-color: #667eea;
 		}
 
-		.error {
-			color: #dc3545;
-			font-size: 14px;
-			margin-top: 5px;
-			display: none;
-		}
+        .character-count {
+            font-size: 12px;
+            color: #b0b0b0;
+            text-align: right;
+            margin-top: 5px;
+        }
 
-		.character-count {
-			font-size: 12px;
-			color: #666;
-			text-align: right;
-			margin-top: 5px;
-		}		
+        /* File Status */
+        #fileStatus {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #b0b0b0;
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .profile-creation {
+                padding: 20px;
+                margin: 20px;
+            }
+            
+            .profile-creation h2 {
+                font-size: 1.6rem;
+            }
+            
+            .preferences-icons {
+                gap: 15px;
+            }
+        }		
 
 		@keyframes shimmer {
 		    0% { background-position: -200% 0; }
@@ -1536,9 +1659,8 @@
 	            <span class="text-xl">Profil erstellen</span>
 	        </button>
 	    </div>	    
-		<div id="createProfileSection">
-			<div id="createProfileModal" class="profile-creation">
-				<h2>📝 Profil erstellen</h2>
+		   <div class="profile-creation">
+				<h2 class="shimmer">Profil erstellen</h2>
 				<form id="profileForm">
 					<!-- Gender Selection -->
 					<div class="form-group">
@@ -1552,8 +1674,17 @@
 
 					<!-- Profile Image -->
 					<div class="form-group">
-						<label>📷 Profilbild:</label>
-						<input type="file" id="profileImage" accept="image/*" required>
+						<label>Profilbild:</label>
+						<div class="modern-file-upload">
+							<button type="button" class="file-upload-btn" onclick="document.getElementById('profileImage').click()">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+								</svg>
+								<span id="fileButtonText">Bild auswählen</span>
+							</button>
+							<input type="file" id="profileImage" accept="image/*" required style="display: none;">
+							<div id="fileStatus">Kein Bild ausgewählt</div>
+						</div>
 					</div>
 
 					<!-- Name and Age Row -->
@@ -1571,7 +1702,7 @@
 						</div>
 					</div>
 
-					<!-- Postal Code -->
+					<!-- Postal Code - Smaller -->
 					<div class="form-group">
 						<label for="postalCode">Postleitzahl:</label>
 						<input type="text" id="postalCode" placeholder="z.B. 10115" maxlength="10">
@@ -1584,6 +1715,7 @@
 						<div id="descriptionError" class="error" style="display: none;"></div>
 						<div id="descriptionCount" class="character-count">0/200</div>
 					</div>
+
 
 					<!-- Genussmittel -->
 					<div class="form-group">
@@ -1625,10 +1757,10 @@
 
 					<div class="action-buttons">
 						<button type="submit" class="action-btn btn-primary">
-							✅ Profil speichern
+							Profil speichern
 						</button>
 						<button type="button" class="action-btn btn-secondary" onclick="closeCreateProfile()">
-							↩️ Zurück
+							Zurück
 						</button>
 					</div>
 				</form>
@@ -1763,23 +1895,36 @@
 
 	
 		const emojiMap = {
-			'wine': '🍷',
-			'420': '🍃',
+			'alcohol': '🍷',
+			'smoking': '🚬',
+			'420': '🍁',
 			'coffee': '☕',
-			'book': '📚',
-			'bike': '🚲'
+			'none': '🚫'
 		};
 
 		const hobbiesMap = {
-		    'Kochen': '👩‍🍳',
-		    'Gaming': '🎮',
-		    'Wandern': '⛰️',
-		    'Fotografie': '📸',
-		    'Musik': '🎵',
-		    'Filme': '🎬',
-		    'Sport': '🏋️',
-		    'Kunst': '🎨',
-		    'Haustiere': '🐶'
+			'Kochen': '👩‍🍳',
+			'Gaming': '🎮',
+			'Wandern': '⛰️',
+			'Fotografie': '📸',
+			'Musik': '🎵',
+			'Filme': '🎬',
+			'Sport': '🏋️',
+			'Kunst': '🎨',
+			'Haustiere': '🐶',
+			'Reisen': '🌍',
+			'Essen & Trinken': '🍽️',
+			'Lesen': '📚',
+			'Technologie': '💻',
+			'Kino': '🍿',
+			'Strand': '🏖️',
+			'Ausgehen': '🎉',
+			'Konzerte': '🎤',
+			'Sprachen': '🗣️',
+			'Ehrenamt': '🤝',
+			'Kultur': '🏛️',
+			'Politik': '🗳️',
+			'Natur': '🌲'
 		};
 
 		const apiUrl = 'https://onebenches.dpdns.org'; 
@@ -2362,9 +2507,15 @@
 					const interestsDiv = document.getElementById('popupProfileInterests');
 					interestsDiv.innerHTML = '';
 					const allEmojis = {
-						'wine': '🍷','420': '🍃','coffee': '☕','book': '📚','bike': '🚲',
-						'Kochen': '👩‍🍳','Gaming': '🎮','Wandern': '⛰️','Fotografie': '📸',
-						'Musik': '🎵','Filme': '🎬','Sport': '🏋️','Kunst': '🎨','Haustiere': '🐶'
+						'alcohol': '🍷', 'smoking': '🚬', '420': '🍁', 'coffee': '☕', 'none': '🚫',
+						'Sport': '🏋️', 'Musik': '🎵', 'Reisen': '🌍', 'Essen & Trinken': '🍽️', 
+						'Lesen': '📚', 'Gaming': '🎮', 'Filme': '🎬', 'Serien': '📺',
+						'Kochen': '👩‍🍳', 'Wandern': '⛰️', 'Fotografie': '📸', 'Tanzen': '💃', 
+						'Kunst': '🎨', 'Fitness': '💪', 'Yoga': '🧘', 'Meditation': '🧘‍♂️',
+						'Gartenarbeit': '🧑‍🌾', 'Tiere': '🐾', 'Shopping': '🛍️', 
+						'Technologie': '💻', 'Bücher': '📖', 'Kino': '🍿', 'Strand': '🏖️',
+						'Ausgehen': '🎉', 'Konzerte': '🎤', 'Sprachen': '🗣️', 'Ehrenamt': '🤝', 
+						'Kultur': '🏛️', 'Politik': '🗳️', 'Natur': '🌲'
 					};
 					
 					const interests = Array.isArray(currentProfile.interests) ? currentProfile.interests : 
@@ -2474,11 +2625,11 @@
 		        
 		        // Definiere verfügbare Präferenzen mit ihren Emojis
 		        const preferencesOptions = {
-		            'wine': '🍷',
-		            '420': '🍃', 
-		            'coffee': '☕',
-		            'book': '📚',
-		            'bike': '🚲'
+					'alcohol': '🍷',
+					'smoking': '🚬',
+					'420': '🍁',
+					'coffee': '☕',
+					'none': '🚫'
 		        };
 		        
 		        Object.entries(preferencesOptions).forEach(([pref, emoji]) => {
@@ -2501,15 +2652,28 @@
 		    hobbiesDiv.innerHTML = ''; 
 		    
 		    const hobbiesOptions = {
-		        'Kochen': '👩‍🍳',
-		        'Gaming': '🎮',
-		        'Wandern': '⛰️',
-		        'Fotografie': '📸',
-		        'Musik': '🎵',
-		        'Filme': '🎬',
-		        'Sport': '🏋️',
-		        'Kunst': '🎨',
-		        'Haustiere': '🐶'
+				'Kochen': '👩‍🍳',
+				'Gaming': '🎮',
+				'Wandern': '⛰️',
+				'Fotografie': '📸',
+				'Musik': '🎵',
+				'Filme': '🎬',
+				'Sport': '🏋️',
+				'Kunst': '🎨',
+				'Haustiere': '🐶',
+				'Reisen': '🌍',
+				'Essen & Trinken': '🍽️',
+				'Lesen': '📚',
+				'Technologie': '💻',
+				'Kino': '🍿',
+				'Strand': '🏖️',
+				'Ausgehen': '🎉',
+				'Konzerte': '🎤',
+				'Sprachen': '🗣️',
+				'Ehrenamt': '🤝',
+				'Kultur': '🏛️',
+				'Politik': '🗳️',
+				'Natur': '🌲'
 		    };
 		    
 		    Object.entries(hobbiesOptions).forEach(([hobby, emoji]) => {
@@ -5247,6 +5411,24 @@
                 sendMessage();
             }
         });
+        document.getElementById('profileImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const button = document.querySelector('.file-upload-btn');
+            const status = document.getElementById('fileStatus');
+            const buttonText = document.getElementById('fileButtonText');
+            
+            if (file) {
+                button.classList.add('has-file');
+                buttonText.textContent = 'Bild ausgewählt';
+                status.textContent = `Ausgewählt: ${file.name}`;
+                status.style.color = '#4caf50';
+            } else {
+                button.classList.remove('has-file');
+                buttonText.textContent = 'Bild auswählen';
+                status.textContent = 'Kein Bild ausgewählt';
+                status.style.color = '#b0b0b0';
+            }
+        });	
 		// Gender-Auswahl Event Listener
 		document.querySelectorAll('.gender-btn').forEach(btn => {
 			btn.addEventListener('click', function() {
