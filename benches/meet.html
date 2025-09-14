@@ -782,110 +782,259 @@
 			transform: scale(0.95);
 		}
 
-        /* Profile Creation */
-        .profile-creation {
-            display: none;
-            background: rgba(255,255,255,0.95);
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 400px;
-            width: 100%;
-            backdrop-filter: blur(10px);
-        }
+		.profile-creation {
+			background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%) !important;
+			border: 1px solid rgba(255, 255, 255, 0.15) !important;
+			color: #ffffff !important;
+			box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6) !important;
+			backdrop-filter: blur(20px);
+		}
 
-        .profile-creation h2 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 1.8rem;
-        }
+		/* Überschrift mit Shimmer */
+		.profile-creation h2 {
+			background: linear-gradient(90deg, #aaa, #ddd, #aaa);
+			background-size: 200% 100%;
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			animation: shimmer 6s infinite linear;
+			font-weight: 600 !important;
+			text-align: center;
+			font-size: 2rem;
+			margin-bottom: 30px;
+		}
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+		/* Form Labels */
+		.form-group label {
+			color: #e0e0e0 !important;
+			font-weight: 600;
+			margin-bottom: 10px;
+		}
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
+		/* Input Fields */
+		.form-group input, 
+		.form-group textarea, 
+		.form-group select {
+			background: rgba(255, 255, 255, 0.08) !important;
+			border: 1px solid rgba(255, 255, 255, 0.2) !important;
+			color: #ffffff !important;
+			border-radius: 10px;
+			transition: all 0.3s ease;
+		}
 
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.3s ease;
-        }
+		.form-group input:focus, 
+		.form-group textarea:focus, 
+		.form-group select:focus {
+			background: rgba(255, 255, 255, 0.12) !important;
+			border-color: rgba(255, 255, 255, 0.4) !important;
+			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+		}
 
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #4caf50;
-        }
+		.form-group input::placeholder, 
+		.form-group textarea::placeholder {
+			color: #b0b0b0;
+		}
 
-        .preferences-section {
-            margin: 20px 0;
-        }
+		/* Gender Selection verbesserung */
+		.gender-btn {
+			background: rgba(255, 255, 255, 0.08) !important;
+			border: 1px solid rgba(255, 255, 255, 0.2) !important;
+			color: #ffffff !important;
+			transition: all 0.3s ease;
+		}
 
-        .preferences-icons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 10px;
-        }
+		.gender-btn:hover {
+			background: rgba(255, 255, 255, 0.15) !important;
+			border-color: rgba(255, 255, 255, 0.3) !important;
+			transform: translateY(-2px);
+		}
 
-        .preference-option {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            padding: 10px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
+		.gender-btn.selected {
+			background: linear-gradient(135deg, #667eea, #764ba2) !important;
+			border-color: #667eea !important;
+			color: white !important;
+		}
 
-        .preference-option:hover {
-            background: rgba(76, 175, 80, 0.1);
-            transform: scale(1.05);
-        }
+		/* Character Count */
+		.character-count {
+			color: #b0b0b0 !important;
+			font-size: 0.8rem;
+		}
 
-        .preference-option.selected {
-            background: rgba(76, 175, 80, 0.2);
-        }
+		/* File Upload moderne Gestaltung */
+		.file-upload-container {
+			position: relative;
+			display: inline-block;
+			width: 100%;
+		}
 
-        .preference-option span {
-            font-size: 2rem;
-            margin-bottom: 5px;
-        }
+		.file-upload-btn {
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			border: none;
+			padding: 15px 25px;
+			border-radius: 12px;
+			color: white;
+			font-weight: 600;
+			cursor: pointer;
+			width: 100%;
+			text-align: center;
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+		}
 
-        .preference-option small {
-            font-size: 0.8rem;
-            color: #666;
-        }
+		.file-upload-btn:hover {
+			background: linear-gradient(135deg, #5a6fd8, #6a4190);
+			transform: translateY(-2px);
+			box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+		}
 
-        .tooltip {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
+		.file-upload-btn.has-file {
+			background: linear-gradient(135deg, #4caf50, #45a049);
+		}
 
-        .preference-option:hover .tooltip {
-            opacity: 1;
-        }
+		.file-input-hidden {
+			position: absolute;
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+
+		.file-preview {
+			margin-top: 10px;
+			text-align: center;
+		}
+
+		.file-preview img {
+			width: 80px;
+			height: 80px;
+			border-radius: 50%;
+			object-fit: cover;
+			border: 3px solid rgba(255, 255, 255, 0.2);
+		}
+
+		.file-name {
+			color: #b0b0b0;
+			font-size: 0.85rem;
+			margin-top: 5px;
+		}
+
+		/* Action Buttons - Neue moderne Gestaltung */
+		.modern-action-buttons {
+			display: flex;
+			gap: 15px;
+			margin-top: 30px;
+			justify-content: center;
+		}
+
+		.modern-btn {
+			padding: 15px 30px;
+			border: none;
+			border-radius: 25px;
+			font-size: 1.1rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+			min-width: 160px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+		}
+
+		.modern-btn-primary {
+			background: linear-gradient(135deg, #4caf50, #45a049);
+			color: white;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.modern-btn-primary:hover {
+			background: linear-gradient(135deg, #45a049, #3d8b40);
+			transform: translateY(-3px);
+			box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+		}
+
+		.modern-btn-primary::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: -100%;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+			transition: left 0.5s;
+		}
+
+		.modern-btn-primary:hover::before {
+			left: 100%;
+		}
+
+		.modern-btn-secondary {
+			background: rgba(255, 255, 255, 0.1);
+			color: #ffffff;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+		}
+
+		.modern-btn-secondary:hover {
+			background: rgba(255, 255, 255, 0.15);
+			border-color: rgba(255, 255, 255, 0.3);
+			transform: translateY(-2px);
+		}
+
+		/* Error Messages */
+		.error {
+			color: #ff6b6b !important;
+			background: rgba(255, 107, 107, 0.1);
+			padding: 8px 12px;
+			border-radius: 8px;
+			font-size: 0.85rem;
+			border: 1px solid rgba(255, 107, 107, 0.2);
+		}
+
+		/* Preferences Icons - dunkler Stil */
+		.preferences-icons .preference-option {
+			background: rgba(255, 255, 255, 0.08);
+			border: 1px solid rgba(255, 255, 255, 0.15);
+			color: #ffffff;
+			transition: all 0.3s ease;
+		}
+
+		.preferences-icons .preference-option:hover {
+			background: rgba(255, 255, 255, 0.15);
+			border-color: rgba(255, 255, 255, 0.3);
+		}
+
+		.preferences-icons .preference-option.selected {
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			border-color: #667eea;
+			color: white;
+		}
+
+		.preferences-icons .preference-option small {
+			color: #b0b0b0;
+		}
+
+		.preferences-icons .preference-option.selected small {
+			color: white;
+		}
+
+		/* Select Dropdown */
+		.form-group select option {
+			background: #2a2a2a;
+			color: #ffffff;
+		}
+
+		/* Form Validation Improvements */
+		.form-group input:invalid {
+			border-color: rgba(255, 107, 107, 0.5);
+		}
+
+		.form-group input:valid {
+			border-color: rgba(76, 175, 80, 0.5);
+		}
 		
 		/* UserPlus Premium Button Styles */
 		.premium-btn {
@@ -1538,7 +1687,9 @@
 	    </div>	    
 		<div id="createProfileSection">
 			<div id="createProfileModal" class="profile-creation">
-				<h2>📝 Profil erstellen</h2>
+				<!-- Überschrift mit Shimmer-Effekt -->
+				<h2 class="shimmer">Profil erstellen</h2>
+				
 				<form id="profileForm">
 					<!-- Gender Selection -->
 					<div class="form-group">
@@ -1550,22 +1701,34 @@
 						<div id="genderError" class="error" style="display: none;"></div>
 					</div>
 
-					<!-- Profile Image -->
+					<!-- Modernes Profilbild Upload -->
 					<div class="form-group">
-						<label>📷 Profilbild:</label>
-						<input type="file" id="profileImage" accept="image/*" required>
+						<label>Profilbild:</label>
+						<div class="file-upload-container">
+							<button type="button" class="file-upload-btn" onclick="document.getElementById('profileImage').click()">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M3 16.5v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4M16 6l-4-4-4 4M12 2v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+								</svg>
+								<span id="uploadButtonText">Bild auswählen</span>
+							</button>
+							<input type="file" id="profileImage" class="file-input-hidden" accept="image/*" required>
+							<div id="filePreview" class="file-preview" style="display: none;">
+								<img id="previewImage" src="" alt="Vorschau">
+								<div id="fileName" class="file-name"></div>
+							</div>
+						</div>
 					</div>
 
 					<!-- Name and Age Row -->
 					<div class="form-row">
 						<div class="form-group">
-							<label>👤 Name:</label>
+							<label>Name:</label>
 							<input type="text" id="profileName" placeholder="Dein Name" maxlength="16" required>
 							<div id="nameError" class="error" style="display: none;"></div>
 							<div id="nameCount" class="character-count">0/16</div>
 						</div>
 						<div class="form-group">
-							<label>🎂 Alter:</label>
+							<label>Alter:</label>
 							<input type="number" id="profileAge" placeholder="Dein Alter" min="18" max="99" required>
 							<div id="ageError" class="error" style="display: none;"></div>
 						</div>
@@ -1579,7 +1742,7 @@
 
 					<!-- Description -->
 					<div class="form-group">
-						<label>📝 Kurze Beschreibung (max. 2 Sätze):</label>
+						<label>Kurze Beschreibung (max. 2 Sätze):</label>
 						<textarea id="profileDescription" rows="3" placeholder="Erzähl etwas über dich..." maxlength="200" required></textarea>
 						<div id="descriptionError" class="error" style="display: none;"></div>
 						<div id="descriptionCount" class="character-count">0/200</div>
@@ -1623,17 +1786,25 @@
 						<input type="text" id="answer2Input" placeholder="Deine Antwort..." style="margin-top: 10px;">
 					</div>
 
-					<div class="action-buttons">
-						<button type="submit" class="action-btn btn-primary">
-							✅ Profil speichern
+					<!-- Moderne Action Buttons -->
+					<div class="modern-action-buttons">
+						<button type="submit" class="modern-btn modern-btn-primary">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+							Profil speichern
 						</button>
-						<button type="button" class="action-btn btn-secondary" onclick="closeCreateProfile()">
-							↩️ Zurück
+						<button type="button" class="modern-btn modern-btn-secondary" onclick="closeCreateProfile()">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+							Zurück
 						</button>
 					</div>
 				</form>
 			</div>
 		</div>
+
 	    
 		<div id="swipeContainer" class="swipe-container" style="display: none;">
 			<div class="card-stack" id="cardStack">
@@ -5247,6 +5418,32 @@
                 sendMessage();
             }
         });
+		
+		// JavaScript für File Upload Funktionalität
+		document.getElementById('profileImage').addEventListener('change', function(e) {
+			const file = e.target.files[0];
+			const uploadBtn = document.querySelector('.file-upload-btn');
+			const uploadText = document.getElementById('uploadButtonText');
+			const preview = document.getElementById('filePreview');
+			const previewImg = document.getElementById('previewImage');
+			const fileName = document.getElementById('fileName');
+			
+			if (file) {
+				// Button Status ändern
+				uploadBtn.classList.add('has-file');
+				uploadText.textContent = 'Bild ändern';
+				
+				// Preview anzeigen
+				const reader = new FileReader();
+				reader.onload = function(e) {
+					previewImg.src = e.target.result;
+					fileName.textContent = file.name;
+					preview.style.display = 'block';
+				};
+				reader.readAsDataURL(file);
+			}
+		});		
+		
 		// Gender-Auswahl Event Listener
 		document.querySelectorAll('.gender-btn').forEach(btn => {
 			btn.addEventListener('click', function() {
