@@ -1176,17 +1176,17 @@
 		}
 		
 		#createProfileModal {
-			position: fixed !important;
-			top: 50% !important;
-			left: 50% !important;
-			transform: translate(-50%, -50%) !important;
-			z-index: 2000 !important;
-			width: 90% !important;
-			max-width: 600px !important;
-			max-height: 90vh !important;
-			overflow-y: auto !important;
+			/* ALLE !important überschreibungen hier löschen */
 		}
-		
+
+		.modal-content.profile-creation {
+			position: relative;
+			max-width: 600px;
+			width: 90%;
+			max-height: 90vh;
+			overflow-y: auto;
+		}
+				
 		/* Neue Klasse für zweispaltige Anordnung hinzufügen */
 		.form-row {
 			display: grid;
@@ -1662,7 +1662,7 @@
 	
 		<div id="createProfileModal" class="modal" style="display: none;">
 			<div class="modal-content profile-creation">
-				<span class="close" onclick="closeModal('createProfileModal')">&times;</span>
+				<span class="close" onclick="closeCreateProfile()">&times;</span>
 				<h2 class="shimmer">Erstelle dein Profil</h2>
 				<form id="profileForm">
 			
@@ -3114,65 +3114,6 @@
 			return Math.round(distance);
 		}
 
-		function generateSampleProfiles() {
-			sampleProfiles = [
-				{
-					id: 1,
-					name: "Anna",
-					age: 26,
-					gender: "female",
-					description: "Liebe Spaziergänge in der Natur und romantische Sonnenuntergänge auf Bänken 🌅 Suche jemanden für tiefe Gespräche bei einem Glas Wein.",
-					image: "https://images.unsplash.com/photo-1699474072277-aeccb6e17263?q=80&w=2061&auto=format&fit=crop",
-					preferences: ["wine", "Wandern", "Fotografie"],
-					latitude: 49.0069 + (Math.random() - 0.5) * 0.1,
-					longitude: 8.4037 + (Math.random() - 0.5) * 0.1
-				},
-				{
-					id: 2,
-					name: "Max",
-					age: 29,
-					gender: "male",
-					description: "Entspannte Gespräche bei einem Glas Wein sind das Beste! 🍷 Musik-Liebhaber der gerne chillt und das Leben genießt.",
-					image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
-					preferences: ["wine", "420", "Musik"],
-					latitude: 49.0069 + (Math.random() - 0.5) * 0.1,
-					longitude: 8.4037 + (Math.random() - 0.5) * 0.1
-				},
-				{
-					id: 3,
-					name: "Lisa",
-					age: 24,
-					gender: "female",
-					description: "Naturliebhaberin, die gerne neue Orte entdeckt und chillige Momente genießt 🍃 Bin immer für spontane Abenteuer zu haben!",
-					image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
-					preferences: ["420", "Wandern", "Haustiere"],
-					latitude: 49.0069 + (Math.random() - 0.5) * 0.1,
-					longitude: 8.4037 + (Math.random() - 0.5) * 0.1
-				},
-				{
-					id: 4,
-					name: "Tom",
-					age: 31,
-					gender: "male",
-					description: "Romantiker mit Herz für schöne Aussichten und tiefe Gespräche 💕 Kunst und Kultur sind meine Leidenschaft.",
-					image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
-					preferences: ["wine", "Kunst", "Musik"],
-					latitude: 49.0069 + (Math.random() - 0.5) * 0.1,
-					longitude: 8.4037 + (Math.random() - 0.5) * 0.1
-				},
-				{
-					id: 5,
-					name: "Sarah",
-					age: 27,
-					gender: "female",
-					description: "Lebenslustig und immer für Abenteuer zu haben! Lass uns die Welt entdecken 🌍 Sport, Filme und gute Vibes!",
-					image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
-					preferences: ["wine", "420", "Sport", "Filme"],
-					latitude: 49.0069 + (Math.random() - 0.5) * 0.1,
-					longitude: 8.4037 + (Math.random() - 0.5) * 0.1
-				}
-			];
-		}
 
 		// Swipe Functions
 		function createSwipeCardFromData(profile) {
