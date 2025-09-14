@@ -26,6 +26,23 @@ async function getCloudinaryImages(folder) {
   return data.resources.map(r => r.secure_url);
 }
 
+// === Clustered locations across Germany ===
+const cityClusters = [
+  { name: 'Biberach', postalCode: '88400', lat: 48.095, lng: 9.786, count: 6 },
+  { name: 'Ulm', postalCode: '89073', lat: 48.401, lng: 9.987, count: 6 },
+  { name: 'Memmingen', postalCode: '87700', lat: 47.988, lng: 10.177, count: 4 },
+  { name: 'München', postalCode: '80331', lat: 48.137, lng: 11.575, count: 12 },
+  { name: 'Stuttgart', postalCode: '70173', lat: 48.7758, lng: 9.1829, count: 8 },
+  { name: 'Karlsruhe', postalCode: '76131', lat: 49.0069, lng: 8.4037, count: 5 },
+  { name: 'Freiburg', postalCode: '79098', lat: 47.999, lng: 7.842, count: 4 },
+  { name: 'Augsburg', postalCode: '86150', lat: 48.3705, lng: 10.8978, count: 4 },
+  { name: 'Nürnberg', postalCode: '90402', lat: 49.4521, lng: 11.0767, count: 5 },
+  { name: 'Berlin', postalCode: '10115', lat: 52.532, lng: 13.384, count: 12 },
+  { name: 'Hamburg', postalCode: '20095', lat: 53.55, lng: 10.0, count: 8 },
+  { name: 'Bremen', postalCode: '28195', lat: 53.075, lng: 8.807, count: 4 },
+];
+
+
 // === Locations ===
 const cityClusters = [ /* ... wie vorher ... */ ];
 function buildExpandedLocations(clusters) {
