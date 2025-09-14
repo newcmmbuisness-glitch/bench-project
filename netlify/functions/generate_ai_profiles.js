@@ -44,7 +44,6 @@ const cityClusters = [
 
 
 // === Locations ===
-const cityClusters = [ /* ... wie vorher ... */ ];
 function buildExpandedLocations(clusters) {
   const expanded = [];
   clusters.forEach(c => {
