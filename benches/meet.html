@@ -790,7 +790,6 @@
 			backdrop-filter: blur(20px);
 		}
 
-		/* Überschrift mit Shimmer */
 		.profile-creation h2 {
 			background: linear-gradient(90deg, #aaa, #ddd, #aaa);
 			background-size: 200% 100%;
@@ -798,9 +797,6 @@
 			-webkit-text-fill-color: transparent;
 			animation: shimmer 6s infinite linear;
 			font-weight: 600 !important;
-			text-align: center;
-			font-size: 2rem;
-			margin-bottom: 30px;
 		}
 
 		/* Form Labels */
@@ -867,31 +863,26 @@
 			width: 100%;
 		}
 
-		.file-upload-btn {
-			background: linear-gradient(135deg, #667eea, #764ba2);
-			border: none;
-			padding: 15px 25px;
-			border-radius: 12px;
-			color: white;
-			font-weight: 600;
+		.file-upload-modern {
+			display: inline-block;
+			background: rgba(255, 255, 255, 0.1);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			padding: 8px 16px;
+			border-radius: 8px;
+			color: #ffffff;
+			font-size: 0.9rem;
 			cursor: pointer;
-			width: 100%;
-			text-align: center;
 			transition: all 0.3s ease;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 10px;
 		}
 
-		.file-upload-btn:hover {
-			background: linear-gradient(135deg, #5a6fd8, #6a4190);
-			transform: translateY(-2px);
-			box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+		.file-upload-modern:hover {
+			background: rgba(255, 255, 255, 0.15);
+			border-color: rgba(255, 255, 255, 0.3);
 		}
 
-		.file-upload-btn.has-file {
-			background: linear-gradient(135deg, #4caf50, #45a049);
+		.file-upload-modern.has-file {
+			background: rgba(76, 175, 80, 0.2);
+			border-color: rgba(76, 175, 80, 0.4);
 		}
 
 		.file-input-hidden {
@@ -901,9 +892,10 @@
 			height: 0;
 		}
 
-		.file-preview {
-			margin-top: 10px;
-			text-align: center;
+		.file-preview-small {
+			margin-top: 8px;
+			font-size: 0.8rem;
+			color: #b0b0b0;
 		}
 
 		.file-preview img {
@@ -1035,7 +1027,34 @@
 		.form-group input:valid {
 			border-color: rgba(76, 175, 80, 0.5);
 		}
-		
+
+		/* Neue Action Buttons - weiße Hover-Effekte */
+		.action-buttons .btn-primary {
+			background: linear-gradient(135deg, #4caf50, #45a049) !important;
+			border: none !important;
+			transition: all 0.3s ease !important;
+		}
+
+		.action-buttons .btn-primary:hover {
+			background: rgba(255, 255, 255, 0.9) !important;
+			color: #333 !important;
+			transform: translateY(-2px);
+			box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+		}
+
+		.action-buttons .btn-secondary {
+			background: rgba(255, 255, 255, 0.1) !important;
+			color: #ffffff !important;
+			border: 1px solid rgba(255, 255, 255, 0.2) !important;
+			transition: all 0.3s ease !important;
+		}
+
+		.action-buttons .btn-secondary:hover {
+			background: rgba(255, 255, 255, 0.9) !important;
+			color: #333 !important;
+			border-color: rgba(255, 255, 255, 0.4) !important;
+			transform: translateY(-2px);
+		}		
 		/* UserPlus Premium Button Styles */
 		.premium-btn {
 			position: relative;
@@ -1703,20 +1722,12 @@
 
 					<!-- Modernes Profilbild Upload -->
 					<div class="form-group">
-						<label>Profilbild:</label>
-						<div class="file-upload-container">
-							<button type="button" class="file-upload-btn" onclick="document.getElementById('profileImage').click()">
-								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-									<path d="M3 16.5v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4M16 6l-4-4-4 4M12 2v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-								</svg>
-								<span id="uploadButtonText">Bild auswählen</span>
-							</button>
-							<input type="file" id="profileImage" class="file-input-hidden" accept="image/*" required>
-							<div id="filePreview" class="file-preview" style="display: none;">
-								<img id="previewImage" src="" alt="Vorschau">
-								<div id="fileName" class="file-name"></div>
-							</div>
-						</div>
+						<label>📷 Profilbild:</label>
+						<label for="profileImage" class="file-upload-modern">
+							<span id="fileButtonText">📁 Bild auswählen</span>
+						</label>
+						<input type="file" id="profileImage" accept="image/*" required style="display: none;">
+						<div id="filePreview" class="file-preview-small" style="display: none;"></div>
 					</div>
 
 					<!-- Name and Age Row -->
@@ -5422,27 +5433,21 @@
 		// JavaScript für File Upload Funktionalität
 		document.getElementById('profileImage').addEventListener('change', function(e) {
 			const file = e.target.files[0];
-			const uploadBtn = document.querySelector('.file-upload-btn');
-			const uploadText = document.getElementById('uploadButtonText');
+			const button = document.querySelector('.file-upload-modern');
+			const buttonText = document.getElementById('fileButtonText');
 			const preview = document.getElementById('filePreview');
-			const previewImg = document.getElementById('previewImage');
-			const fileName = document.getElementById('fileName');
 			
 			if (file) {
-				// Button Status ändern
-				uploadBtn.classList.add('has-file');
-				uploadText.textContent = 'Bild ändern';
-				
-				// Preview anzeigen
-				const reader = new FileReader();
-				reader.onload = function(e) {
-					previewImg.src = e.target.result;
-					fileName.textContent = file.name;
-					preview.style.display = 'block';
-				};
-				reader.readAsDataURL(file);
+				button.classList.add('has-file');
+				buttonText.textContent = '✅ ' + file.name;
+				preview.textContent = 'Datei ausgewählt: ' + file.name;
+				preview.style.display = 'block';
+			} else {
+				button.classList.remove('has-file');
+				buttonText.textContent = '📁 Bild auswählen';
+				preview.style.display = 'none';
 			}
-		});		
+		});
 		
 		// Gender-Auswahl Event Listener
 		document.querySelectorAll('.gender-btn').forEach(btn => {
