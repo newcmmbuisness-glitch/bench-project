@@ -58,9 +58,27 @@ function buildExpandedLocations(clusters) {
 const locationsExpanded = buildExpandedLocations(cityClusters);
 
 // === Profile data ===
-const descriptions = [ /* ... */ ];
-const hobbyPool = [ /* ... */ ];
-const prompts = [ /* ... */ ];
+// === Profile texts ===
+const descriptions = [
+  "Liebe Spaziergänge und gemütliche Abende.",
+  "Musik, Filme und Sport machen mein Leben bunt.",
+  "Kunst- und Kulturfan, tiefgründige Gespräche.",
+  "Natur, Reisen und gutes Essen sind meine Leidenschaft.",
+  "Humorvoll, entspannt und immer für Abenteuer zu haben."
+];
+
+const hobbyPool = [
+  "Kochen", "Gaming", "Wandern", "Fotografie",
+  "Musik", "Filme", "Sport", "Kunst", "Haustiere"
+];
+
+const prompts = [
+  { q: "Ein perfekter erster Date ist...", a: "Ein Spaziergang am Fluss mit Kaffee." },
+  { q: "Ich bin gerade besessen von...", a: "Neuen Rezepten und Serien." },
+  { q: "Zwei Wahrheiten und eine Lüge...", a: "Ich liebe Hunde, ich hasse Pizza, ich spiele Gitarre." },
+  { q: "Mein liebstes Reiseziel ist...", a: "Die Berge in Südtirol." },
+  { q: "Was ich in meiner Freizeit tue...", a: "Sport treiben und Freunde treffen." }
+];
 function randomFromArray(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 // === Lambda Handler ===
