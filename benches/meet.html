@@ -1659,9 +1659,14 @@
 	            <span class="text-xl">Profil erstellen</span>
 	        </button>
 	    </div>	    
-		   <div class="profile-creation">
-				<h2 class="shimmer">Profil erstellen</h2>
-				<form id="profileForm">
+			<div id="createProfileModal" class="modal" style="display: none;">
+				<div class="modal-content profile-creation">
+					<span class="close" onclick="closeModal('createProfileModal')">&times;</span>
+					<h2 class="shimmer">Erstelle dein Profil</h2>
+					<form id="profileForm">
+						</form>
+				</div>
+		
 					<!-- Gender Selection -->
 					<div class="form-group">
 						<label>Geschlecht:</label>
@@ -2229,21 +2234,10 @@
         }
 		
 		function showCreateProfileForm() {
-			// Zeigt das Profil-Erstellungsformular an
-			document.getElementById('welcomeScreen').style.display = 'none';
-			document.getElementById('createProfileSection').style.display = 'none';
-			document.querySelector('.profile-creation').style.display = 'block';
-			
-			// Verstecke die Floating Buttons
-			const profileBtn = document.getElementById('profileButton');
-			const chatBtn = document.getElementById('chatButton');
-			if (profileBtn) profileBtn.classList.add('hidden');
-			if (chatBtn) chatBtn.classList.add('hidden');
-			
-			// Setzt das Formular zurück und rendert die Emojis neu
-			document.getElementById('profileForm').reset();
-			renderPreferences();
-			renderHobbies();
+		    closeProfilePopup(); // Stellt sicher, dass das Popup geschlossen ist
+		    document.getElementById('createProfileSection').style.display = 'none';
+		    document.getElementById('createProfileModal').style.display = 'block';
+		    // Optional: Leeren Sie hier das Formular, falls nötig
 		}
 
 		function closeCreateProfile() {
