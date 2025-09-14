@@ -227,20 +227,118 @@
 		    color: white;
 		}
 
-		/* Profile-Popup Styling */
+		/* Profil Popup - Dunkleres Design */
 		.profile-popup {
+			background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			border-radius: 20px;
+			padding: 30px;
+			max-width: 500px;
+			width: 90%;
+			max-height: 90vh;
+			overflow-y: auto;
+			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 			position: fixed;
 			top: 50%;
 			left: 50%;
 			transform: translate(-50%, -50%);
-			background-color: white;
-			padding: 2rem;
-			border-radius: 1rem;
-			box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-			z-index: 2000;
-			display: none;
-			width: 90%;
-			max-width: 500px;
+			z-index: 1001;
+			backdrop-filter: blur(20px);
+			color: #ffffff;
+		}
+		
+		/* Modal Overlay Update */
+		#modalOverlay {
+			background: rgba(0, 0, 0, 0.8);
+			backdrop-filter: blur(10px);
+		}
+
+		/* Profil Image Styling */
+		#popupProfileImage {
+			width: 140px !important;
+			height: 140px !important;
+			border-radius: 50%;
+			object-fit: cover;
+			border: 3px solid rgba(255, 255, 255, 0.2);
+			margin-bottom: 20px;
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+		}
+
+		/* Profil Name mit Shimmer */
+		#popupProfileName {
+			font-size: 1.8rem;
+			font-weight: 600;
+			margin-bottom: 8px;
+		}
+
+		/* Distance & Details */
+		#popupProfileDistance {
+			color: #b0b0b0 !important;
+			font-size: 0.9rem;
+			margin-bottom: 15px;
+			background: rgba(255, 255, 255, 0.05);
+			padding: 6px 12px;
+			border-radius: 12px;
+		}
+
+		/* Gender Display */
+		.profile-gender {
+			color: #b0b0b0;
+			font-size: 0.9rem;
+			margin-bottom: 10px;
+			display: inline-block;
+			background: rgba(255, 255, 255, 0.08);
+			padding: 4px 10px;
+			border-radius: 8px;
+		}
+
+		/* Postal Code */
+		.profile-postal {
+			color: #b0b0b0;
+			font-size: 0.85rem;
+			margin-bottom: 15px;
+		}
+
+		/* Description Styling */
+		#popupProfileDescription {
+			color: #e0e0e0 !important;
+			font-size: 1rem;
+			line-height: 1.6;
+			margin-bottom: 20px;
+			max-width: 400px;
+		}
+
+		/* Interests Container */
+		#popupProfileInterests {
+			margin-bottom: 25px;
+		}
+
+		#popupProfileInterests span {
+			background: rgba(255, 255, 255, 0.1) !important;
+			color: #ffffff !important;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			padding: 8px 14px;
+			border-radius: 20px;
+			font-size: 0.9rem;
+			margin: 4px;
+			display: inline-block;
+			transition: all 0.3s ease;
+		}
+
+		#popupProfileInterests span:hover {
+			background: rgba(255, 255, 255, 0.15) !important;
+			transform: translateY(-2px);
+		}
+
+		/* Prompts & Answers Section */
+		.profile-qa-section {
+			width: 100%;
+			margin: 20px 0;
+			text-align: left;
+		}
+
+		.profile-qa-item {
+			background: rgba(255, 255, 255, 0.05);
 		}
 
         /* Auth buttons - übernommen */
@@ -1558,28 +1656,64 @@
 	    </div>
 	</div>
 	
-    <div id="profilePopup" class="profile-popup" style="display: none;">
-        <div class="flex justify-between items-start mb-4">
-            <h2 class="text-2xl font-bold" id="popupProfileName"></h2>
+	
+	<div id="profilePopup" class="profile-popup" style="display: none;">
+		<div class="flex justify-between items-start mb-4">
+			<h2 class="text-2xl font-bold shimmer" id="popupProfileName"></h2>
+			<button onclick="closeProfilePopup()" class="text-gray-500 hover:text-gray-700 transition-colors">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+				</svg>
+			</button>
+		</div>
+		
+		<div class="flex flex-col items-center">
+			<img id="popupProfileImage" src="" alt="Profilbild" class="w-32 h-32 rounded-full object-cover mb-4">
+			
+			<!-- Distance und zusätzliche Info -->
 			<p id="popupProfileDistance" class="text-gray-500 text-sm mb-2"></p>
-            <button onclick="closeProfilePopup()" class="text-gray-500 hover:text-gray-700 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-        </div>
-        <div class="flex flex-col items-center">
-            <img id="popupProfileImage" src="" alt="Profilbild" class="w-32 h-32 rounded-full object-cover mb-4">
-            <p id="popupProfileDescription" class="text-gray-600 text-center mb-4"></p>
-            <div class="flex flex-wrap gap-2 justify-center mb-6" id="popupProfileInterests"></div>
-            <div class="flex space-x-4">
-                <button onclick="editProfile()" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-green-600 transition-colors">
-                    Profil bearbeiten
-                </button>
-                <button onclick="deleteProfile()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-red-600 transition-colors">
-                    Profil löschen
-                </button>
-            </div>
-        </div>
-    </div>
+			
+			<!-- Zusätzliche Profil-Infos -->
+			<div class="profile-additional-info">
+				<div class="profile-info-row">
+					<span class="profile-info-label">Geschlecht:</span>
+					<span class="profile-info-value" id="popupProfileGender">-</span>
+				</div>
+				<div class="profile-info-row">
+					<span class="profile-info-label">PLZ:</span>
+					<span class="profile-info-value" id="popupProfilePostal">-</span>
+				</div>
+			</div>
+			
+			<!-- Description -->
+			<p id="popupProfileDescription" class="text-gray-600 text-center mb-4"></p>
+			
+			<!-- Interests -->
+			<div class="flex flex-wrap gap-2 justify-center mb-6" id="popupProfileInterests"></div>
+			
+			<!-- Q&A Section -->
+			<div class="profile-qa-section" id="popupProfileQA">
+				<div class="profile-qa-item" id="qa1Container" style="display: none;">
+					<div class="profile-qa-question" id="popupPrompt1"></div>
+					<div class="profile-qa-answer" id="popupAnswer1"></div>
+				</div>
+				<div class="profile-qa-item" id="qa2Container" style="display: none;">
+					<div class="profile-qa-question" id="popupPrompt2"></div>
+					<div class="profile-qa-answer" id="popupAnswer2"></div>
+				</div>
+			</div>
+			
+			<!-- Action Buttons -->
+			<div class="flex space-x-4">
+				<button onclick="editProfile()" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-green-600 transition-colors">
+					Profil bearbeiten
+				</button>
+				<button onclick="deleteProfile()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-red-600 transition-colors">
+					Profil löschen
+				</button>
+			</div>
+		</div>
+	</div>
 
 	<button id="profileButton" class="floating-button profile-button hidden" onclick="showProfilePopup()">
 	    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
@@ -2180,74 +2314,101 @@
 		}
 		
 		async function showProfilePopup() {
-		    if (!currentUser || !currentUser.uid) {
-		        showNotification('❌ Bitte melden Sie sich erneut an.', 'error');
-		        return;
-		    }
-		    
-		    try {
-		        const response = await fetch('/.netlify/functions/get_my_profile', {
-		            method: 'POST',
-		            headers: { 'Content-Type': 'application/json' },
-		            body: JSON.stringify({ userId: currentUser.uid })
-		        });
-		
-		        const result = await response.json();
-		
-		        if (response.ok && result.profile) {
-		            currentProfile = result.profile;
-		
-		            // ✅ Name + Alter
-		            document.getElementById('popupProfileName').textContent = 
-		                `${currentProfile.profile_name}, ${currentProfile.age || ''}`;
-		
-		            document.getElementById('popupProfileImage').src = currentProfile.profile_image;
-		            document.getElementById('popupProfileDescription').textContent = currentProfile.description;
-		
-		            // ✅ Entfernung berechnen, wenn Koordinaten vorhanden
-		            let distanceText = '';
-		            if (currentProfile.latitude && currentProfile.longitude && currentUser.latitude && currentUser.longitude) {
-		                const dist = calculateDistance(
-		                    currentUser.latitude, currentUser.longitude,
-		                    currentProfile.latitude, currentProfile.longitude
-		                );
-		                distanceText = `${dist} km entfernt`;
-		            }
-		
-		            if (distanceText) {
-		                // Extra Feld für Entfernung anzeigen (falls noch nicht im HTML)
-		                const distElem = document.getElementById('popupProfileDistance') || document.createElement('p');
-		                distElem.id = 'popupProfileDistance';
-		                distElem.className = "text-gray-500 text-sm mb-2";
-		                distElem.textContent = distanceText;
-		                document.getElementById('profilePopup').insertBefore(distElem, document.getElementById('popupProfileDescription'));
-		            }
-		
-		            // ✅ Interessen rendern
-		            const interestsDiv = document.getElementById('popupProfileInterests');
-		            interestsDiv.innerHTML = '';
-		            const allEmojis = {
-		                'wine': '🍷','420': '🍃','coffee': '☕','book': '📚','bike': '🚲',
-		                'Kochen': '👩‍🍳','Gaming': '🎮','Wandern': '⛰️','Fotografie': '📸',
-		                'Musik': '🎵','Filme': '🎬','Sport': '🏋️','Kunst': '🎨','Haustiere': '🐶'
-		            };
-		            (Array.isArray(currentProfile.interests) ? currentProfile.interests : []).forEach(interest => {
-		                const span = document.createElement('span');
-		                const emoji = allEmojis[interest] || '❓';
-		                span.textContent = `${emoji} ${interest}`;
-		                span.className = 'px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium mr-2 mb-2 inline-block';
-		                interestsDiv.appendChild(span);
-		            });
-		
-		            document.getElementById('profilePopup').style.display = 'block';
-		            document.getElementById('modalOverlay').style.display = 'block';
-		        } else {
-		            showNotification('❌ Fehler beim Laden des Profils: ' + (result.error || 'Unbekannter Fehler'), 'error');
-		        }
-		    } catch (error) {
-		        console.error('Fehler beim Anzeigen des Profil-Popups:', error);
-		        showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
-		    }
+			if (!currentUser || !currentUser.uid) {
+				showNotification('❌ Bitte melden Sie sich erneut an.', 'error');
+				return;
+			}
+			
+			try {
+				const response = await fetch('/.netlify/functions/get_my_profile', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userId: currentUser.uid })
+				});
+
+				const result = await response.json();
+
+				if (response.ok && result.profile) {
+					currentProfile = result.profile;
+
+					// Name + Alter
+					const nameText = currentProfile.profile_name || 'Unbekannt';
+					const ageText = currentProfile.age ? `, ${currentProfile.age}` : '';
+					document.getElementById('popupProfileName').textContent = nameText + ageText;
+
+					// Profilbild
+					document.getElementById('popupProfileImage').src = currentProfile.profile_image || '/default-avatar.jpg';
+					
+					// Beschreibung
+					document.getElementById('popupProfileDescription').textContent = currentProfile.description || 'Keine Beschreibung verfügbar.';
+
+					// Entfernung berechnen
+					let distanceText = '';
+					if (currentProfile.latitude && currentProfile.longitude && currentUser.latitude && currentUser.longitude) {
+						const dist = calculateDistance(
+							currentUser.latitude, currentUser.longitude,
+							currentProfile.latitude, currentProfile.longitude
+						);
+						distanceText = `${dist} km entfernt`;
+					}
+					document.getElementById('popupProfileDistance').textContent = distanceText;
+					document.getElementById('popupProfileDistance').style.display = distanceText ? 'block' : 'none';
+
+					// Zusätzliche Infos
+					document.getElementById('popupProfileGender').textContent = currentProfile.gender || 'Nicht angegeben';
+					document.getElementById('popupProfilePostal').textContent = currentProfile.postal_code || 'Nicht angegeben';
+
+					// Interessen
+					const interestsDiv = document.getElementById('popupProfileInterests');
+					interestsDiv.innerHTML = '';
+					const allEmojis = {
+						'wine': '🍷','420': '🍃','coffee': '☕','book': '📚','bike': '🚲',
+						'Kochen': '👩‍🍳','Gaming': '🎮','Wandern': '⛰️','Fotografie': '📸',
+						'Musik': '🎵','Filme': '🎬','Sport': '🏋️','Kunst': '🎨','Haustiere': '🐶'
+					};
+					
+					const interests = Array.isArray(currentProfile.interests) ? currentProfile.interests : 
+									 (currentProfile.interests ? JSON.parse(currentProfile.interests) : []);
+					
+					interests.forEach(interest => {
+						const span = document.createElement('span');
+						const emoji = allEmojis[interest] || '❓';
+						span.textContent = `${emoji} ${interest}`;
+						span.className = 'px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium mr-2 mb-2 inline-block';
+						interestsDiv.appendChild(span);
+					});
+
+					// Q&A Bereiche
+					const qa1Container = document.getElementById('qa1Container');
+					const qa2Container = document.getElementById('qa2Container');
+					
+					if (currentProfile.prompt_1 && currentProfile.answer_1) {
+						document.getElementById('popupPrompt1').textContent = currentProfile.prompt_1;
+						document.getElementById('popupAnswer1').textContent = currentProfile.answer_1;
+						qa1Container.style.display = 'block';
+					} else {
+						qa1Container.style.display = 'none';
+					}
+					
+					if (currentProfile.prompt_2 && currentProfile.answer_2) {
+						document.getElementById('popupPrompt2').textContent = currentProfile.prompt_2;
+						document.getElementById('popupAnswer2').textContent = currentProfile.answer_2;
+						qa2Container.style.display = 'block';
+					} else {
+						qa2Container.style.display = 'none';
+					}
+
+					// Modal anzeigen
+					document.getElementById('profilePopup').style.display = 'block';
+					document.getElementById('modalOverlay').style.display = 'block';
+					
+				} else {
+					showNotification('❌ Fehler beim Laden des Profils: ' + (result.error || 'Unbekannter Fehler'), 'error');
+				}
+			} catch (error) {
+				console.error('Fehler beim Anzeigen des Profil-Popups:', error);
+				showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
+			}
 		}
 
 
