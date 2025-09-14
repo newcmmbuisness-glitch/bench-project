@@ -782,110 +782,177 @@
 			transform: scale(0.95);
 		}
 
-        /* Profile Creation */
-        .profile-creation {
-            display: none;
-            background: rgba(255,255,255,0.95);
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 400px;
-            width: 100%;
-            backdrop-filter: blur(10px);
-        }
+		/* Container: dunkler wie beim Profil-Popup */
+		.profile-creation {
+			background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%) !important;
+			border: 1px solid rgba(255, 255, 255, 0.15) !important;
+			backdrop-filter: blur(20px) !important;
+		}
 
-        .profile-creation h2 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 1.8rem;
-        }
+		/* Überschrift: Shimmer ohne Emoji */
+		.profile-creation h2 {
+			background: linear-gradient(90deg, #aaa, #ddd, #aaa);
+			background-size: 200% 100%;
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			animation: shimmer 6s infinite linear;
+			font-weight: 600;
+			color: transparent !important;
+		}
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+		/* Labels: weiß statt schwarz */
+		.form-group label {
+			color: #ffffff !important;
+		}
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
+		/* Inputs: dunkler Hintergrund, weiße Schrift */
+		.form-group input, 
+		.form-group textarea {
+			background: rgba(255, 255, 255, 0.08) !important;
+			border: 1px solid rgba(255, 255, 255, 0.2) !important;
+			color: #ffffff !important;
+		}
 
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.3s ease;
-        }
+		.form-group input::placeholder, 
+		.form-group textarea::placeholder {
+			color: #b0b0b0;
+		}
 
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #4caf50;
-        }
+		.form-group input:focus, 
+		.form-group textarea:focus {
+			border-color: rgba(255, 255, 255, 0.4) !important;
+			background: rgba(255, 255, 255, 0.12) !important;
+		}
 
-        .preferences-section {
-            margin: 20px 0;
-        }
+		/* PLZ-Feld kleiner machen */
+		#postalCode {
+			max-width: 200px !important;
+		}
 
-        .preferences-icons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 10px;
-        }
+		/* Gender Buttons: dunkel */
+		.gender-btn {
+			background: rgba(255, 255, 255, 0.08) !important;
+			border: 1px solid rgba(255, 255, 255, 0.2) !important;
+			color: #ffffff !important;
+		}
 
-        .preference-option {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            padding: 10px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
+		.gender-btn.selected {
+			background: rgba(255, 255, 255, 0.15) !important;
+			border-color: rgba(255, 255, 255, 0.4) !important;
+		}
 
-        .preference-option:hover {
-            background: rgba(76, 175, 80, 0.1);
-            transform: scale(1.05);
-        }
+		/* Character Count */
+		.character-count {
+			color: #b0b0b0 !important;
+		}
 
-        .preference-option.selected {
-            background: rgba(76, 175, 80, 0.2);
-        }
+		/* Error Messages */
+		.error {
+			color: #ff6b6b !important;
+			background: rgba(255, 107, 107, 0.1);
+			border: 1px solid rgba(255, 107, 107, 0.2);
+			border-radius: 5px;
+			padding: 5px 8px;
+		}
 
-        .preference-option span {
-            font-size: 2rem;
-            margin-bottom: 5px;
-        }
+		/* Moderner File Upload */
+		.modern-file-upload {
+			position: relative;
+			display: inline-block;
+		}
 
-        .preference-option small {
-            font-size: 0.8rem;
-            color: #666;
-        }
+		.file-upload-btn {
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: white;
+			padding: 12px 20px;
+			border: none;
+			border-radius: 10px;
+			cursor: pointer;
+			font-weight: 600;
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
 
-        .tooltip {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
+		.file-upload-btn:hover {
+			background: linear-gradient(135deg, #5a6fd8, #6a4190);
+			transform: translateY(-2px);
+		}
 
-        .preference-option:hover .tooltip {
-            opacity: 1;
-        }
+		.file-upload-btn.has-file {
+			background: linear-gradient(135deg, #4caf50, #45a049);
+		}
+
+		/* Select Felder modernisieren */
+		.form-group select {
+			background: rgba(255, 255, 255, 0.08) !important;
+			border: 1px solid rgba(255, 255, 255, 0.2) !important;
+			color: #ffffff !important;
+			padding: 12px;
+			border-radius: 10px;
+			font-size: 1rem;
+			transition: all 0.3s ease;
+		}
+
+		.form-group select:focus {
+			border-color: rgba(255, 255, 255, 0.4) !important;
+			background: rgba(255, 255, 255, 0.12) !important;
+		}
+
+		.form-group select option {
+			background: #2a2a2a;
+			color: #ffffff;
+		}
+
+		/* Action Buttons: moderne weiße Hover-Effekte */
+		.action-buttons {
+			display: flex;
+			gap: 15px;
+			margin-top: 30px;
+			justify-content: center;
+		}
+
+		.action-btn {
+			padding: 15px 30px !important;
+			border: none !important;
+			border-radius: 25px !important;
+			font-size: 1.1rem !important;
+			font-weight: 600 !important;
+			cursor: pointer !important;
+			transition: all 0.3s ease !important;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+			min-width: 160px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+		}
+
+		.btn-primary {
+			background: linear-gradient(135deg, #4caf50, #45a049) !important;
+			color: white !important;
+		}
+
+		.btn-primary:hover {
+			background: rgba(255, 255, 255, 0.9) !important;
+			color: #333 !important;
+			transform: translateY(-3px) !important;
+			box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3) !important;
+		}
+
+		.btn-secondary {
+			background: rgba(255, 255, 255, 0.1) !important;
+			color: #ffffff !important;
+			border: 1px solid rgba(255, 255, 255, 0.2) !important;
+		}
+
+		.btn-secondary:hover {
+			background: rgba(255, 255, 255, 0.9) !important;
+			color: #333 !important;
+			border-color: rgba(255, 255, 255, 0.4) !important;
+			transform: translateY(-2px) !important;
+		}
 		
 		/* UserPlus Premium Button Styles */
 		.premium-btn {
@@ -1538,7 +1605,7 @@
 	    </div>	    
 		<div id="createProfileSection">
 			<div id="createProfileModal" class="profile-creation">
-				<h2>📝 Profil erstellen</h2>
+				<h2 class="shimmer">Profil erstellen</h2>
 				<form id="profileForm">
 					<!-- Gender Selection -->
 					<div class="form-group">
@@ -1553,7 +1620,16 @@
 					<!-- Profile Image -->
 					<div class="form-group">
 						<label>📷 Profilbild:</label>
-						<input type="file" id="profileImage" accept="image/*" required>
+						<div class="modern-file-upload">
+							<button type="button" class="file-upload-btn" onclick="document.getElementById('profileImage').click()">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2"/>
+								</svg>
+								<span id="fileButtonText">Bild auswählen</span>
+							</button>
+							<input type="file" id="profileImage" accept="image/*" required style="display: none;">
+							<div id="fileStatus" style="margin-top: 5px; font-size: 0.8rem; color: #b0b0b0;"></div>
+						</div>
 					</div>
 
 					<!-- Name and Age Row -->
@@ -5247,6 +5323,22 @@
                 sendMessage();
             }
         });
+		document.getElementById('profileImage').addEventListener('change', function(e) {
+			const file = e.target.files[0];
+			const button = document.querySelector('.file-upload-btn');
+			const buttonText = document.getElementById('fileButtonText');
+			const status = document.getElementById('fileStatus');
+			
+			if (file) {
+				button.classList.add('has-file');
+				buttonText.textContent = 'Bild gewählt';
+				status.textContent = `✓ ${file.name}`;
+			} else {
+				button.classList.remove('has-file');
+				buttonText.textContent = 'Bild auswählen';
+				status.textContent = '';
+			}
+		});		
 		// Gender-Auswahl Event Listener
 		document.querySelectorAll('.gender-btn').forEach(btn => {
 			btn.addEventListener('click', function() {
