@@ -2589,20 +2589,27 @@
 			try {
 				// Nicht editierbare Felder (readonly)
 				const nameInput = document.getElementById('profileName');
-				nameInput.value = currentProfile.profile_name || '';
-				nameInput.readOnly = true;
+				if (nameInput) {
+					nameInput.value = currentProfile.profile_name || '';
+					nameInput.readOnly = true;
+				}
 
 				const ageInput = document.getElementById('profileAge');
-				ageInput.value = currentProfile.age || '';
-				ageInput.readOnly = true;
-
-				const genderInput = document.getElementById('profileGender');
-				genderInput.value = currentProfile.gender || '';
-				genderInput.readOnly = true;
+				if (ageInput) {
+					ageInput.value = currentProfile.age || '';
+					ageInput.readOnly = true;
+				}
 
 				// Editierbare Felder
-				document.getElementById('profileDescription').value = currentProfile.description || '';
-				document.getElementById('postalCode').value = currentProfile.postal_code || '';
+				const descriptionInput = document.getElementById('profileDescription');
+				if (descriptionInput) {
+					descriptionInput.value = currentProfile.description || '';
+				}
+
+				const postalCodeInput = document.getElementById('postalCode');
+				if (postalCodeInput) {
+					postalCodeInput.value = currentProfile.postal_code || '';
+				}
 
 				const interests = Array.isArray(currentProfile.interests)
 					? currentProfile.interests
@@ -2618,12 +2625,17 @@
 				renderHobbies();
 
 				if (currentProfile.prompt_1) {
-					document.getElementById('prompt1Select').value = currentProfile.prompt_1;
-					document.getElementById('answer1Input').value = currentProfile.answer_1 || '';
+					const prompt1Select = document.getElementById('prompt1Select');
+					const answer1Input = document.getElementById('answer1Input');
+					if (prompt1Select) prompt1Select.value = currentProfile.prompt_1;
+					if (answer1Input) answer1Input.value = currentProfile.answer_1 || '';
 				}
+
 				if (currentProfile.prompt_2) {
-					document.getElementById('prompt2Select').value = currentProfile.prompt_2;
-					document.getElementById('answer2Input').value = currentProfile.answer_2 || '';
+					const prompt2Select = document.getElementById('prompt2Select');
+					const answer2Input = document.getElementById('answer2Input');
+					if (prompt2Select) prompt2Select.value = currentProfile.prompt_2;
+					if (answer2Input) answer2Input.value = currentProfile.answer_2 || '';
 				}
 
 				closeProfilePopup();
@@ -2642,6 +2654,7 @@
 				showNotification('Fehler beim Laden der Profil-Daten', 'error');
 			}
 		}
+
 
 
 		function renderPreferences() {
