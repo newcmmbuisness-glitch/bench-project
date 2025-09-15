@@ -2649,9 +2649,20 @@
 				const submitBtn = document.querySelector('#createProfileModal button[type="submit"]');
 				if (submitBtn) submitBtn.innerHTML = '💾 Änderungen speichern';
 
+				const genderLabel = document.querySelector('.form-group label[for="gender"]');
 				const genderSection = document.querySelector('.gender-selection');
+				
 				if (genderSection) {
+				    // Aktuelles Gender abrufen
+				    const currentGender = currentProfile.gender || '';
+				    
+				    // Buttons ausblenden
 				    genderSection.style.display = 'none';
+				    
+				    // Label ersetzen oder erweitern
+				    if (genderLabel) {
+				        genderLabel.textContent = `Geschlecht: ${currentGender}`;
+				    }
 				}
 
 			} catch (error) {
