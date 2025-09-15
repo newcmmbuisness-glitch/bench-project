@@ -3961,7 +3961,10 @@
 		}
 		
 		async function reportChat(match) {
-			// Für AI-Chats sofort die Illusion anzeigen, keine IDs nötig
+			// Wenn kein Match übergeben wird, automatisch das aktuelle nehmen
+			match = match || chatState.currentMatch;
+
+			// AI-Chat: nur Illusion, kein Zugriff auf IDs
 			if (match?.isAI) {
 				if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
 				alert('Chat mit AI gemeldet. Vielen Dank für Ihr Feedback.');
@@ -3969,8 +3972,8 @@
 				return;
 			}
 
-			// Echte User: Prüfen, ob IDs vorhanden sind
-			if (!match?.match_id || !currentUser.uid) {
+			// Echte Matches prüfen
+			if (!match?.match_id || !currentUser?.uid) {
 				alert('Fehler: Chat oder Benutzer nicht identifiziert.');
 				return;
 			}
@@ -3984,7 +3987,7 @@
 					body: JSON.stringify({
 						match_id: parseInt(match.match_id),
 						reporter_id: currentUser.uid
-					})
+					}),
 				});
 
 				const result = await response.json();
@@ -3999,6 +4002,7 @@
 				alert('Ein Netzwerkfehler ist aufgetreten.');
 			}
 		}
+
 
 		async function updateSuggestions() {
 			if (!chatState.currentMatchId || !currentUser) {
