@@ -3961,7 +3961,7 @@
 		}
 		
 		async function reportChat(match) {
-			// Nur Anzeige für AI-Chats
+			// Für AI-Chats sofort die Illusion anzeigen, keine IDs nötig
 			if (match?.isAI) {
 				if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
 				alert('Chat mit AI gemeldet. Vielen Dank für Ihr Feedback.');
@@ -3969,7 +3969,7 @@
 				return;
 			}
 
-			// Für echte User: prüfen, dass ID existiert
+			// Echte User: Prüfen, ob IDs vorhanden sind
 			if (!match?.match_id || !currentUser.uid) {
 				alert('Fehler: Chat oder Benutzer nicht identifiziert.');
 				return;
@@ -3999,8 +3999,6 @@
 				alert('Ein Netzwerkfehler ist aufgetreten.');
 			}
 		}
-
-
 
 		async function updateSuggestions() {
 			if (!chatState.currentMatchId || !currentUser) {
