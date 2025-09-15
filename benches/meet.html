@@ -4506,7 +4506,8 @@
 					
 					// Create AI match with proper ID structure
 					const aiMatch = {
-						match_id: `ai_match_${profile.user_id}`, // stabil pro Profil
+						id: profile.user_id || profile.profile_image,
+						match_id: `ai_match_${profile.user_id || profile.profile_image}`, // stabil pro Profil
 						matched_user_id: profile.user_id,
 						profile_name: profile.profile_name || profile.name,
 						profile_image: profile.profile_image || profile.image,
