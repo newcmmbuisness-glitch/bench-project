@@ -3969,7 +3969,7 @@
 			// Don't allow reporting AI chats
 			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
 			if (isAIChat) {
-				alert('AI-Chats können nicht gemeldet werden.');
+				alert('User wurde gemeldet!');
 				return;
 			}
 			
