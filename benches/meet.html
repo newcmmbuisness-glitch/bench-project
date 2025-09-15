@@ -2647,24 +2647,6 @@
 			showSwipeMenu();
 		}
 
-		
-		        closeProfilePopup();
-				showCreateProfileForm();  
-				
-				// Direkt danach Button ausblenden, weil wir vom Swipe kommen
-				document.getElementById('createProfileSection').style.display = 'none';
-						
-		        const formTitle = document.querySelector('#createProfileModal h2');
-		        if (formTitle) formTitle.textContent = '✏️ Profil bearbeiten';
-		
-		        const submitBtn = document.querySelector('#createProfileModal button[type="submit"]');
-		        if (submitBtn) submitBtn.innerHTML = '💾 Änderungen speichern';
-		
-		    } catch (error) {
-		        console.error('Fehler beim Bearbeiten:', error);
-		        showNotification('Fehler beim Laden der Profil-Daten', 'error');
-		    }
-		}
 
 		function renderPreferences() {
 		    const preferencesDiv = document.getElementById('preferencesIcons');
