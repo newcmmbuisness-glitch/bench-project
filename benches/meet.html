@@ -2920,8 +2920,8 @@
 
 						aiProfiles = data.profiles
 							.filter(p => p.gender === targetGender)
-							.filter(p => !blockedAIIds.includes(p.id || p.profile_image))
-							.map(p => ({ ...p, isAI: true }));
+							.filter(p => !blockedAIIds.includes(`ai_${p.profile_name}`))
+							.map(p => ({ ...p, id: `ai_${p.profile_name}`, isAI: true }));
 					} catch (err) {
 						console.error("Fehler beim Laden der AI-Profile:", err);
 					}
@@ -4506,8 +4506,8 @@
 					
 					// Create AI match with proper ID structure
 					const aiMatch = {
-						id: profile.profile_image,
-						match_id: `ai_match_${profile.profile_image}`, // stabil pro Profil
+						id: `ai_${profile.profile_name}`,
+						match_id: `ai_match_${profile.profile_name}`,
 						matched_user_id: profile.user_id,
 						profile_name: profile.profile_name || profile.name,
 						profile_image: profile.profile_image || profile.image,
