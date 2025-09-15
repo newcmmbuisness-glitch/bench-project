@@ -2585,16 +2585,27 @@
 				showNotification('❌ Profil-Daten nicht verfügbar', 'error');
 				return;
 			}
-			
+
 			try {
-				// Alle aktuellen Profile-Daten in die Felder laden
-				document.getElementById('profileName').value = currentProfile.profile_name || '';
+				// Nicht editierbare Felder (readonly)
+				const nameInput = document.getElementById('profileName');
+				nameInput.value = currentProfile.profile_name || '';
+				nameInput.readOnly = true;
+
+				const ageInput = document.getElementById('profileAge');
+				ageInput.value = currentProfile.age || '';
+				ageInput.readOnly = true;
+
+				const genderInput = document.getElementById('profileGender');
+				genderInput.value = currentProfile.gender || '';
+				genderInput.readOnly = true;
+
+				// Editierbare Felder
 				document.getElementById('profileDescription').value = currentProfile.description || '';
 				document.getElementById('postalCode').value = currentProfile.postal_code || '';
-				document.getElementById('profileAge').value = currentProfile.age || '';
 
-				const interests = Array.isArray(currentProfile.interests) 
-					? currentProfile.interests 
+				const interests = Array.isArray(currentProfile.interests)
+					? currentProfile.interests
 					: (currentProfile.interests ? [currentProfile.interests] : []);
 
 				const preferencesOptions = ['wine', '420', 'coffee', 'book', 'bike'];
@@ -2616,10 +2627,10 @@
 				}
 
 				closeProfilePopup();
-				showCreateProfileForm();  
-						
+				showCreateProfileForm();
+
+				// Formular-Anpassungen
 				document.getElementById('createProfileSection').style.display = 'none';
-						
 				const formTitle = document.querySelector('#createProfileModal h2');
 				if (formTitle) formTitle.textContent = '✏️ Profil bearbeiten';
 
@@ -2631,6 +2642,7 @@
 				showNotification('Fehler beim Laden der Profil-Daten', 'error');
 			}
 		}
+
 
 		function renderPreferences() {
 		    const preferencesDiv = document.getElementById('preferencesIcons');
