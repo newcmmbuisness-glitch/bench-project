@@ -2573,80 +2573,57 @@
 		}
 		
 		async function editProfile() {
-			if (!currentProfile) {
-				showNotification('❌ Profil-Daten nicht verfügbar', 'error');
-				return;
-			}
-
-			try {
-				// Felder vorausfüllen
-				const nameInput = document.getElementById('profileName');
-				const ageInput = document.getElementById('profileAge');
-				const descriptionInput = document.getElementById('profileDescription');
-				const postalInput = document.getElementById('postalCode');
-
-				nameInput.value = currentProfile.profile_name || '';
-				ageInput.value = currentProfile.age || '';
-				descriptionInput.value = currentProfile.description || '';
-				postalInput.value = currentProfile.postal_code || '';
-
-				// Name & Age nicht änderbar
-				nameInput.disabled = true;
-				ageInput.disabled = true;
-
-				// Interessen / Hobbies
-				const interests = Array.isArray(currentProfile.interests) ? currentProfile.interests : (currentProfile.interests ? [currentProfile.interests] : []);
-				const preferencesOptions = ['wine', '420', 'coffee', 'book', 'bike'];
-				const hobbiesOptions = ['Kochen','Gaming','Wandern','Fotografie','Musik','Filme','Sport','Kunst','Haustiere'];
-
-				selectedPreferences = interests.filter(i => preferencesOptions.includes(i));
-				selectedHobbies = interests.filter(i => hobbiesOptions.includes(i));
-
-				renderPreferences();
-				renderHobbies();
-
-				if (currentProfile.prompt_1) {
-					document.getElementById('prompt1Select').value = currentProfile.prompt_1;
-					document.getElementById('answer1Input').value = currentProfile.answer_1 || '';
-				}
-				if (currentProfile.prompt_2) {
-					document.getElementById('prompt2Select').value = currentProfile.prompt_2;
-					document.getElementById('answer2Input').value = currentProfile.answer_2 || '';
-				}
-
-				// Popup schließen
-				closeProfilePopup();
-
-				// Modal direkt anzeigen (eigene Edit-Logik, nicht Create-Flow)
-				const modal = document.getElementById('createProfileModal');
-				const overlay = document.getElementById('modalOverlay');
-				if (modal) modal.style.display = 'block';
-				if (overlay) overlay.style.display = 'block';
-
-				// Überschrift & Button ändern
-				const formTitle = modal.querySelector('h2');
-				if (formTitle) formTitle.textContent = '✏️ Profil bearbeiten';
-
-				const submitBtn = modal.querySelector('button[type="submit"]');
-				if (submitBtn) submitBtn.innerHTML = '💾 Änderungen speichern';
-
-			} catch (error) {
-				console.error('Fehler beim Bearbeiten:', error);
-				showNotification('Fehler beim Laden der Profil-Daten', 'error');
-			}
+		    if (!currentProfile) {
+		        showNotification('❌ Profil-Daten nicht verfügbar', 'error');
+		        return;
+		    }
+		    
+		    try {
+		        document.getElementById('profileName').value = currentProfile.profile_name || '';
+		        document.getElementById('profileDescription').value = currentProfile.description || '';
+		        document.getElementById('postalCode').value = currentProfile.postal_code || '';
+		        // ✅ Alter vorausfüllen
+		        document.getElementById('profileAge').value = currentProfile.age || '';
+		
+		        const interests = Array.isArray(currentProfile.interests) 
+		            ? currentProfile.interests 
+		            : (currentProfile.interests ? [currentProfile.interests] : []);
+		
+		        const preferencesOptions = ['wine', '420', 'coffee', 'book', 'bike'];
+		        const hobbiesOptions = ['Kochen', 'Gaming', 'Wandern', 'Fotografie', 'Musik', 'Filme', 'Sport', 'Kunst', 'Haustiere'];
+		
+		        selectedPreferences = interests.filter(i => preferencesOptions.includes(i));
+		        selectedHobbies = interests.filter(i => hobbiesOptions.includes(i));
+		
+		        renderPreferences();
+		        renderHobbies();
+		
+		        if (currentProfile.prompt_1) {
+		            document.getElementById('prompt1Select').value = currentProfile.prompt_1;
+		            document.getElementById('answer1Input').value = currentProfile.answer_1 || '';
+		        }
+		        if (currentProfile.prompt_2) {
+		            document.getElementById('prompt2Select').value = currentProfile.prompt_2;
+		            document.getElementById('answer2Input').value = currentProfile.answer_2 || '';
+		        }
+		
+		        closeProfilePopup();
+				showCreateProfileForm();  
+				
+				// Direkt danach Button ausblenden, weil wir vom Swipe kommen
+				document.getElementById('createProfileSection').style.display = 'none';
+						
+		        const formTitle = document.querySelector('#createProfileModal h2');
+		        if (formTitle) formTitle.textContent = '✏️ Profil bearbeiten';
+		
+		        const submitBtn = document.querySelector('#createProfileModal button[type="submit"]');
+		        if (submitBtn) submitBtn.innerHTML = '💾 Änderungen speichern';
+		
+		    } catch (error) {
+		        console.error('Fehler beim Bearbeiten:', error);
+		        showNotification('Fehler beim Laden der Profil-Daten', 'error');
+		    }
 		}
-
-		// Schließen des Modals für Edit-Flow
-		function closeEditProfileModal() {
-			const modal = document.getElementById('createProfileModal');
-			const overlay = document.getElementById('modalOverlay');
-			if (modal) modal.style.display = 'none';
-			if (overlay) overlay.style.display = 'none';
-
-			// Zurück zum Swipe-Menü
-			showSwipeMenu();
-		}
-
 
 		function renderPreferences() {
 		    const preferencesDiv = document.getElementById('preferencesIcons');
