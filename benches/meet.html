@@ -2895,9 +2895,9 @@
 					: [];
 
 				const blockedAIIds = localMatches
-					.filter(m => m.isAI && now - m.matched_at < AI_BLOCK_DAYS * 24 * 60 * 60 * 1000)
-					.map(m => m.matched_user_id);
-
+				  .filter(m => m.isAI && now - m.matched_at < AI_BLOCK_DAYS * 24 * 60 * 60 * 1000)
+				  .map(m => m.id || m.profile_image);
+				  
 				// --- Echte Profile ---
 				let realProfiles = [];
 				if (profilesResponse.ok && profilesResult.success && profilesResult.profiles) {
@@ -2920,7 +2920,7 @@
 
 						aiProfiles = data.profiles
 							.filter(p => p.gender === targetGender)
-							.filter(p => !blockedAIIds.includes(p.user_id))
+							.filter(p => !blockedAIIds.includes(p.id || p.profile_image))
 							.map(p => ({ ...p, isAI: true }));
 					} catch (err) {
 						console.error("Fehler beim Laden der AI-Profile:", err);
