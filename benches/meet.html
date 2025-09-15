@@ -3961,16 +3961,17 @@
 		}
 		
 		async function reportChat(match) {
-			// AI-Chat: nur Illusion, kein Zugriff auf IDs nötig
+			// Wenn kein Match übergeben wird, automatisch das aktuelle Profil nehmen
+			// Für AI-Matches z.B. das gerade angezeigte Profil im Swipe
+			match = match || currentProfiles?.[currentIndex] || chatState.currentMatch;
+
+			// AI-Match: nur Illusion, kein Zugriff auf IDs nötig
 			if (match?.isAI) {
 				if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
 				alert('Chat mit AI gemeldet. Vielen Dank für Ihr Feedback.');
 				closeChat();
 				return;
 			}
-
-			// Wenn kein Match übergeben wird, echtes Match aus chatState nehmen
-			match = match || chatState.currentMatch;
 
 			// Echte Matches prüfen
 			if (!match?.match_id || !currentUser?.uid) {
