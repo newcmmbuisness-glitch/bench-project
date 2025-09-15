@@ -3960,43 +3960,45 @@
 			}
 		}
 		
-		async function reportChat() {
-			if (!chatState.currentMatchId || !currentUser.uid) {
+		async function reportChat(match) {
+			if (!match || !currentUser.uid) {
 				alert('Fehler: Chat oder Benutzer nicht identifiziert.');
 				return;
 			}
-			
-			// Don't allow reporting AI chats
-			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
-			if (isAIChat) {
-				alert('User wurde gemeldet!');
+
+			if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
+
+			if (match.isAI) {
+				// Nur lokal anzeigen, kein API-Aufruf
+				alert('Chat mit AI gemeldet. Vielen Dank für Ihr Feedback.');
+				closeChat();
 				return;
 			}
-			
-			if (confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) {
-				try {
-					const response = await fetch('/.netlify/functions/report_chat', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({
-							match_id: parseInt(chatState.currentMatchId),
-							reporter_id: currentUser.uid
-						}),
-					});
-					
-					const result = await response.json();
-					if (response.ok && result.success) {
-						alert('Chat erfolgreich gemeldet. Vielen Dank für Ihr Feedback.');
-						closeChat();
-					} else {
-						alert('Fehler beim Melden des Chats: ' + (result.error || 'Unbekannter Fehler.'));
-					}
-				} catch (error) {
-					console.error('❌ Error reporting chat:', error);
-					alert('Ein Netzwerkfehler ist aufgetreten.');
+
+			// Echte User: API-Aufruf
+			try {
+				const response = await fetch('/.netlify/functions/report_chat', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						match_id: parseInt(match.match_id),
+						reporter_id: currentUser.uid
+					})
+				});
+
+				const result = await response.json();
+				if (response.ok && result.success) {
+					alert('Chat erfolgreich gemeldet. Vielen Dank für Ihr Feedback.');
+					closeChat();
+				} else {
+					alert('Fehler beim Melden des Chats: ' + (result.error || 'Unbekannter Fehler.'));
 				}
+			} catch (error) {
+				console.error('❌ Error reporting chat:', error);
+				alert('Ein Netzwerkfehler ist aufgetreten.');
 			}
 		}
+
 
 		async function updateSuggestions() {
 			if (!chatState.currentMatchId || !currentUser) {
