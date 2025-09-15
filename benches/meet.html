@@ -2571,8 +2571,12 @@
 				showNotification('Ein Fehler ist aufgetreten: ' + error.message, 'error');
 			}
 		}
-
-
+		
+		function closeProfilePopup() {
+			document.getElementById('profilePopup').style.display = 'none';
+			document.getElementById('modalOverlay').style.display = 'none';
+		}
+				
 		async function editProfile() {
 			if (!currentProfile) {
 				showNotification('❌ Profil-Daten nicht verfügbar', 'error');
