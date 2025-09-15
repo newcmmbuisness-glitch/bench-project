@@ -310,7 +310,9 @@ exports.handler = async () => {
         const [prompt1, prompt2] = faker.helpers.shuffle(prompts).slice(0, 2);
 
         const profile = {
-          profile_name: faker.person.firstName({ sex: gender }),
+          profile_name: gender === 'female'
+            ? faker.person.firstName('female')
+            : faker.person.firstName('male'),
           age: faker.number.int({ min: 18, max: 31 }),
           gender,
           description: randomFromArray(descriptions),
