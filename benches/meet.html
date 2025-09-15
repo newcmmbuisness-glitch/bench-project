@@ -3961,16 +3961,16 @@
 		}
 		
 		async function reportChat(match) {
-			// Wenn kein Match übergeben wird, automatisch das aktuelle nehmen
-			match = match || chatState.currentMatch;
-
-			// AI-Chat: nur Illusion, kein Zugriff auf IDs
+			// AI-Chat: nur Illusion, kein Zugriff auf IDs nötig
 			if (match?.isAI) {
 				if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
 				alert('Chat mit AI gemeldet. Vielen Dank für Ihr Feedback.');
 				closeChat();
 				return;
 			}
+
+			// Wenn kein Match übergeben wird, echtes Match aus chatState nehmen
+			match = match || chatState.currentMatch;
 
 			// Echte Matches prüfen
 			if (!match?.match_id || !currentUser?.uid) {
@@ -4002,6 +4002,7 @@
 				alert('Ein Netzwerkfehler ist aufgetreten.');
 			}
 		}
+
 
 
 		async function updateSuggestions() {
