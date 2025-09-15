@@ -2896,7 +2896,7 @@
 
 				const blockedAIIds = localMatches
 				  .filter(m => m.isAI && now - m.matched_at < AI_BLOCK_DAYS * 24 * 60 * 60 * 1000)
-				  .map(m => m.id || m.profile_image);
+				  .map(m => m.id);
 				  
 				// --- Echte Profile ---
 				let realProfiles = [];
@@ -4506,8 +4506,8 @@
 					
 					// Create AI match with proper ID structure
 					const aiMatch = {
-						id: profile.user_id || profile.profile_image,
-						match_id: `ai_match_${profile.user_id || profile.profile_image}`, // stabil pro Profil
+						id: profile.profile_image,
+						match_id: `ai_match_${profile.profile_image}`, // stabil pro Profil
 						matched_user_id: profile.user_id,
 						profile_name: profile.profile_name || profile.name,
 						profile_image: profile.profile_image || profile.image,
