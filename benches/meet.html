@@ -3961,21 +3961,22 @@
 		}
 		
 		async function reportChat(match) {
-			if (!match || !currentUser.uid) {
+			// Nur Anzeige für AI-Chats
+			if (match?.isAI) {
+				if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
+				alert('Chat mit AI gemeldet. Vielen Dank für Ihr Feedback.');
+				closeChat();
+				return;
+			}
+
+			// Für echte User: prüfen, dass ID existiert
+			if (!match?.match_id || !currentUser.uid) {
 				alert('Fehler: Chat oder Benutzer nicht identifiziert.');
 				return;
 			}
 
 			if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
 
-			if (match.isAI) {
-				// Nur lokal anzeigen, kein API-Aufruf
-				alert('Chat mit AI gemeldet. Vielen Dank für Ihr Feedback.');
-				closeChat();
-				return;
-			}
-
-			// Echte User: API-Aufruf
 			try {
 				const response = await fetch('/.netlify/functions/report_chat', {
 					method: 'POST',
@@ -3998,6 +3999,7 @@
 				alert('Ein Netzwerkfehler ist aufgetreten.');
 			}
 		}
+
 
 
 		async function updateSuggestions() {
