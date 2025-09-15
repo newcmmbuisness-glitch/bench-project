@@ -1180,13 +1180,16 @@
 		}
 
 		.modal-content.profile-creation {
-			position: relative;
-			max-width: 600px;
-			width: 90%;
-			max-height: 90vh;
-			overflow-y: auto;
-		}
-		
+		    position: fixed !important;
+		    top: 50% !important;
+		    left: 50% !important;
+		    transform: translate(-50%, -50%) !important;
+		    margin: 0 !important; /* Überschreibt das bestehende margin: 10% auto */
+		    max-width: 600px;
+		    width: 90%;
+		    max-height: 90vh;
+		    overflow-y: auto;
+		}		
 		/* Neue Klasse für zweispaltige Anordnung hinzufügen */
 		.form-row {
 			display: grid;
