@@ -4254,21 +4254,25 @@
 			localStorage.setItem(`ai_chat_${chatId}`, JSON.stringify(aiMessages));
 
 			// **NEU: In DB speichern**
+			const dbMatchId = chatId.startsWith('ai_') ? 0 : parseInt(chatId); // 0 für AI-Chats
+			const dbSenderId = sender === 'user' ? parseInt(currentUser.uid) : 0;
+
 			try {
 				await fetch('/.netlify/functions/send_message', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						match_id: dbMatchId  
-						sender_id: sender === 'user' ? parseInt(currentUser.uid) : 0,
+						match_id: dbMatchId,
+						sender_id: dbSenderId,
 						message_text: text,
-						is_ai: sender === 'ai'        
+						is_ai: sender === 'ai'
 					})
 				});
 			} catch (err) {
 				console.error('❌ Fehler beim Speichern der AI-Nachricht in DB', err);
 			}
 		}
+
 
 
 
