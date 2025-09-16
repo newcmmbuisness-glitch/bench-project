@@ -4295,15 +4295,15 @@
 		async function sendAIMessage(messageText) {
 		  if (!chatState.currentMatchId) return;
 
-		  // Speichere User-Message lokal
+		  // 1️⃣ User-Nachricht lokal speichern
 		  saveAIMessage('user', messageText);
 		  loadAIMessages();
 
 		  const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
 		  const convId = chatState.currentConversationId || aiProfileId;
 
-		  // Timer/Delay für realistischeres Antworten
-		  if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
+		  // 2️⃣ Timer/Delay für realistischere AI-Antwort
+		  if (window.aiReplyTimers[convId]?.id) {
 			clearTimeout(window.aiReplyTimers[convId].id);
 		  }
 		  if (!window.aiReplyTimers[convId]) {
@@ -4322,7 +4322,68 @@
 		  console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay / 1000)}s`);
 
 		  window.aiReplyTimers[convId].dueAt = dueAt;
-		  window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
+		  window.aiReplyTimers[convId].id = setTimeout(async () => {
+			const t = window.aiReplyTimers[convId];
+			if (!t) return;
+
+			const combinedUserText = t.pendingUserMessages.map(m => m.text).join("\n");
+			t.pendingUserMessages = [];
+			removeTimerFromStorage(convId);
+
+			try {
+			  // 3️⃣ AI-Antwort abrufen
+			  const response = await fetch('/.netlify/functions/ai-chat', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+				  aiProfileId: aiProfileId,
+				  userMessage: combinedUserText,
+				  userProfile: {
+					id: currentUser?.uid || "guest",
+					name: currentUser?.email || null,
+					interests: currentProfile?.interests || []
+				  },
+				  conversationId: convId
+				})
+			  });
+
+			  const result = await response.json();
+			  let aiText;
+			  if (result?.success && result.response) {
+				aiText = result.response;
+			  } else {
+				aiText = "Entschuldige, ich bin gerade nicht verfügbar.";
+			  }
+
+			  // 4️⃣ AI-Antwort lokal speichern
+			  saveAIMessage('ai', aiText);
+			  if (chatState.currentMatchId === `ai_match_${aiProfileId}`) loadAIMessages();
+
+			  // 5️⃣ AI-Antwort auch in DB speichern
+			  try {
+				await fetch('/.netlify/functions/send_message', {
+				  method: 'POST',
+				  headers: { 'Content-Type': 'application/json' },
+				  body: JSON.stringify({
+					match_id: parseInt(aiProfileId),  // eindeutige ID für AI-Profile
+					sender_id: `ai_${aiProfileId}`,   // AI als Sender kennzeichnen
+					message_text: aiText
+				  })
+				});
+			  } catch (dbErr) {
+				console.error('❌ Error saving AI message to DB:', dbErr);
+			  }
+
+			} catch (err) {
+			  console.error('❌ AI reply failed:', err);
+			  saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem was über dich!");
+			  if (chatState.currentMatchId === `ai_match_${aiProfileId}`) loadAIMessages();
+			} finally {
+			  if (window.aiReplyTimers[convId]?.id) clearTimeout(window.aiReplyTimers[convId].id);
+			  removeTimerFromStorage(convId);
+			  delete window.aiReplyTimers[convId];
+			}
+		  }, delay);
 		}
 
 		// Holt die AI-Antwort von Netlify Function
