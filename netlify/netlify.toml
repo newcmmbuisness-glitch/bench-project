@@ -1,6 +1,6 @@
 [build]
+  publish = "benches"            # dein HTML-Ordner
   functions = "netlify/functions"
-  publish = "."
 
 [[plugins]]
   package = "@netlify/plugin-functions-install-core"
@@ -16,4 +16,3 @@
   to = "/.netlify/functions/ai-chat"
   status = 200
   force = true
-  
