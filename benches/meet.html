@@ -4259,10 +4259,10 @@
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						match_id: dbMatchId // String-ID, kein echter Match
+						match_id: dbMatchId  
 						sender_id: sender === 'user' ? parseInt(currentUser.uid) : 0,
 						message_text: text,
-						is_ai: sender === 'ai'          // Flag für AI
+						is_ai: sender === 'ai'        
 					})
 				});
 			} catch (err) {
