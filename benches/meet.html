@@ -2316,7 +2316,7 @@
 				
 				// Add AI matches from localStorage WITH their last messages
 				const localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-				const aiMatches = localMatches.filter(m => m.isAI).map(match => {
+				const aiMatches = localMatches.filter(m => m.isAI && m.matched_user_id).map(match => {
 					// Get last message from AI chat
 					const aiChatKey = `ai_chat_ai_match_${match.matched_user_id}`;
 					const aiMessages = JSON.parse(localStorage.getItem(aiChatKey) || '[]');
