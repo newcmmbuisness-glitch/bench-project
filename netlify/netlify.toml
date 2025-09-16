@@ -1,18 +1,14 @@
 [build]
-  publish = "benches"            # dein HTML-Ordner
   functions = "netlify/functions"
+  publish = "."
+
+---
 
 [[plugins]]
   package = "@netlify/plugin-functions-install-core"
 
-[[redirects]]
-  from = "/api/train"
-  to = "/.netlify/functions/train-ai"
-  status = 200
-  force = true
+---
 
-[[redirects]]
-  from = "/api/chat"
-  to = "/.netlify/functions/ai-chat"
-  status = 200
-  force = true
+# Add this section to your netlify.toml
+[functions]
+  node_bundler = "esbuild"
