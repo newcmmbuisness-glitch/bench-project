@@ -5,19 +5,6 @@
 [functions]
   node_bundler = "esbuild"
 
-[[functions]]
-  path = "/api/chat"
-  function = "ai-chat"
-
-[[functions]]  
-  path = "/api/train"
-  function = "train-ai"
-  
-[[functions]]
-  schedule = "@hourly"
-  function = "train-ai"
-
-# Redirects
 [[redirects]]
   from = "/api/train"
   to = "/.netlify/functions/train-ai"
