@@ -2,6 +2,9 @@
   functions = "netlify/functions"
   publish = "."
 
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
+
 [[redirects]]
   from = "/api/train"
   to = "/.netlify/functions/train-ai"
