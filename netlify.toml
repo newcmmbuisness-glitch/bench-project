@@ -12,3 +12,7 @@
 [[functions]]  
   path = "/api/train"
   function = "train-ai"
+  
+[[functions]]
+  schedule = "@hourly"
+  function = "train-ai"
