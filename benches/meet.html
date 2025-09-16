@@ -4244,7 +4244,7 @@
 				else { console.warn('Keine AI-Chat-ID gefunden'); return; }
 			}
 
-			// LocalStorage speichern wie bisher
+			// LocalStorage speichern
 			let aiMessages = JSON.parse(localStorage.getItem(`ai_chat_${chatId}`) || '[]');
 			aiMessages.push({
 				sender: sender,
@@ -4253,26 +4253,30 @@
 			});
 			localStorage.setItem(`ai_chat_${chatId}`, JSON.stringify(aiMessages));
 
-			// **NEU: In DB speichern**
-			const dbMatchId = chatId.startsWith('ai_') ? 0 : parseInt(chatId); // 0 für AI-Chats
 			const dbSenderId = sender === 'user' ? parseInt(currentUser.uid) : 0;
 
 			try {
+				// 1️⃣ Dummy-User und Dummy-Match anlegen (falls nicht vorhanden)
+				if (dbSenderId === 0) { // nur für AI
+					await fetch('/.netlify/functions/ensure_ai_dummy', { method: 'POST' });
+				}
+
+				// 2️⃣ Nachricht speichern
 				await fetch('/.netlify/functions/send_message', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						match_id: dbMatchId,
-						sender_id: dbSenderId,
+						match_id: 999999,        // Dummy-Match
+						sender_id: dbSenderId,   // 0 für AI, echte User-ID sonst
 						message_text: text,
 						is_ai: sender === 'ai'
 					})
 				});
+
 			} catch (err) {
 				console.error('❌ Fehler beim Speichern der AI-Nachricht in DB', err);
 			}
 		}
-
 
 
 
