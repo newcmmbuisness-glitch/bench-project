@@ -1890,7 +1890,6 @@
 		let isAdmin = false;
 		let lastSwipedProfile = null;
 		let selectedGender = null;
-		let userMatches = []; 
 
 		
 		// Global chat state object instead of individual variables
@@ -4119,12 +4118,12 @@
 			}
 			
 			// Determine if this is an AI chat
-			const isAIChat = userMatches.some(m => m.match_id == matchId && m.isAI);
+			const isAIChat = typeof matchId === 'string' && matchId.includes('ai_match_');
 			
 			// Reset chat state for new chat
 			chatState = {
-				currentMatchId: parseInt(matchId),
-				currentConversationId: parseInt(matchId),
+				currentMatchId: matchId,
+				currentConversationId: matchId, 
 				aiSuggestionsLoaded: false,
 				lastLoadedMessageCount: 0,
 				messageInterval: null
@@ -4300,7 +4299,7 @@
 		  saveAIMessage('user', messageText);
 		  loadAIMessages();
 
-		  const aiProfileId = chatState.currentMatchId;
+		  const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
 		  const convId = chatState.currentConversationId || aiProfileId;
 
 		  // Timer/Delay für realistischeres Antworten
@@ -4492,9 +4491,10 @@
 					const now = Date.now();
 
 					
+					// Create AI match with proper ID structure
 					const aiMatch = {
-						id: `ai_${profile.id}`,                // Nur für LocalStorage (String)
-						match_id: profile.id,                  // 👈 echte AI-ID (Integer, aus DB!)
+						id: `ai_${profile.profile_name}`,
+						match_id: `ai_match_${profile.profile_name}`,
 						matched_user_id: profile.user_id,
 						profile_name: profile.profile_name || profile.name,
 						profile_image: profile.profile_image || profile.image,
