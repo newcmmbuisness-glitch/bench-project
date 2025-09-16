@@ -4288,30 +4288,18 @@
 		}
 
 
+		// User-Nachricht speichern + Anzeige
 		async function sendAIMessage(messageText) {
 		  if (!chatState.currentMatchId) return;
 
+		  // Speichere User-Message lokal
 		  saveAIMessage('user', messageText);
 		  loadAIMessages();
 
 		  const aiProfileId = chatState.currentMatchId.replace('ai_match_', '');
 		  const convId = chatState.currentConversationId || aiProfileId;
 
-		  function getDynamicDelay(isFirst) {
-			if (isFirst) {
-			  return Math.floor(Math.random() * (60_000 - 8_000)) + 8_000; // 8–60 Sek
-			}
-			const lastUser = (chatState.chatHistory || []).filter(m => m.sender === 'user').slice(-1)[0];
-			const since = lastUser ? (Date.now() - new Date(lastUser.timestamp).getTime()) : Infinity;
-			const engaged = since < 2*60_000;
-
-			if (engaged) {
-			  return Math.floor(Math.random() * (60_000 - 8_000)) + 8_000; // 8–60 Sek
-			} else {
-			  return Math.floor(Math.random() * (10*60_000 - 2*60_000)) + 2*60_000; // 2–10 Min
-			}
-		  }
-
+		  // Timer/Delay für realistischeres Antworten
 		  if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
 			clearTimeout(window.aiReplyTimers[convId].id);
 		  }
@@ -4320,8 +4308,7 @@
 		  }
 		  window.aiReplyTimers[convId].pendingUserMessages.push({ text: messageText, ts: Date.now() });
 
-		  const isFirst = !(chatState.chatHistory && chatState.chatHistory.length > 0);
-		  const delay = getDynamicDelay(isFirst);
+		  const delay = Math.floor(Math.random() * (60_000 - 8_000)) + 8_000; // 8–60 Sek
 		  const dueAt = Date.now() + delay;
 
 		  persistTimerToStorage(convId, {
@@ -4329,75 +4316,64 @@
 			pendingUserMessages: window.aiReplyTimers[convId].pendingUserMessages
 		  });
 
-		  console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay/1000)}s`);
+		  console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay / 1000)}s`);
 
 		  window.aiReplyTimers[convId].dueAt = dueAt;
 		  window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
 		}
 
+		// Holt die AI-Antwort von Netlify Function
 		async function triggerAiReply(convId) {
-			const t = window.aiReplyTimers[convId];
-			if (!t) return;
+		  const t = window.aiReplyTimers[convId];
+		  if (!t) return;
 
-			// ❌ ENTFERNT: Die Überprüfung, die AI-Antworten blockierte
-			// if (!chatState.currentMatchId?.startsWith('ai_match_')) {
-			//     console.log("triggerAiReply: Kein AI-Match, überspringe AI-Antwort");
-			//     return;
-			// }
+		  const aiProfileId = convId.replace('ai_match_', '');
+		  try {
+			const combinedUserText = (t.pendingUserMessages || []).map(m => m.text).join("\n");
+			t.pendingUserMessages = [];
+			removeTimerFromStorage(convId);
 
-			// Safe replace - funktioniert auch wenn Chat geschlossen ist
-			const aiProfileId = convId.replace('ai_match_', '');
+			const response = await fetch('/.netlify/functions/ai-chat', {
+			  method: 'POST',
+			  headers: { 'Content-Type': 'application/json' },
+			  body: JSON.stringify({
+				aiProfileId: aiProfileId,
+				userMessage: combinedUserText,
+				userProfile: {
+				  id: currentUser?.uid || "guest",
+				  name: currentUser?.email || null,
+				  interests: currentProfile?.interests || []
+				},
+				conversationId: convId
+			  })
+			});
 
-			try {
-				const combinedUserText = (t.pendingUserMessages || []).map(m => m.text).join("\n");
-				t.pendingUserMessages = [];
-				removeTimerFromStorage(convId);
-
-				const response = await fetch('/.netlify/functions/ai_chat_responses', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						aiProfileId: aiProfileId,
-						userMessage: combinedUserText,
-						userProfile: {
-							name: currentUser?.email || null,
-							interests: currentProfile?.interests || []
-						},
-						conversationId: convId
-					})
-				});
-
-				const result = await response.json();
-				if (result && result.success) {
-					// Speichere AI-Antwort auch wenn Chat geschlossen ist
-					saveAIMessage('ai', result.response);
-					
-					// Lade Nachrichten nur wenn Chat noch offen ist
-					if (chatState.currentMatchId === `ai_match_${aiProfileId}`) {
-						loadAIMessages();
-					}
-				} else {
-					saveAIMessage('ai', "Hey! Entschuldige, ich bin gerade etwas verwirrt...");
-					if (chatState.currentMatchId === `ai_match_${aiProfileId}`) {
-						loadAIMessages();
-					}
-				}
-			} catch (err) {
-				console.error('AI reply failed', err);
-				saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem von dir!");
-				if (chatState.currentMatchId === `ai_match_${aiProfileId}`) {
-					loadAIMessages();
-				}
-			} finally {
-				if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
-					clearTimeout(window.aiReplyTimers[convId].id);
-				}
-				removeTimerFromStorage(convId);
-				delete window.aiReplyTimers[convId];
+			const result = await response.json();
+			if (result && result.success) {
+			  saveAIMessage('ai', result.response);  // Speichere Antwort in localStorage
+			  if (chatState.currentMatchId === `ai_match_${aiProfileId}`) {
+				loadAIMessages();
+			  }
+			} else {
+			  saveAIMessage('ai', "Entschuldige, ich bin gerade nicht verfügbar.");
+			  if (chatState.currentMatchId === `ai_match_${aiProfileId}`) {
+				loadAIMessages();
+			  }
 			}
+		  } catch (err) {
+			console.error('AI reply failed', err);
+			saveAIMessage('ai', "Oh, da ist wohl etwas schiefgelaufen! Erzähl mir trotzdem was über dich!");
+			if (chatState.currentMatchId === `ai_match_${aiProfileId}`) {
+			  loadAIMessages();
+			}
+		  } finally {
+			if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) {
+			  clearTimeout(window.aiReplyTimers[convId].id);
+			}
+			removeTimerFromStorage(convId);
+			delete window.aiReplyTimers[convId];
+		  }
 		}
-
-
 						
 		// Swipe abschließen
 		async function completeSwipe(direction) {
