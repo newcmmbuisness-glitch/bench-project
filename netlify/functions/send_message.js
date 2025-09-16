@@ -10,11 +10,10 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
     try {
-        // 🚀 KORREKTUR: Die Variablennamen wurden jetzt auf match_id, sender_id und message_text geändert,
-        // um den vom Frontend gesendeten Namen zu entsprechen.
-        const { match_id, sender_id, message_text } = JSON.parse(event.body);
+        const { match_id, sender_id, message_text, is_ai } = JSON.parse(event.body);
 
-        if (!match_id || !sender_id || !message_text) {
+        // ⚡ Prüfung auf null oder undefined (0 ist jetzt erlaubt)
+        if (match_id === undefined || match_id === null || sender_id === undefined || sender_id === null || !message_text) {
             return {
                 statusCode: 400,
                 headers,
@@ -23,8 +22,8 @@ exports.handler = async (event, context) => {
         }
 
         await sql`
-            INSERT INTO chat_messages (match_id, sender_id, message_text)
-            VALUES (${match_id}, ${sender_id}, ${message_text});
+            INSERT INTO chat_messages (match_id, sender_id, message_text, is_ai)
+            VALUES (${match_id}, ${sender_id}, ${message_text}, ${is_ai || false});
         `;
 
         return {
@@ -34,6 +33,7 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
+        console.error('❌ send_message error:', error);
         return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
     }
 };
