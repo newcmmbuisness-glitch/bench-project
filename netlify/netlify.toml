@@ -16,5 +16,3 @@
   to = "/.netlify/functions/ai-chat"
   status = 200
   force = true
-[build.environment]
-  NODE_VERSION = "18"
