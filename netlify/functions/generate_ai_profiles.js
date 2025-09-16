@@ -285,7 +285,10 @@ function randomFromArray(arr) {
 
 // === Lambda Handler ===
 exports.handler = async () => {
-  const client = new Client({ connectionString: process.env.NETLIFY_DATABASE_URL });
+  const client = new Client({
+    connectionString: process.env.NETLIFY_DATABASE_URL,
+    transport: 'http' // <--- zwingt HTTP statt WebSocket
+  });
   try {
     await client.connect();
     const profiles = [];
