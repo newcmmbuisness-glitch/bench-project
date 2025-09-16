@@ -4106,30 +4106,25 @@
 		
 		async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
 			console.log('🔥 Opening chat - Match ID:', matchId, 'Type:', typeof matchId);
-			
-			// Close any existing chat first
+
 			closeChat();
-			
-			// Validate required parameters
+
 			if (!matchId || !matchUserId || !matchName) {
 				console.error('❌ Missing required chat parameters');
 				showNotification('❌ Fehlerhafte Chat-Daten', 'error');
 				return;
 			}
-			
-			// Determine if this is an AI chat
-			const isAIChat = typeof matchId === 'string' && matchId.includes('ai_match_');
-			
-			// Reset chat state for new chat
+
+			const isAIChat = typeof matchId === 'string' && matchId.includes('ai_');
+
 			chatState = {
 				currentMatchId: matchId,
-				currentConversationId: matchId, 
+				currentConversationId: matchId,
 				aiSuggestionsLoaded: false,
 				lastLoadedMessageCount: 0,
 				messageInterval: null
 			};
-			
-			// For real chats, ensure matchId is valid
+
 			if (!isAIChat) {
 				const numericMatchId = parseInt(matchId);
 				if (isNaN(numericMatchId) || numericMatchId <= 0) {
@@ -4137,11 +4132,10 @@
 					showNotification('❌ Fehlerhafte Match-ID', 'error');
 					return;
 				}
-				// Update chatState with numeric ID for real chats
 				chatState.currentMatchId = numericMatchId;
 			}
 
-			// Create chat modal
+			// Chat Modal erzeugen...
 			const chatModalHtml = `
 				<div class="fixed inset-0 bg-black bg-opacity-50 z-[2001] flex items-center justify-center p-4" data-chat-modal>
 					<div class="bg-white rounded-2xl max-w-md w-full h-[90vh] flex flex-col" onclick="event.stopPropagation()">
@@ -4149,7 +4143,7 @@
 							<img src="${matchImage || '/default-avatar.png'}" alt="${matchName}" class="w-10 h-10 rounded-full mr-3">
 							<h3 class="text-lg font-bold flex-grow">${matchName}</h3>
 							<div class="flex items-center space-x-2">
-								<div class="ki-beta-container relative overflow-hidden mr-2"><span class="ki-beta-branding">One-KI Beta</span></div>                                             
+								${isAIChat ? `<div class="ki-beta-container relative overflow-hidden mr-2"><span class="ki-beta-branding">One-KI Beta</span></div>` : ''}
 								<button onclick="reportChat()" class="text-gray-500 hover:text-red-500">
 									<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
 								</button>
@@ -4173,21 +4167,17 @@
 					</div>
 				</div>
 			`;
-
 			const chatDiv = document.createElement('div');
 			chatDiv.innerHTML = chatModalHtml;
 			document.body.appendChild(chatDiv);
 
-			// Setup input handler
 			setupMessageInput();
 			markMessagesAsRead(matchId);
 
-			// Load messages based on chat type
 			if (isAIChat) {
 				loadAIMessages();
 			} else {
 				loadMessages();
-				// Start polling for new messages (real chats only)
 				chatState.messageInterval = setInterval(loadMessages, 3000);
 			}
 		}
@@ -4245,55 +4235,61 @@
 			container.scrollTop = container.scrollHeight;
 		}
 
-		function saveAIMessage(sender, text) {
-			// Versuche zuerst mit currentMatchId, dann mit allen verfügbaren AI-Chats
+		async function saveAIMessage(sender, text) {
 			let chatId = chatState.currentMatchId;
-			
+
 			if (!chatId) {
-				// Fallback: Finde den letzten AI-Chat in localStorage
 				const allKeys = Object.keys(localStorage).filter(k => k.startsWith('ai_chat_'));
-				if (allKeys.length > 0) {
-					chatId = allKeys[allKeys.length - 1].replace('ai_chat_', '');
-				} else {
-					console.warn('Keine AI-Chat-ID gefunden');
-					return;
-				}
+				if (allKeys.length > 0) chatId = allKeys[allKeys.length - 1].replace('ai_chat_', '');
+				else { console.warn('Keine AI-Chat-ID gefunden'); return; }
 			}
-			
+
+			// LocalStorage speichern wie bisher
 			let aiMessages = JSON.parse(localStorage.getItem(`ai_chat_${chatId}`) || '[]');
-			
 			aiMessages.push({
 				sender: sender,
 				text: text,
 				timestamp: new Date().toISOString()
 			});
-			
 			localStorage.setItem(`ai_chat_${chatId}`, JSON.stringify(aiMessages));
+
+			// **NEU: In DB speichern**
+			try {
+				await fetch('/.netlify/functions/send_message', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						match_id: chatId,              // String-ID, kein echter Match
+						sender_id: sender === 'user' ? parseInt(currentUser.uid) : null,
+						message_text: text,
+						is_ai: sender === 'ai'          // Flag für AI
+					})
+				});
+			} catch (err) {
+				console.error('❌ Fehler beim Speichern der AI-Nachricht in DB', err);
+			}
 		}
+
 
 
 		async function sendAIMessage(messageText) {
 			if (!chatState.currentMatchId || !messageText) return;
 
-			// Lokale + DB Speicherung
-			await saveAIMessage('user', messageText);
+			await saveAIMessage('user', messageText); // speichert lokal + DB
 			loadAIMessages();
 
 			const convId = chatState.currentMatchId;
-
-			// AI-Antwort mit Timer
 			if (!window.aiReplyTimers) window.aiReplyTimers = {};
 			if (!window.aiReplyTimers[convId]) window.aiReplyTimers[convId] = { pendingUserMessages: [] };
 			window.aiReplyTimers[convId].pendingUserMessages.push({ text: messageText, ts: Date.now() });
 
 			const delay = Math.floor(Math.random() * (60_000 - 8_000)) + 8_000; // 8–60 Sek
-			const dueAt = Date.now() + delay;
-
-			window.aiReplyTimers[convId].dueAt = dueAt;
+			window.aiReplyTimers[convId].dueAt = Date.now() + delay;
 			window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
 
 			console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay / 1000)}s`);
 		}
+
 
 		async function triggerAiReply(convId) {
 			const t = window.aiReplyTimers[convId];
@@ -4434,23 +4430,22 @@
 			});
 		}
 
+
 		async function handleLike(profile) {
 			try {
 				console.log('💖 Like für:', profile.profile_name || profile.name);
 
-				// AI-Profil
+				// Prüfen, ob es ein AI-Profil ist
 				if (profile.isAI || typeof profile.user_id === 'string') {
-					showNotification('🎉 Es ist ein Match! 💕', 'success');
-					showMatchAnimation(profile);
-
-					// Eindeutige AI-Match-ID
+					// AI Match erstellen
 					const profileId = profile.profile_name || profile.name || `AI-${Date.now()}`;
 					const aiMatchId = `ai_${profileId}`;
+					const aiMatchUserId = `ai_user_${profileId}`; // Dummy-ID für openMatchChat
 
 					const aiMatch = {
 						id: aiMatchId,
-						match_id: aiMatchId,      // für chat_messages
-						matched_user_id: profile.user_id,
+						match_id: aiMatchId,
+						matched_user_id: aiMatchUserId,
 						profile_name: profile.profile_name || profile.name,
 						profile_image: profile.profile_image || profile.image,
 						description: profile.description,
@@ -4460,38 +4455,46 @@
 						isAI: true
 					};
 
-					// Lokale Matches speichern
+					// LocalStorage speichern
 					let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-					const idx = localMatches.findIndex(m => m.match_id === aiMatchId);
-					if (idx !== -1) localMatches[idx] = aiMatch;
-					else localMatches.push(aiMatch);
+					const idx = localMatches.findIndex(m => m.match_id === aiMatch.match_id);
+					if (idx !== -1) {
+						localMatches[idx] = aiMatch;
+					} else {
+						localMatches.push(aiMatch);
+					}
 					localStorage.setItem('userMatches', JSON.stringify(localMatches));
 
-					// Chat-Setup
-					openMatchChat(aiMatchId, aiMatch.matched_user_id, aiMatch.profile_name, aiMatch.profile_image);
+					showNotification('🎉 Es ist ein Match! 💕', 'success');
+					showMatchAnimation(profile);
+
+					// AI Chat direkt öffnen
+					openMatchChat(aiMatch.match_id, aiMatch.matched_user_id, aiMatch.profile_name, aiMatch.profile_image);
 					return;
 				}
 
-				// Echte Matches (wie bisher)
+				// Echte Matches
 				const response = await fetch('/.netlify/functions/create_match', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ 
+					body: JSON.stringify({
 						likerId: parseInt(currentUser.uid),
 						likedId: parseInt(profile.user_id)
 					})
 				});
+
 				const result = await response.json();
 				if (result.success && result.newMatch) {
 					showNotification('🎉 Es ist ein Match!', 'success');
+
+					// Echte Match Chat öffnen
+					const matchId = result.match_id; // aus DB
+					openMatchChat(matchId, profile.user_id, profile.profile_name || profile.name, profile.profile_image || profile.image);
 				}
-			} catch (err) {
-				console.error('Fehler beim Like:', err);
+			} catch (error) {
+				console.error('Fehler beim Like:', error);
 			}
 		}
-
-
-
 
 		// Match zu lokaler Liste hinzufügen - FIXED VERSION
 		function addToLocalMatches(match) {
