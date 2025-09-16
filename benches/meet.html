@@ -1895,6 +1895,7 @@
 		// Global chat state object instead of individual variables
 		let chatState = {
 			currentMatchId: null,
+			currentConversationId: null,
 			aiSuggestionsLoaded: false,
 			lastLoadedMessageCount: 0,
 			messageInterval: null
@@ -4121,7 +4122,8 @@
 			
 			// Reset chat state for new chat
 			chatState = {
-				currentMatchId: matchId, // Keep original format (string for AI, can be string or number for real)
+				currentMatchId: matchId,
+				currentConversationId: matchId, 
 				aiSuggestionsLoaded: false,
 				lastLoadedMessageCount: 0,
 				messageInterval: null
@@ -4204,6 +4206,7 @@
 			// Reset chat state completely
 			chatState = {
 				currentMatchId: null,
+				currentConversationId: null,
 				aiSuggestionsLoaded: false,
 				lastLoadedMessageCount: 0,
 				messageInterval: null
