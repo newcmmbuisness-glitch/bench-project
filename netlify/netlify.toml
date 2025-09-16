@@ -16,3 +16,16 @@
 [[functions]]
   schedule = "@hourly"
   function = "train-ai"
+
+# Redirects
+[[redirects]]
+  from = "/api/train"
+  to = "/.netlify/functions/train-ai"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/ai-chat"
+  status = 200
+  force = true
