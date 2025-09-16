@@ -1,14 +1,9 @@
 [build]
   functions = "netlify/functions"
   publish = "."
-
----
-
+  
 [[plugins]]
   package = "@netlify/plugin-functions-install-core"
 
----
-
-# Add this section to your netlify.toml
 [functions]
   node_bundler = "esbuild"
