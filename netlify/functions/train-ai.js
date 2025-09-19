@@ -97,6 +97,7 @@ async function analyzeChatData(pool) {
     // Response-Zeiten analysieren (wenn verfügbar)
     const responsePatterns = await analyzeResponsePatternsFromDB(pool);
 
+
     return {
       totalMessages,
       aiStats,
@@ -109,6 +110,52 @@ async function analyzeChatData(pool) {
     console.error('Fehler bei Chat-Analyse:', error);
     throw error;
   }
+}
+// ===================
+// Generiert AI-Antwort basierend auf gelernten Trainingsdaten
+// ===================
+async function generateAIResponse(pool, aiId, userMessage) {
+  // Profil inkl. Trainingsdaten laden
+  const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
+  if (profileQuery.rows.length === 0) return "Hmm, ich weiß gerade nicht, was ich sagen soll.";
+
+  const profile = profileQuery.rows[0];
+  const trainingData = profile.training_data || [];
+
+  if (!trainingData.length) {
+    // Fallback auf vordefinierte Prompts/Antworten
+    return profile.answer_1 || "Hallo! Wie geht's dir?";
+  }
+
+  // Ähnlichste Trainings-Eingabe finden
+  let bestMatch = null;
+  let highestScore = 0;
+
+  for (const item of trainingData) {
+    const score = similarity(userMessage, item.input); // einfache Ähnlichkeitsberechnung
+    if (score > highestScore) {
+      highestScore = score;
+      bestMatch = item;
+    }
+  }
+
+  // Wenn guter Treffer, gib die trainierte Antwort
+  if (bestMatch && highestScore > 0.3) {
+    return bestMatch.output;
+  }
+
+  // Sonst Fallback auf Profil-Prompts
+  if (userMessage.length < 20) return profile.answer_2 || "Erzähl mal mehr!";
+  return profile.answer_1 || "Interessant, erzähl mir mehr!";
+}
+// ===================
+// Sehr einfache Text-Ähnlichkeit (Overlap von Wörtern)
+// ===================
+function similarity(text1, text2) {
+  const words1 = text1.toLowerCase().split(/\s+/);
+  const words2 = text2.toLowerCase().split(/\s+/);
+  const common = words1.filter(w => words2.includes(w));
+  return common.length / Math.max(words1.length, words2.length);
 }
 
 // Häufige Phrases analysieren
