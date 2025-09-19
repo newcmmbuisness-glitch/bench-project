@@ -488,9 +488,9 @@ async function extractTrainingData(pool) {
         cs.conversation_duration
       FROM conversation_pairs cp
       JOIN conversation_stats cs ON cp.match_id = cs.match_id
-      WHERE cs.total_messages > 5  -- Nur aus längeren Gesprächen lernen
-        AND LENGTH(cp.input_message) > 3
-        AND LENGTH(cp.response_message) > 3
+      WHERE cs.total_messages > 2  -- Nur aus längeren Gesprächen lernen
+        AND LENGTH(cp.input_message) > 1
+        AND LENGTH(cp.response_message) > 1
       ORDER BY cs.total_messages DESC, cp.sent_at DESC
       LIMIT 500
     `);
