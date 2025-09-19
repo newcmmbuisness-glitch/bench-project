@@ -4454,21 +4454,17 @@
 			try {
 				console.log('💖 Like für:', profile.profile_name || profile.name);
 
-				const likerId = parseInt(currentUser.uid); // echte User-ID
-				let likedId = parseInt(profile.user_id);   // für echte User
-
 				// Prüfen, ob es ein AI-Profil ist
 				if (profile.isAI || typeof profile.user_id === 'string') {
-					likedId = 0; // AI-User in DB hat ID 0
-				}
+					// AI Match erstellen
+					const profileId = profile.profile_name || profile.name || `AI-${Date.now()}`;
+					const aiMatchId = `ai_${profileId}`;
+					const aiMatchUserId = `ai_user_${profileId}`; // Dummy-ID für openMatchChat
 
-				// Lokal für AI-Matches vorbereiten
-				if (likedId === 0) {
-					const aiMatchId = `ai_${profile.profile_name || profile.name || Date.now()}`;
 					const aiMatch = {
 						id: aiMatchId,
 						match_id: aiMatchId,
-						matched_user_id: likedId,
+						matched_user_id: aiMatchUserId,
 						profile_name: profile.profile_name || profile.name,
 						profile_image: profile.profile_image || profile.image,
 						description: profile.description,
@@ -4492,7 +4488,7 @@
 					showMatchAnimation(profile);
 
 					// AI Chat direkt öffnen
-					openMatchChat(aiMatch.match_id, likerId, aiMatch.profile_name, aiMatch.profile_image);
+					openMatchChat(aiMatch.match_id, aiMatch.matched_user_id, aiMatch.profile_name, aiMatch.profile_image);
 					return;
 				}
 
@@ -4501,8 +4497,8 @@
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						likerId,
-						likedId
+						likerId: parseInt(currentUser.uid),
+						likedId: parseInt(profile.user_id)
 					})
 				});
 
@@ -4511,24 +4507,11 @@
 					showNotification('🎉 Es ist ein Match!', 'success');
 
 					// Echte Match Chat öffnen
-					openMatchChat(result.matchId, profile.user_id, profile.profile_name || profile.name, profile.profile_image || profile.image);
+					const matchId = result.match_id; // aus DB
+					openMatchChat(matchId, profile.user_id, profile.profile_name || profile.name, profile.profile_image || profile.image);
 				}
-
 			} catch (error) {
 				console.error('Fehler beim Like:', error);
-			}
-		}
-
-		// Match zu lokaler Liste hinzufügen
-		function addToLocalMatches(match) {
-			let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-			const exists = localMatches.some(m => m.id === match.id);
-			if (!exists) {
-				localMatches.push(match);
-				localStorage.setItem('userMatches', JSON.stringify(localMatches));
-				console.log('✅ Match erfolgreich dem lokalen Speicher hinzugefügt.');
-			} else {
-				console.log('ℹ️ Match bereits im lokalen Speicher vorhanden.');
 			}
 		}
 
