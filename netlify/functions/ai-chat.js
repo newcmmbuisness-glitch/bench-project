@@ -102,6 +102,10 @@ exports.handler = async (event) => {
       pool
     );
 
+    // Vollautomatisch basierend auf Training-Daten
+    const response = await generateAIResponse(pool, aiProfileId, userMessage);
+
+
     // Nachricht in Datenbank speichern
     if (conversationId) {
       // User-Nachricht speichern
