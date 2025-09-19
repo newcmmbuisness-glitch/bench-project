@@ -215,9 +215,7 @@ async function analyzeResponsePatternsFromDB(pool) {
         cm2.sender_id as ai_id
       FROM chat_messages cm1
       JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
-      WHERE cm1.sender_id < 1000 
-        AND cm2.sender_id > 1000
-        AND cm2.sent_at > cm1.sent_at
+      WHERE cm2.sent_at > cm1.sent_at
         AND cm2.sent_at - cm1.sent_at < INTERVAL '1 hour'
       ORDER BY cm1.sent_at DESC
       LIMIT 500
@@ -471,9 +469,7 @@ async function extractTrainingData(pool) {
           ROW_NUMBER() OVER (PARTITION BY cm1.match_id ORDER BY cm1.sent_at) as msg_order
         FROM chat_messages cm1
         JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
-        WHERE cm1.sender_id < 1000 
-          AND cm2.sender_id > 1000
-          AND cm2.sent_at > cm1.sent_at
+        WHERE cm2.sent_at > cm1.sent_at
           AND cm2.sent_at - cm1.sent_at < INTERVAL '10 minutes'
       ),
       conversation_stats AS (
