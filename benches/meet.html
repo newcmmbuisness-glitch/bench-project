@@ -3899,7 +3899,18 @@
 			const originalValue = messageText;
 			messageInput.value = '';
 			messageInput.disabled = true;
-			
+
+			// Handle real user chat
+			console.log("Sending message:", {
+			    match_id: parseInt(chatState.currentMatchId),
+			    sender_id: parseInt(currentUser.uid),
+			    message_text: originalValue
+			});	
+			console.log("Types:", {
+			    match_id: typeof parseInt(chatState.currentMatchId),
+			    sender_id: typeof parseInt(currentUser.uid),
+			    message_text: typeof originalValue
+			});
 			try {
 				if (isAIChat) {
 					// Handle AI chat - KEINE Erfolgsmeldung
