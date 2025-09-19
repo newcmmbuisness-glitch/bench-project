@@ -94,14 +94,6 @@ exports.handler = async (event) => {
 
     const chatHistory = chatHistoryQuery.rows.reverse();
 
-    // Intelligente Response-Generierung
-    const response = await generateIntelligentResponse(
-      userMessage, 
-      aiProfile, 
-      chatHistory, 
-      pool
-    );
-
     // Vollautomatisch basierend auf Training-Daten
     const response = await generateAIResponse(pool, aiProfileId, userMessage);
 
