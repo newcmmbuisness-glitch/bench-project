@@ -95,7 +95,7 @@ async function analyzeChatData(pool) {
     const frequentPhrases = await analyzeFrequentPhrases(pool);
 
     // Response-Zeiten analysieren (wenn verfügbar)
-    const responsePatterns = await analyzeResponsePatterns(pool);
+    const responsePatterns = await analyzeResponsePatternsFromDB(pool);
 
     return {
       totalMessages,
@@ -157,7 +157,7 @@ async function analyzeFrequentPhrases(pool) {
 }
 
 // Response-Muster analysieren
-async function analyzeResponsePatterns(pool) {
+async function analyzeResponsePatternsFromDB(pool) {
   try {
     // Aufeinanderfolgende Nachrichten analysieren
     const conversationQuery = await pool.query(`
