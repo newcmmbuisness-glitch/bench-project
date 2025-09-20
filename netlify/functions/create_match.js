@@ -13,12 +13,19 @@ exports.handler = async (event, context) => {
     try {
         const { likerId, likedId, isInstaMatch = false } = JSON.parse(event.body);
         
-        if (!likerId || !likedId) {
-            return { statusCode: 400, headers, body: 'Fehlende IDs' };
+        if (!likerId || likedId === undefined || likedId === null) {
+            return { 
+                statusCode: 400, 
+                headers, 
+                body: JSON.stringify({ error: 'Fehlende IDs' })
+            };
         }
 
-        // Check if liker is UserPlus for InstaMatch
-        if (isInstaMatch) {
+        // Check if this is an AI match (likedId = 0)
+        const isAIMatch = likedId === 0;
+
+        // Check if liker is UserPlus for InstaMatch (but skip for AI matches)
+        if (isInstaMatch && !isAIMatch) {
             const userCheck = await sql`
                 SELECT is_user_plus, is_admin FROM users WHERE id = ${likerId}
             `;
@@ -51,25 +58,29 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Record the swipe in swipe_history
-        await sql`
-            INSERT INTO swipe_history (user_id, swiped_user_id, swipe_direction)
-            VALUES (${likerId}, ${likedId}, 'right')
-            ON CONFLICT (user_id, swiped_user_id) DO NOTHING
-        `;
+        // Record the swipe in swipe_history (only for non-AI profiles)
+        if (!isAIMatch) {
+            await sql`
+                INSERT INTO swipe_history (user_id, swiped_user_id, swipe_direction)
+                VALUES (${likerId}, ${likedId}, 'right')
+                ON CONFLICT (user_id, swiped_user_id) DO NOTHING
+            `;
+        }
 
-        // Record the like
-        await sql`
-            INSERT INTO likes (liker_id, liked_id)
-            VALUES (${likerId}, ${likedId})
-            ON CONFLICT (liker_id, liked_id) DO NOTHING
-        `;
+        // Record the like (only for non-AI profiles)
+        if (!isAIMatch) {
+            await sql`
+                INSERT INTO likes (liker_id, liked_id)
+                VALUES (${likerId}, ${likedId})
+                ON CONFLICT (liker_id, liked_id) DO NOTHING
+            `;
+        }
 
         let newMatch = false;
         let matchId = null;
 
-        if (isInstaMatch) {
-            // InstaMatch: Create match immediately
+        if (isInstaMatch || isAIMatch) {
+            // InstaMatch or AI Match: Create match immediately
             const result = await sql`
                 INSERT INTO matches (user_id_1, user_id_2)
                 VALUES (${likerId}, ${likedId})
@@ -79,12 +90,14 @@ exports.handler = async (event, context) => {
             matchId = result[0].id;
             newMatch = true;
             
-            // Also record the reverse like to maintain consistency
-            await sql`
-                INSERT INTO likes (liker_id, liked_id)
-                VALUES (${likedId}, ${likerId})
-                ON CONFLICT (liker_id, liked_id) DO NOTHING
-            `;
+            // For non-AI InstaMatches, also record the reverse like to maintain consistency
+            if (!isAIMatch) {
+                await sql`
+                    INSERT INTO likes (liker_id, liked_id)
+                    VALUES (${likedId}, ${likerId})
+                    ON CONFLICT (liker_id, liked_id) DO NOTHING
+                `;
+            }
             
         } else {
             // Regular like: Check if other user also liked
@@ -113,7 +126,8 @@ exports.handler = async (event, context) => {
                 success: true, 
                 newMatch, 
                 matchId,
-                isInstaMatch 
+                isInstaMatch,
+                isAIMatch
             }),
         };
         
