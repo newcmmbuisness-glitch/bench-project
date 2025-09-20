@@ -4311,7 +4311,11 @@
 			t.pendingUserMessages = [];
 
 			try {
-				const aiProfileId = convId.replace('ai_', '');
+				// KORRIGIERT: Hole AI-Profile-ID aus localStorage
+				const localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+				const currentMatch = localMatches.find(m => m.match_id === convId);
+				const aiProfileId = currentMatch?.ai_profile_id || 1; // Fallback auf AI-ID 1
+
 				const response = await fetch('/.netlify/functions/ai-chat', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -4326,6 +4330,7 @@
 						conversationId: convId
 					})
 				});
+				
 				const result = await response.json();
 				const aiText = result.success ? result.response : "Entschuldige, gerade nicht verfügbar.";
 
