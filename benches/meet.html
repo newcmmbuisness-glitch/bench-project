@@ -4447,29 +4447,33 @@
 			});
 		}
 
-
 		async function handleLike(profile) {
 			try {
 				console.log('💖 Like für:', profile.profile_name || profile.name);
 
-				// Prüfen, ob es ein AI-Profil ist
 				const isAIMatch = profile.isAI || typeof profile.user_id === 'string';
-				
+
+				// --- Prüfen, ob Match lokal schon existiert ---
+				let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+				if (
+					localMatches.some(m => (isAIMatch ? m.ai_profile_id === profile.id : m.matched_user_id === profile.user_id))
+				) {
+					console.log('ℹ️ Match existiert bereits lokal, kein Request nötig');
+					return;
+				}
+
 				if (isAIMatch) {
 					if (!profile.id) throw new Error('AI Profile ID fehlt!');
 
-					// 1. Ensure AI dummy user exists (user_id = 0)
 					await fetch('/.netlify/functions/ensure_ai_dummy', { method: 'POST' });
 
-					// 2. Create REAL database match between current user and AI user
 					const response = await fetch('/.netlify/functions/create_match', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
 							likerId: parseInt(currentUser.uid),
 							likedId: 0,
-							aiProfileId: profile.id,
-							isInstaMatch: true
+							aiProfileId: profile.id
 						})
 					});
 
@@ -4478,7 +4482,6 @@
 
 					const realMatchId = result.matchId;
 
-					// 3. Build local AI match object
 					const aiMatch = {
 						id: realMatchId,
 						match_id: realMatchId,
@@ -4494,20 +4497,10 @@
 						isAI: true
 					};
 
-					// 4. Store in localStorage, check for existing match
-					let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-					const existingIndex = localMatches.findIndex(
-						m => m.match_id === aiMatch.match_id || 
-							 (m.is_ai_match && m.ai_profile_id === aiMatch.ai_profile_id)
-					);
-					if (existingIndex !== -1) localMatches[existingIndex] = aiMatch;
-					else localMatches.push(aiMatch);
-					localStorage.setItem('userMatches', JSON.stringify(localMatches));
+					addToLocalMatches(aiMatch);
 
 					showNotification('🎉 Es ist ein Match! 💕', 'success');
 					showMatchAnimation(profile);
-
-					// 5. Open chat
 					openMatchChat(realMatchId, 0, aiMatch.profile_name, aiMatch.profile_image);
 					return;
 				}
@@ -4524,14 +4517,35 @@
 
 				const result = await response.json();
 				if (result.success && result.newMatch) {
-					showNotification('🎉 Es ist ein Match!', 'success');
 					const matchId = result.matchId;
+					addToLocalMatches({
+						id: matchId,
+						match_id: matchId,
+						matched_user_id: profile.user_id,
+						profile_name: profile.profile_name || profile.name,
+						profile_image: profile.profile_image || profile.image,
+						matched_at: Date.now(),
+						is_ai_match: false
+					});
+					showNotification('🎉 Es ist ein Match!', 'success');
 					openMatchChat(matchId, profile.user_id, profile.profile_name || profile.name, profile.profile_image || profile.image);
 				}
 
 			} catch (error) {
 				console.error('Fehler beim Like:', error);
 				showNotification('❌ Fehler beim Match erstellen', 'error');
+			}
+		}
+
+		function addToLocalMatches(match) {
+			let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+			const exists = localMatches.some(m => m.match_id == match.match_id);
+			if (!exists) {
+				localMatches.push(match);
+				localStorage.setItem('userMatches', JSON.stringify(localMatches));
+				console.log('✅ Match added to localMatches', match.match_id);
+			} else {
+				console.log('ℹ️ Match already exists (local)', match.match_id);
 			}
 		}
 
