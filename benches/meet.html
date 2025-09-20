@@ -4533,20 +4533,20 @@
 		  }
 		}
 
-		// Match zu lokaler Liste hinzufügen - FIXED VERSION
 		function addToLocalMatches(match) {
-			let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-			
-			// Prüfen, ob bereits vorhanden, basierend auf der Match-ID
-			const exists = localMatches.some(m => m.id === match.id);
-			if (!exists) {
-				localMatches.push(match);
-				localStorage.setItem('userMatches', JSON.stringify(localMatches));
-				console.log('✅ Match erfolgreich dem lokalen Speicher hinzugefügt.');
-			} else {
-				console.log('ℹ️ Match bereits im lokalen Speicher vorhanden.');
-			}
+		  let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+		  const id = match.match_id || match.id;
+		  const exists = localMatches.some(m => m.match_id == id || m.id == id);
+		  if (!exists) {
+			const store = Object.assign({}, match, { match_id: id, id: id });
+			localMatches.push(store);
+			localStorage.setItem('userMatches', JSON.stringify(localMatches));
+			console.log('✅ Match added to localMatches', id);
+		  } else {
+			console.log('ℹ️ Match already exists (local)', id);
+		  }
 		}
+
 
 		// ✅ UPDATED: Replace your existing showNoMoreCards function
 		function showNoMoreCards() {
