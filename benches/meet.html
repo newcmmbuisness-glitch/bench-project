@@ -4285,6 +4285,8 @@
 		}
 
 		async function sendAIMessage(messageText) {
+		    console.log("sendAIMessage called with:", messageText);
+			console.log("chatState.currentMatchId:", chatState.currentMatchId);
 			if (!chatState.currentMatchId || !messageText) return;
 
 			await saveAIMessage('user', messageText); // speichert lokal + DB
