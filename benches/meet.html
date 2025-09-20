@@ -2866,13 +2866,11 @@
 		async function loadProfiles() {
 			console.log('🔄 Profile werden geladen...');
 			const cardStack = document.getElementById('cardStack');
-
 			if (!cardStack) {
 				console.log('cardStack noch nicht bereit, versuche erneut...');
 				setTimeout(loadProfiles, 100);
 				return;
 			}
-
 			try {
 				// Get both profiles and existing matches
 				const [profilesResponse, matchesResponse] = await Promise.all([
@@ -2887,25 +2885,24 @@
 						body: JSON.stringify({ userId: currentUser.uid })
 					})
 				]);
-
+				
 				const profilesResult = await profilesResponse.json();
 				const matchesResult = await matchesResponse.json();
-
+				
 				// Lokale Matches laden (für AI-Profile)
 				let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-				const now = Date.now();
-				const AI_BLOCK_DAYS = 7;
-
+				
 				const matchedUserIds = matchesResult.success && matchesResult.matches 
 					? matchesResult.matches
 						.filter(m => !m.isAI)
 						.map(m => m.matched_user_id || m.user_id)
 					: [];
 
-				const blockedAIIds = localMatches
-				  .filter(m => m.isAI && now - m.matched_at < AI_BLOCK_DAYS * 24 * 60 * 60 * 1000)
-				  .map(m => m.id);
-				  
+				// KORRIGIERT: Bereits gematchte AI-Profile-IDs extrahieren
+				const matchedAIProfileIds = localMatches
+					.filter(m => m.isAI && m.ai_profile_id) // ai_profile_id muss existieren
+					.map(m => m.ai_profile_id); // Echte AI-Profile-ID, nicht match_id
+					  
 				// --- Echte Profile ---
 				let realProfiles = [];
 				if (profilesResponse.ok && profilesResult.success && profilesResult.profiles) {
@@ -2914,31 +2911,29 @@
 						!matchedUserIds.includes(p.user_id)
 					);
 				}
-
+				
 				// --- AI Profile ---
 				let aiProfiles = [];
 				if (realProfiles.length < 5) {
 					const myProfile = JSON.parse(localStorage.getItem('currentProfile') || '{}');
 					const userGender = myProfile.gender;
 					const targetGender = userGender === 'male' ? 'female' : 'male';
-
+					
 					try {
 						const res = await fetch('/.netlify/functions/generate_ai_profiles');
 						const data = await res.json();
-
 						aiProfiles = data.profiles
 							.filter(p => p.gender === targetGender)
-							.filter(p => !blockedAIIds.includes(`ai_${p.profile_name}`))
-							.map(p => ({ ...p, id: `ai_${p.profile_name}`, isAI: true }));
+							.filter(p => !matchedAIProfileIds.includes(p.id)) // KORRIGIERT: Echte ID-Vergleich
+							.map(p => ({ ...p, isAI: true })); // ID bleibt original
 					} catch (err) {
 						console.error("Fehler beim Laden der AI-Profile:", err);
 					}
 				}
-
-
+				
 				const allProfiles = [...realProfiles, ...aiProfiles];
 				currentProfiles = allProfiles;
-
+				
 				if (currentProfiles.length > 0) {
 					console.log(`🎯 ${currentProfiles.length} Profile geladen (${realProfiles.length} echt, ${currentProfiles.length - realProfiles.length} KI)`);
 					currentIndex = 0;
@@ -2946,12 +2941,12 @@
 				} else {
 					showNoMoreProfilesInCardStack();
 				}
-
 			} catch (error) {
 				console.error('Fehler beim Laden der Profile:', error);
 				showNoMoreProfilesInCardStack();
 			}		
 		}
+		
 		function showCreateProfileSection() {
 			hideAllScreens();
 			document.getElementById('createProfileSection').style.display = 'flex';
@@ -4479,6 +4474,7 @@
 				  id: realMatchId,                    // Use REAL database match ID
 				  match_id: realMatchId,              // Use REAL database match ID
 				  matched_user_id: 0,                 // AI user ID is 0
+				  ai_profile_id: profile.id,
 				  profile_name: profile.profile_name || profile.name,
 				  profile_image: profile.profile_image || profile.image,
 				  description: profile.description,
