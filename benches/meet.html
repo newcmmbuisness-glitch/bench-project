@@ -2366,7 +2366,7 @@
 
 							return `
 								<div class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3"
-									onclick="openMatchChat('${matchId}', '${userId}', '${match.profile_name}', '${match.profile_image}')">
+									onclick="openMatchChat('${matchId}', '${match.matched_user_id}', '${match.profile_name}', '${match.profile_image}')">
 									<div class="flex items-center space-x-4">
 										<div class="flex-shrink-0 relative">
 											<img src="${match.profile_image}"
@@ -2379,13 +2379,14 @@
 											</h4>
 											<p class="text-sm text-gray-600 truncate">${lastMsg}</p>
 											<span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full">
-												${match.isAI ? 'KI Match' : 'Match'}
+												${match.isAI ? '💕 Match' : '💕 Match'}
 										   </span>
 										</div>
 									</div>
 								</div>
 							`;
 						}).join('');
+						
 						
 						// Add back button
 						matchesList.innerHTML += `
