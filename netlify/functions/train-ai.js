@@ -392,10 +392,10 @@ async function updateAIProfiles(pool, successfulPatterns) {
       if (hasUpdates) {
         const updateFields = Object.keys(updates);
         const updateValues = Object.values(updates);
-        const setClause = updateFields.map((field, index) => `${field} = ${index + 1}`).join(', ');
-        
+        const setClause = updateFields.map((field, index) => `${field} = $${index + 1}`).join(', ');
+
         await pool.query(
-          `UPDATE ai_profiles SET ${setClause} WHERE id = ${updateFields.length + 1}`,
+          `UPDATE ai_profiles SET ${setClause} WHERE id = $${updateFields.length + 1}`,
           [...updateValues, profile.id]
         );
 
@@ -404,8 +404,6 @@ async function updateAIProfiles(pool, successfulPatterns) {
           profileName: profile.profile_name,
           updates: updates
         });
-
-        console.log(`Profil ${profile.profile_name} aktualisiert:`, updates);
       }
     }
 
@@ -517,63 +515,66 @@ async function extractTrainingData(pool) {
   }
 }
 
-// Batch-Training für alle AI-Profile
+// Vollautomatisches Batch-Training für alle AI-Profile
+// Vollautomatisches Batch-Training für alle AI-Profile (parallel)
 async function batchTrainAllProfiles(pool) {
   try {
-    console.log('Starte Batch-Training für alle AI-Profile...');
+    console.log('Starte automatisches Batch-Training für alle AI-Profile...');
 
-    // Training-Daten extrahieren
+    // 1. Training-Daten aus den Chats extrahieren
     const trainingData = await extractTrainingData(pool);
     console.log(`${trainingData.length} Training-Paare extrahiert`);
 
-    // Nach AI-ID gruppieren
+    if (!trainingData.length) {
+      console.log('Keine Trainingsdaten gefunden, Abbruch.');
+      return [];
+    }
+
+    // 2. Training-Daten nach AI-ID gruppieren
     const groupedData = trainingData.reduce((acc, item) => {
-      if (!acc[item.aiId]) {
-        acc[item.aiId] = [];
-      }
+      if (!acc[item.aiId]) acc[item.aiId] = [];
       acc[item.aiId].push(item);
       return acc;
     }, {});
 
-    const results = [];
-
-    // Jede AI einzeln trainieren
-    for (const [aiId, data] of Object.entries(groupedData)) {
+    // 3. Alle AIs parallel trainieren
+    const trainingPromises = Object.entries(groupedData).map(async ([aiId, data]) => {
       try {
         const result = await trainSpecificAI(pool, parseInt(aiId), data);
-        results.push(result);
-        console.log(`AI ${aiId} trainiert: ${data.length} Beispiele`);
+        console.log(`✅ AI ${aiId} trainiert: ${data.length} Beispiele`);
+        return result;
       } catch (error) {
-        console.error(`Fehler beim Training von AI ${aiId}:`, error);
-        results.push({
+        console.error(`❌ Fehler beim Training von AI ${aiId}:`, error);
+        return {
           aiId: parseInt(aiId),
           success: false,
           error: error.message
-        });
+        };
       }
-    }
+    });
 
+    const results = await Promise.all(trainingPromises);
+
+    console.log('Automatisches Batch-Training abgeschlossen.');
     return results;
 
   } catch (error) {
-    console.error('Fehler beim Batch-Training:', error);
+    console.error('Fehler beim automatischen Batch-Training:', error);
     throw error;
   }
 }
 
-// Spezifische AI trainieren
+// Spezifische AI trainieren (DB-Updates)
 async function trainSpecificAI(pool, aiId, trainingData) {
   try {
     // AI-Profil laden
     const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
-    
     if (profileQuery.rows.length === 0) {
       throw new Error(`AI-Profil ${aiId} nicht gefunden`);
     }
-
     const profile = profileQuery.rows[0];
 
-    // Training-Statistiken erstellen
+    // Training-Statistiken
     const stats = {
       totalExamples: trainingData.length,
       highQualityExamples: trainingData.filter(d => d.quality === 'high').length,
@@ -581,24 +582,24 @@ async function trainSpecificAI(pool, aiId, trainingData) {
       avgOutputLength: trainingData.reduce((sum, d) => sum + d.output.length, 0) / trainingData.length
     };
 
-    // Häufigste Input-Patterns identifizieren
+    // Muster analysieren
     const inputPatterns = analyzeInputPatterns(trainingData.map(d => d.input));
-
-    // Erfolgreiche Response-Patterns identifizieren
     const responsePatterns = analyzeResponsePatterns(trainingData.map(d => d.output));
 
-    // Profile mit gelernten Patterns aktualisieren
+    // DB-Updates vorbereiten
     const updates = generateProfileUpdates(profile, inputPatterns, responsePatterns, stats);
 
     if (Object.keys(updates).length > 0) {
       const updateFields = Object.keys(updates);
       const updateValues = Object.values(updates);
-      const setClause = updateFields.map((field, index) => `${field} = ${index + 1}`).join(', ');
-      
+      const setClause = updateFields.map((field, index) => `${field} = $${index + 1}`).join(', ');
+
       await pool.query(
-        `UPDATE ai_profiles SET ${setClause} WHERE id = ${updateFields.length + 1}`,
+        `UPDATE ai_profiles SET ${setClause} WHERE id = $${updateFields.length + 1}`,
         [...updateValues, aiId]
       );
+
+      console.log(`Profil ${profile.profile_name} erfolgreich aktualisiert:`, updates);
     }
 
     return {
