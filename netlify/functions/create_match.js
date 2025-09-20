@@ -22,35 +22,42 @@ exports.handler = async (event) => {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'AI Profile ID erforderlich' }) };
         }
 
-        // --- AI Match oder echte User Match UPSERT ---
-        let result;
-        if (isAIMatch) {
-            result = await sql`
-                INSERT INTO matches (user_id_1, user_id_2, ai_profile_id)
-                VALUES (${likerId}, ${likedId}, ${aiProfileId})
-                ON CONFLICT (user_id_1, user_id_2, ai_profile_id) DO NOTHING
-                RETURNING id
-            `;
-        } else {
-            result = await sql`
-                INSERT INTO matches (user_id_1, user_id_2)
-                VALUES (${likerId}, ${likedId})
-                ON CONFLICT (user_id_1, user_id_2) DO NOTHING
-                RETURNING id
-            `;
-        }
-
-        // Existierendes Match holen, falls UPSERT nichts zurückgegeben hat
         let matchId;
-        if (result.length > 0) {
-            matchId = result[0].id;
-        } else {
-            // SELECT existierendes Match
-            const existing = isAIMatch
-                ? await sql`SELECT id FROM matches WHERE (user_id_1 = ${likerId} AND user_id_2 = ${likedId} OR user_id_1 = ${likedId} AND user_id_2 = ${likerId}) AND ai_profile_id = ${aiProfileId}`
-                : await sql`SELECT id FROM matches WHERE (user_id_1 = ${likerId} AND user_id_2 = ${likedId} OR user_id_1 = ${likedId} AND user_id_2 = ${likerId})`;
 
-            matchId = existing[0].id;
+        // --- Prüfen, ob Match bereits existiert ---
+        if (isAIMatch) {
+            const existing = await sql`
+                SELECT id FROM matches
+                WHERE ((user_id_1 = ${likerId} AND user_id_2 = ${likedId})
+                    OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId}))
+                  AND ai_profile_id = ${aiProfileId}
+            `;
+            if (existing.length > 0) {
+                matchId = existing[0].id;
+            } else {
+                const result = await sql`
+                    INSERT INTO matches (user_id_1, user_id_2, ai_profile_id)
+                    VALUES (${likerId}, ${likedId}, ${aiProfileId})
+                    RETURNING id
+                `;
+                matchId = result[0].id;
+            }
+        } else {
+            const existing = await sql`
+                SELECT id FROM matches
+                WHERE (user_id_1 = ${likerId} AND user_id_2 = ${likedId})
+                   OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId})
+            `;
+            if (existing.length > 0) {
+                matchId = existing[0].id;
+            } else {
+                const result = await sql`
+                    INSERT INTO matches (user_id_1, user_id_2)
+                    VALUES (${likerId}, ${likedId})
+                    RETURNING id
+                `;
+                matchId = result[0].id;
+            }
         }
 
         return {
