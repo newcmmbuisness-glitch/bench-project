@@ -4116,35 +4116,34 @@
 		}
 		
 		async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
-			console.log('🔥 Opening chat - Match ID:', matchId, 'Type:', typeof matchId);
-
-			closeChat();
-
-			if (!matchId || !matchUserId || !matchName) {
-				console.error('❌ Missing required chat parameters');
-				showNotification('❌ Fehlerhafte Chat-Daten', 'error');
-				return;
-			}
-
-			const isAIChat = typeof matchId === 'string' && matchId.includes('ai_');
-
-			chatState = {
-				currentMatchId: matchId,
-				currentConversationId: matchId,
-				aiSuggestionsLoaded: false,
-				lastLoadedMessageCount: 0,
-				messageInterval: null
-			};
-
-			if (!isAIChat) {
-				const numericMatchId = parseInt(matchId);
-				if (isNaN(numericMatchId) || numericMatchId <= 0) {
-					console.error('❌ Invalid numeric match ID:', matchId);
-					showNotification('❌ Fehlerhafte Match-ID', 'error');
-					return;
-				}
-				chatState.currentMatchId = numericMatchId;
-			}
+		  console.log('🔥 Opening chat - Match ID:', matchId, 'User ID:', matchUserId);
+		  closeChat();
+		  
+		  if (!matchId || matchUserId === undefined || !matchName) {
+			console.error('❌ Missing required chat parameters');
+			showNotification('❌ Fehlerhafte Chat-Daten', 'error');
+			return;
+		  }
+		  
+		  // Determine if this is an AI chat based on matchUserId being 0
+		  const isAIChat = matchUserId === 0;
+		  
+		  // Ensure matchId is a number for database operations
+		  const numericMatchId = parseInt(matchId);
+		  if (isNaN(numericMatchId) || numericMatchId <= 0) {
+			console.error('❌ Invalid match ID:', matchId);
+			showNotification('❌ Fehlerhafte Match-ID', 'error');
+			return;
+		  }
+		  
+		  chatState = {
+			currentMatchId: numericMatchId,          // Always use numeric match ID
+			currentConversationId: numericMatchId,   // Always use numeric match ID
+			aiSuggestionsLoaded: false,
+			lastLoadedMessageCount: 0,
+			messageInterval: null,
+			isAI: isAIChat                           // Flag to identify AI chats
+		  };
 
 			// Chat Modal erzeugen...
 			const chatModalHtml = `
@@ -4186,7 +4185,7 @@
 			markMessagesAsRead(matchId);
 
 			if (isAIChat) {
-				loadAIMessages();
+				loadMessages();
 			} else {
 				loadMessages();
 				chatState.messageInterval = setInterval(loadMessages, 3000);
@@ -4247,49 +4246,40 @@
 		}
 
 		async function saveAIMessage(sender, text) {
-			let chatId = chatState.currentMatchId;
-
-			if (!chatId) {
-				const allKeys = Object.keys(localStorage).filter(k => k.startsWith('ai_chat_'));
-				if (allKeys.length > 0) chatId = allKeys[allKeys.length - 1].replace('ai_chat_', '');
-				else { console.warn('Keine AI-Chat-ID gefunden'); return; }
-			}
-
-			// LocalStorage speichern
-			let aiMessages = JSON.parse(localStorage.getItem(`ai_chat_${chatId}`) || '[]');
-			aiMessages.push({
-				sender: sender,
-				text: text,
-				timestamp: new Date().toISOString()
+		  const matchId = chatState.currentMatchId; // This is now the real database match ID
+		  
+		  if (!matchId) {
+			console.warn('Keine Match-ID gefunden');
+			return;
+		  }
+		  
+		  // Store in localStorage using the real match ID
+		  let aiMessages = JSON.parse(localStorage.getItem(`ai_chat_${matchId}`) || '[]');
+		  aiMessages.push({
+			sender: sender,
+			text: text,
+			timestamp: new Date().toISOString()
+		  });
+		  localStorage.setItem(`ai_chat_${matchId}`, JSON.stringify(aiMessages));
+		  
+		  // Store in database using the real match ID
+		  const dbSenderId = sender === 'user' ? parseInt(currentUser.uid) : 0;
+		  
+		  try {
+			await fetch('/.netlify/functions/send_message', {
+			  method: 'POST',
+			  headers: { 'Content-Type': 'application/json' },
+			  body: JSON.stringify({
+				match_id: matchId,        // Real database match ID
+				sender_id: dbSenderId,    // 0 for AI, real user ID for user
+				message_text: text,
+				is_ai: sender === 'ai'
+			  })
 			});
-			localStorage.setItem(`ai_chat_${chatId}`, JSON.stringify(aiMessages));
-
-			const dbSenderId = sender === 'user' ? parseInt(currentUser.uid) : 0;
-
-			try {
-				// 1️⃣ Dummy-User und Dummy-Match anlegen (falls nicht vorhanden)
-				if (dbSenderId === 0) { // nur für AI
-					await fetch('/.netlify/functions/ensure_ai_dummy', { method: 'POST' });
-				}
-
-				// 2️⃣ Nachricht speichern
-				await fetch('/.netlify/functions/send_message', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						match_id: 999999,        // Dummy-Match
-						sender_id: dbSenderId,   // 0 für AI, echte User-ID sonst
-						message_text: text,
-						is_ai: sender === 'ai'
-					})
-				});
-
-			} catch (err) {
-				console.error('❌ Fehler beim Speichern der AI-Nachricht in DB', err);
-			}
+		  } catch (err) {
+			console.error('❌ Fehler beim Speichern der AI-Nachricht in DB', err);
+		  }
 		}
-
-
 
 		async function sendAIMessage(messageText) {
 			if (!chatState.currentMatchId || !messageText) return;
@@ -4451,68 +4441,87 @@
 
 
 		async function handleLike(profile) {
-			try {
-				console.log('💖 Like für:', profile.profile_name || profile.name);
-
-				// Prüfen, ob es ein AI-Profil ist
-				if (profile.isAI || typeof profile.user_id === 'string') {
-					// AI Match erstellen
-					const profileId = profile.profile_name || profile.name || `AI-${Date.now()}`;
-					const aiMatchId = `ai_${profileId}`;
-					const aiMatchUserId = `ai_user_${profileId}`; // Dummy-ID für openMatchChat
-
-					const aiMatch = {
-						id: aiMatchId,
-						match_id: aiMatchId,
-						matched_user_id: aiMatchUserId,
-						profile_name: profile.profile_name || profile.name,
-						profile_image: profile.profile_image || profile.image,
-						description: profile.description,
-						interests: profile.interests || profile.preferences,
-						age: profile.age,
-						matched_at: Date.now(),
-						isAI: true
-					};
-
-					// LocalStorage speichern
-					let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-					const idx = localMatches.findIndex(m => m.match_id === aiMatch.match_id);
-					if (idx !== -1) {
-						localMatches[idx] = aiMatch;
-					} else {
-						localMatches.push(aiMatch);
-					}
-					localStorage.setItem('userMatches', JSON.stringify(localMatches));
-
-					showNotification('🎉 Es ist ein Match! 💕', 'success');
-					showMatchAnimation(profile);
-
-					// AI Chat direkt öffnen
-					openMatchChat(aiMatch.match_id, aiMatch.matched_user_id, aiMatch.profile_name, aiMatch.profile_image);
-					return;
+		  try {
+			console.log('💖 Like für:', profile.profile_name || profile.name);
+			
+			// Prüfen, ob es ein AI-Profil ist
+			if (profile.isAI || typeof profile.user_id === 'string') {
+			  // 1. Ensure AI dummy user exists (user_id = 0)
+			  await fetch('/.netlify/functions/ensure_ai_dummy', {
+				method: 'POST'
+			  });
+			  
+			  // 2. Create REAL database match between current user and AI user
+			  const response = await fetch('/.netlify/functions/create_match', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+				  likerId: parseInt(currentUser.uid),  // Real user ID (17)
+				  likedId: 0,                          // AI user ID is always 0
+				  isInstaMatch: true                   // Force immediate match for AI
+				})
+			  });
+			  
+			  const result = await response.json();
+			  
+			  if (result.success) {
+				const realMatchId = result.matchId; // Real database match ID
+				
+				// 3. Create local match data with REAL match ID
+				const aiMatch = {
+				  id: realMatchId,                    // Use REAL database match ID
+				  match_id: realMatchId,              // Use REAL database match ID
+				  matched_user_id: 0,                 // AI user ID is 0
+				  profile_name: profile.profile_name || profile.name,
+				  profile_image: profile.profile_image || profile.image,
+				  description: profile.description,
+				  interests: profile.interests || profile.preferences,
+				  age: profile.age,
+				  matched_at: Date.now(),
+				  isAI: true
+				};
+				
+				// 4. Store in localStorage with REAL match ID
+				let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+				const idx = localMatches.findIndex(m => m.match_id === aiMatch.match_id);
+				if (idx !== -1) {
+				  localMatches[idx] = aiMatch;
+				} else {
+				  localMatches.push(aiMatch);
 				}
-
-				// Echte Matches
-				const response = await fetch('/.netlify/functions/create_match', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						likerId: parseInt(currentUser.uid),
-						likedId: parseInt(profile.user_id)
-					})
-				});
-
-				const result = await response.json();
-				if (result.success && result.newMatch) {
-					showNotification('🎉 Es ist ein Match!', 'success');
-
-					// Echte Match Chat öffnen
-					const matchId = result.match_id; // aus DB
-					openMatchChat(matchId, profile.user_id, profile.profile_name || profile.name, profile.profile_image || profile.image);
-				}
-			} catch (error) {
-				console.error('Fehler beim Like:', error);
+				localStorage.setItem('userMatches', JSON.stringify(localMatches));
+				
+				showNotification('🎉 Es ist ein Match! 💕', 'success');
+				showMatchAnimation(profile);
+				
+				// 5. Open chat with REAL match ID
+				openMatchChat(realMatchId, 0, aiMatch.profile_name, aiMatch.profile_image);
+			  } else {
+				throw new Error(result.error || 'Failed to create AI match');
+			  }
+			  return;
 			}
+			
+			// Rest of the function for real user matches...
+			const response = await fetch('/.netlify/functions/create_match', {
+			  method: 'POST',
+			  headers: { 'Content-Type': 'application/json' },
+			  body: JSON.stringify({
+				likerId: parseInt(currentUser.uid),
+				likedId: parseInt(profile.user_id)
+			  })
+			});
+			
+			const result = await response.json();
+			if (result.success && result.newMatch) {
+			  showNotification('🎉 Es ist ein Match!', 'success');
+			  const matchId = result.match_id;
+			  openMatchChat(matchId, profile.user_id, profile.profile_name || profile.name, profile.profile_image || profile.image);
+			}
+		  } catch (error) {
+			console.error('Fehler beim Like:', error);
+			showNotification('❌ Fehler beim Match erstellen', 'error');
+		  }
 		}
 
 		// Match zu lokaler Liste hinzufügen - FIXED VERSION
