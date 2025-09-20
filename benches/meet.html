@@ -4302,8 +4302,11 @@
 			console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay / 1000)}s`);
 		}
 
-
-		async function triggerAiReply(convId) {
+		console.log('currentMatchId:', chatState.currentMatchId);
+		const localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+		console.log('localMatches:', localMatches);
+	
+	async function triggerAiReply(convId) {
 			const t = window.aiReplyTimers[convId];
 			if (!t) return;
 
