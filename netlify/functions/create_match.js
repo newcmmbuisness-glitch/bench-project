@@ -1,3 +1,7 @@
+const { neon } = require('@neondatabase/serverless');
+const sql = neon(process.env.NETLIFY_DATABASE_URL);
+
+
 exports.handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
