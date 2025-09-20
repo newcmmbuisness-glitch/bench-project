@@ -11,7 +11,7 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
     
     try {
-        const { likerId, likedId, isInstaMatch = false } = JSON.parse(event.body);
+        const { likerId, likedId, aiProfileId, isInstaMatch = false } = JSON.parse(event.body);
         
         if (!likerId || likedId === undefined || likedId === null) {
             return { 
@@ -23,6 +23,15 @@ exports.handler = async (event, context) => {
 
         // Check if this is an AI match (likedId = 0)
         const isAIMatch = likedId === 0;
+        
+        // For AI matches, aiProfileId is required
+        if (isAIMatch && !aiProfileId) {
+            return { 
+                statusCode: 400, 
+                headers, 
+                body: JSON.stringify({ error: 'AI Profile ID ist erforderlich für AI Matches' })
+            };
+        }
 
         // Check if liker is UserPlus for InstaMatch (but skip for AI matches)
         if (isInstaMatch && !isAIMatch) {
@@ -40,11 +49,23 @@ exports.handler = async (event, context) => {
         }
 
         // Check if match already exists
-        const existingMatch = await sql`
-            SELECT id FROM matches 
-            WHERE (user_id_1 = ${likerId} AND user_id_2 = ${likedId}) 
-               OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId})
-        `;
+        let existingMatch;
+        if (isAIMatch) {
+            // For AI matches, check including ai_profile_id
+            existingMatch = await sql`
+                SELECT id FROM matches 
+                WHERE ((user_id_1 = ${likerId} AND user_id_2 = ${likedId}) 
+                    OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId}))
+                    AND ai_profile_id = ${aiProfileId}
+            `;
+        } else {
+            // For real user matches, check normally
+            existingMatch = await sql`
+                SELECT id FROM matches 
+                WHERE (user_id_1 = ${likerId} AND user_id_2 = ${likedId}) 
+                   OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId})
+            `;
+        }
 
         if (existingMatch.length > 0) {
             return { 
@@ -81,11 +102,22 @@ exports.handler = async (event, context) => {
 
         if (isInstaMatch || isAIMatch) {
             // InstaMatch or AI Match: Create match immediately
-            const result = await sql`
-                INSERT INTO matches (user_id_1, user_id_2)
-                VALUES (${likerId}, ${likedId})
-                RETURNING id
-            `;
+            let result;
+            if (isAIMatch) {
+                // For AI matches, include ai_profile_id
+                result = await sql`
+                    INSERT INTO matches (user_id_1, user_id_2, ai_profile_id)
+                    VALUES (${likerId}, ${likedId}, ${aiProfileId})
+                    RETURNING id
+                `;
+            } else {
+                // For real user matches
+                result = await sql`
+                    INSERT INTO matches (user_id_1, user_id_2)
+                    VALUES (${likerId}, ${likedId})
+                    RETURNING id
+                `;
+            }
             
             matchId = result[0].id;
             newMatch = true;
@@ -127,7 +159,8 @@ exports.handler = async (event, context) => {
                 newMatch, 
                 matchId,
                 isInstaMatch,
-                isAIMatch
+                isAIMatch,
+                aiProfileId: isAIMatch ? aiProfileId : null
             }),
         };
         
