@@ -2306,60 +2306,67 @@
 				
 				let allMatches = [];
 				
-				// Add real matches
+				// Add real matches from database (including AI matches!)
 				if (response.ok) {
 					const result = await response.json();
 					if (result.success && result.matches) {
 						allMatches = [...result.matches];
+						
+						// For AI matches from database, get additional info from localStorage
+						allMatches = allMatches.map(match => {
+							// Check if this is an AI match (user_id_2 = 0 or any user with id 0)
+							const isAIMatch = match.matched_user_id === 0 || match.matched_user_id === "0";
+							
+							if (isAIMatch) {
+								// Get AI profile data from localStorage
+								const localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+								const localAIMatch = localMatches.find(lm => lm.match_id === match.match_id);
+								
+								if (localAIMatch) {
+									// Combine database match with localStorage AI profile data
+									return {
+										...match,
+										isAI: true,
+										profile_name: localAIMatch.profile_name,
+										profile_image: localAIMatch.profile_image,
+										description: localAIMatch.description,
+										age: localAIMatch.age
+									};
+								}
+							}
+							
+							return match;
+						});
 					}
 				}
 				
-				// Add AI matches from localStorage WITH their last messages
-				const localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-				const aiMatches = localMatches.filter(m => m.isAI && m.matched_user_id).map(match => {
-					// Get last message from AI chat
-					const aiChatKey = `ai_chat_ai_match_${match.matched_user_id}`;
-					const aiMessages = JSON.parse(localStorage.getItem(aiChatKey) || '[]');
-					const lastAIMessage = aiMessages.length > 0 ? aiMessages[aiMessages.length - 1] : null;
-					
-					return {
-						...match,
-						last_message: lastAIMessage ? {
-							sender_id: lastAIMessage.sender === 'user' ? currentUser.uid : match.matched_user_id,
-							text: lastAIMessage.text,
-							sent_at: lastAIMessage.timestamp
-						} : null
-					};
-				});
-				
-				allMatches = [...allMatches, ...aiMatches];
-				
-				// Erstelle Hash der aktuellen Match-Daten zum Vergleich
+				// Create hash for comparison
 				const currentHash = JSON.stringify(allMatches.map(m => ({
-					id: m.match_id || m.matched_user_id,
+					id: m.match_id,
 					lastMsg: m.last_message?.text || null,
 					lastMsgTime: m.last_message?.sent_at || null
 				})));
 				
-				// Nur UI aktualisieren wenn sich etwas geändert hat
+				// Only update UI if something changed
 				if (currentHash !== lastMatchesHash || forceRefresh) {
 					lastMatchesHash = currentHash;
 					
 					if (allMatches.length > 0) {
 						matchesList.innerHTML = allMatches.map(match => {
-							// Letzte Nachricht aus DB/Objekt
+							// Last message from DB
 							const lastMsg = match.last_message
-								? (match.last_message.sender_id === currentUser.uid
+								? (match.last_message.sender_id == currentUser.uid
 									? `Du: ${match.last_message.text}`
 									: `${match.profile_name}: ${match.last_message.text}`)
 								: "Noch keine Nachrichten";
 
-							// Bestimme die richtige match_id für den onclick
-							const matchId = match.isAI ? `ai_match_${match.matched_user_id}` : match.match_id;
+							// Use the real match_id for AI matches too
+							const matchId = match.match_id;
+							const userId = match.matched_user_id;
 
 							return `
 								<div class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3"
-									onclick="openMatchChat('${matchId}', '${match.matched_user_id}', '${match.profile_name}', '${match.profile_image}')">
+									onclick="openMatchChat('${matchId}', '${userId}', '${match.profile_name}', '${match.profile_image}')">
 									<div class="flex items-center space-x-4">
 										<div class="flex-shrink-0 relative">
 											<img src="${match.profile_image}"
@@ -2372,7 +2379,7 @@
 											</h4>
 											<p class="text-sm text-gray-600 truncate">${lastMsg}</p>
 											<span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full">
-												${match.isAI ? '💕 Match' : '💕 Match'}
+												${match.isAI ? 'KI Match' : 'Match'}
 										   </span>
 										</div>
 									</div>
