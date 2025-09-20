@@ -1891,16 +1891,16 @@
 		let lastSwipedProfile = null;
 		let selectedGender = null;
 
-		
-		// Global chat state object instead of individual variables
+				
 		let chatState = {
 			currentMatchId: null,
 			currentConversationId: null,
 			aiSuggestionsLoaded: false,
 			lastLoadedMessageCount: 0,
-			messageInterval: null
+			messageInterval: null,
+			isAI: false,        // Flag, ob Chat mit AI ist
+			aiProfileId: null   // die AI-Profil-ID für diesen Chat
 		};
-
 	
 		const emojiMap = {
 			'alcohol': '🍷',
