@@ -4449,88 +4449,97 @@
 
 
 		async function handleLike(profile) {
-		  try {
-			console.log('💖 Like für:', profile.profile_name || profile.name);
-			
-			// Prüfen, ob es ein AI-Profil ist
-			if (profile.isAI || typeof profile.user_id === 'string') {
-			  // 1. Ensure AI dummy user exists (user_id = 0)
-			  await fetch('/.netlify/functions/ensure_ai_dummy', {
-				method: 'POST'
-			  });
-			  
-			  // 2. Create REAL database match between current user and AI user
-			  const response = await fetch('/.netlify/functions/create_match', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-				  likerId: parseInt(currentUser.uid),  // Real user ID (17)
-				  likedId: 0,                          // AI user ID is always 0
-				  isInstaMatch: true                   // Force immediate match for AI
-				})
-			  });
-			  
-			  const result = await response.json();
-			  
-			  if (result.success) {
-				const realMatchId = result.matchId; // Real database match ID
+			try {
+				console.log('💖 Like für:', profile.profile_name || profile.name);
 				
-				// 3. Create local match data with REAL match ID
-				const aiMatch = {
-				  id: realMatchId,                    // Use REAL database match ID
-				  match_id: realMatchId,              // Use REAL database match ID
-				  matched_user_id: 0,                 // AI user ID is 0
-				  ai_profile_id: profile.id,
-				  profile_name: profile.profile_name || profile.name,
-				  profile_image: profile.profile_image || profile.image,
-				  description: profile.description,
-				  interests: profile.interests || profile.preferences,
-				  age: profile.age,
-				  matched_at: Date.now(),
-				  isAI: true
-				};
-				
-				// 4. Store in localStorage with REAL match ID
-				let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-				const idx = localMatches.findIndex(m => m.match_id === aiMatch.match_id);
-				if (idx !== -1) {
-				  localMatches[idx] = aiMatch;
-				} else {
-				  localMatches.push(aiMatch);
+				// Prüfen, ob es ein AI-Profil ist
+				if (profile.isAI || typeof profile.user_id === 'string') {
+					// 1. Ensure AI dummy user exists (user_id = 0)
+					await fetch('/.netlify/functions/ensure_ai_dummy', {
+						method: 'POST'
+					});
+					
+					// 2. Create REAL database match between current user and AI user
+					// WICHTIG: Jetzt übergeben wir die AI Profile ID!
+					const response = await fetch('/.netlify/functions/create_match', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							likerId: parseInt(currentUser.uid),  // Real user ID (17)
+							likedId: 0,                          // AI user ID is always 0
+							aiProfileId: profile.id,             // 🔥 WICHTIG: AI Profile ID übergeben!
+							isInstaMatch: true                   // Force immediate match for AI
+						})
+					});
+					
+					const result = await response.json();
+					
+					if (result.success) {
+						const realMatchId = result.matchId; // Real database match ID
+						
+						// 3. Create local match data with REAL match ID
+						const aiMatch = {
+							id: realMatchId,                    // Use REAL database match ID
+							match_id: realMatchId,              // Use REAL database match ID
+							matched_user_id: 0,                 // AI user ID is 0
+							ai_profile_id: profile.id,          // Store AI profile ID
+							profile_name: profile.profile_name || profile.name,
+							profile_image: profile.profile_image || profile.image,
+							description: profile.description,
+							interests: profile.interests || profile.preferences,
+							age: profile.age,
+							matched_at: Date.now(),
+							is_ai_match: true,
+							isAI: true
+						};
+						
+						// 4. Store in localStorage with REAL match ID
+						let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
+						
+						// 🔥 WICHTIG: Check for existing match by match_id UND ai_profile_id
+						const existingIndex = localMatches.findIndex(m => 
+							m.match_id === aiMatch.match_id || 
+							(m.is_ai_match && m.ai_profile_id === aiMatch.ai_profile_id)
+						);
+						
+						if (existingIndex !== -1) {
+							localMatches[existingIndex] = aiMatch;
+						} else {
+							localMatches.push(aiMatch);
+						}
+						localStorage.setItem('userMatches', JSON.stringify(localMatches));
+						
+						showNotification('🎉 Es ist ein Match! 💕', 'success');
+						showMatchAnimation(profile);
+						
+						// 5. Open chat with REAL match ID
+						openMatchChat(realMatchId, 0, aiMatch.profile_name, aiMatch.profile_image);
+					} else {
+						throw new Error(result.error || 'Failed to create AI match');
+					}
+					return;
 				}
-				localStorage.setItem('userMatches', JSON.stringify(localMatches));
 				
-				showNotification('🎉 Es ist ein Match! 💕', 'success');
-				showMatchAnimation(profile);
+				// Rest of the function for real user matches...
+				const response = await fetch('/.netlify/functions/create_match', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						likerId: parseInt(currentUser.uid),
+						likedId: parseInt(profile.user_id)
+					})
+				});
 				
-				// 5. Open chat with REAL match ID
-				openMatchChat(realMatchId, 0, aiMatch.profile_name, aiMatch.profile_image);
-			  } else {
-				throw new Error(result.error || 'Failed to create AI match');
-			  }
-			  return;
+				const result = await response.json();
+				if (result.success && result.newMatch) {
+					showNotification('🎉 Es ist ein Match!', 'success');
+					const matchId = result.match_id;
+					openMatchChat(matchId, profile.user_id, profile.profile_name || profile.name, profile.profile_image || profile.image);
+				}
+			} catch (error) {
+				console.error('Fehler beim Like:', error);
+				showNotification('❌ Fehler beim Match erstellen', 'error');
 			}
-			
-			// Rest of the function for real user matches...
-			const response = await fetch('/.netlify/functions/create_match', {
-			  method: 'POST',
-			  headers: { 'Content-Type': 'application/json' },
-			  body: JSON.stringify({
-				likerId: parseInt(currentUser.uid),
-				likedId: parseInt(profile.user_id)
-			  })
-			});
-			
-			const result = await response.json();
-			if (result.success && result.newMatch) {
-			  showNotification('🎉 Es ist ein Match!', 'success');
-			  const matchId = result.match_id;
-			  openMatchChat(matchId, profile.user_id, profile.profile_name || profile.name, profile.profile_image || profile.image);
-			}
-		  } catch (error) {
-			console.error('Fehler beim Like:', error);
-			showNotification('❌ Fehler beim Match erstellen', 'error');
-		  }
 		}
 
 		function addToLocalMatches(match) {
