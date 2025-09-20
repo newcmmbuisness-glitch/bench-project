@@ -4188,7 +4188,7 @@
 			markMessagesAsRead(matchId);
 
 			if (isAIChat) {
-				loadMessages();
+				loadAIMessages();
 			} else {
 				loadMessages();
 				chatState.messageInterval = setInterval(loadMessages, 3000);
