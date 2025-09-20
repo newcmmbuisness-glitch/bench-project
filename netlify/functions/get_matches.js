@@ -34,7 +34,9 @@ exports.handler = async (event, context) => {
                 m.id AS match_id,
                 p.*,
                 CASE WHEN m.user_id_1 = ${userId} THEN m.user_id_2 ELSE m.user_id_1 END AS matched_user_id,
-                m.created_at
+                m.created_at,
+                false AS is_ai_match,
+                null AS ai_profile_id
             FROM matches m
             JOIN meet_profiles p ON (p.user_id = m.user_id_1 OR p.user_id = m.user_id_2)
             WHERE (m.user_id_1 = ${userId} OR m.user_id_2 = ${userId}) 
@@ -42,17 +44,23 @@ exports.handler = async (event, context) => {
                 AND m.user_id_1 != 0 AND m.user_id_2 != 0  -- Exclude AI matches
         `;
 
-        // Get AI matches (where one user is 0)
+        // Get AI matches with full AI profile information
         const aiMatches = await sql`
             SELECT 
                 m.id AS match_id,
                 0 AS matched_user_id,
                 m.created_at,
-                'AI Match' AS profile_name,
-                18 AS age,
-                'No description available' AS description,
-                '/default-avatar.png' AS profile_image
+                m.ai_profile_id,
+                ap.profile_name,
+                ap.age,
+                ap.gender,
+                ap.description,
+                ap.profile_image,
+                ap.interests,
+                ap.postal_code,
+                true AS is_ai_match
             FROM matches m
+            LEFT JOIN ai_profiles ap ON m.ai_profile_id = ap.id
             WHERE (m.user_id_1 = ${userId} AND m.user_id_2 = 0)
                OR (m.user_id_1 = 0 AND m.user_id_2 = ${userId})
         `;
@@ -63,6 +71,14 @@ exports.handler = async (event, context) => {
         // Add last messages to matches
         const structuredMatches = allMatches.map(match => {
             const lastMsg = lastMessages.find(lm => lm.match_id === match.match_id);
+            
+            // For AI matches, ensure we have profile information
+            if (match.is_ai_match && !match.profile_name) {
+                match.profile_name = 'AI Match';
+                match.age = 25;
+                match.description = 'AI generated profile';
+                match.profile_image = '/default-ai-avatar.png';
+            }
             
             return {
                 ...match,
