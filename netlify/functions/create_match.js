@@ -1,175 +1,78 @@
-const { neon } = require('@neondatabase/serverless');
-const sql = neon(process.env.NETLIFY_DATABASE_URL);
-
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
     };
-    
     if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-    
+
     try {
         const { likerId, likedId, aiProfileId, isInstaMatch = false } = JSON.parse(event.body);
-        
+
         if (!likerId || likedId === undefined || likedId === null) {
-            return { 
-                statusCode: 400, 
-                headers, 
-                body: JSON.stringify({ error: 'Fehlende IDs' })
-            };
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Fehlende IDs' }) };
         }
 
-        // Check if this is an AI match (likedId = 0)
         const isAIMatch = likedId === 0;
-        
-        // For AI matches, aiProfileId is required
         if (isAIMatch && !aiProfileId) {
-            return { 
-                statusCode: 400, 
-                headers, 
-                body: JSON.stringify({ error: 'AI Profile ID ist erforderlich für AI Matches' })
-            };
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'AI Profile ID erforderlich' }) };
         }
 
-        // Check if liker is UserPlus for InstaMatch (but skip for AI matches)
-        if (isInstaMatch && !isAIMatch) {
-            const userCheck = await sql`
-                SELECT is_user_plus, is_admin FROM users WHERE id = ${likerId}
-            `;
-            
-            if (userCheck.length === 0 || (!userCheck[0].is_user_plus && !userCheck[0].is_admin)) {
-                return { 
-                    statusCode: 403, 
-                    headers, 
-                    body: JSON.stringify({ error: 'InstaMatch nur für UserPlus verfügbar' }) 
-                };
-            }
-        }
-
-        // Check if match already exists
+        // --- Überprüfen, ob Match schon existiert ---
         let existingMatch;
         if (isAIMatch) {
-            // For AI matches, check including ai_profile_id
             existingMatch = await sql`
-                SELECT id FROM matches 
+                SELECT id FROM matches
                 WHERE ((user_id_1 = ${likerId} AND user_id_2 = ${likedId}) 
-                    OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId}))
-                    AND ai_profile_id = ${aiProfileId}
+                       OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId}))
+                  AND ai_profile_id = ${aiProfileId}
             `;
         } else {
-            // For real user matches, check normally
             existingMatch = await sql`
-                SELECT id FROM matches 
+                SELECT id FROM matches
                 WHERE (user_id_1 = ${likerId} AND user_id_2 = ${likedId}) 
                    OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId})
             `;
         }
 
         if (existingMatch.length > 0) {
-            return { 
-                statusCode: 200, 
-                headers, 
-                body: JSON.stringify({ 
-                    success: true, 
-                    newMatch: false, 
-                    matchId: existingMatch[0].id 
-                }) 
-            };
+            return { statusCode: 200, headers, body: JSON.stringify({
+                success: true,
+                newMatch: false,
+                matchId: existingMatch[0].id
+            }) };
         }
 
-        // Record the swipe in swipe_history (only for non-AI profiles)
-        if (!isAIMatch) {
-            await sql`
-                INSERT INTO swipe_history (user_id, swiped_user_id, swipe_direction)
-                VALUES (${likerId}, ${likedId}, 'right')
-                ON CONFLICT (user_id, swiped_user_id) DO NOTHING
+        // --- Match erstellen ---
+        let result;
+        if (isAIMatch) {
+            result = await sql`
+                INSERT INTO matches (user_id_1, user_id_2, ai_profile_id)
+                VALUES (${likerId}, ${likedId}, ${aiProfileId})
+                RETURNING id
             `;
-        }
-
-        // Record the like (only for non-AI profiles)
-        if (!isAIMatch) {
-            await sql`
-                INSERT INTO likes (liker_id, liked_id)
-                VALUES (${likerId}, ${likedId})
-                ON CONFLICT (liker_id, liked_id) DO NOTHING
-            `;
-        }
-
-        let newMatch = false;
-        let matchId = null;
-
-        if (isInstaMatch || isAIMatch) {
-            // InstaMatch or AI Match: Create match immediately
-            let result;
-            if (isAIMatch) {
-                // For AI matches, include ai_profile_id
-                result = await sql`
-                    INSERT INTO matches (user_id_1, user_id_2, ai_profile_id)
-                    VALUES (${likerId}, ${likedId}, ${aiProfileId})
-                    RETURNING id
-                `;
-            } else {
-                // For real user matches
-                result = await sql`
-                    INSERT INTO matches (user_id_1, user_id_2)
-                    VALUES (${likerId}, ${likedId})
-                    RETURNING id
-                `;
-            }
-            
-            matchId = result[0].id;
-            newMatch = true;
-            
-            // For non-AI InstaMatches, also record the reverse like to maintain consistency
-            if (!isAIMatch) {
-                await sql`
-                    INSERT INTO likes (liker_id, liked_id)
-                    VALUES (${likedId}, ${likerId})
-                    ON CONFLICT (liker_id, liked_id) DO NOTHING
-                `;
-            }
-            
         } else {
-            // Regular like: Check if other user also liked
-            const mutualLike = await sql`
-                SELECT id FROM likes 
-                WHERE liker_id = ${likedId} AND liked_id = ${likerId}
+            result = await sql`
+                INSERT INTO matches (user_id_1, user_id_2)
+                VALUES (${likerId}, ${likedId})
+                RETURNING id
             `;
-
-            if (mutualLike.length > 0) {
-                // Both users liked each other - create match
-                const result = await sql`
-                    INSERT INTO matches (user_id_1, user_id_2)
-                    VALUES (${likerId}, ${likedId})
-                    RETURNING id
-                `;
-                
-                matchId = result[0].id;
-                newMatch = true;
-            }
         }
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ 
-                success: true, 
-                newMatch, 
-                matchId,
-                isInstaMatch,
+            body: JSON.stringify({
+                success: true,
+                newMatch: true,
+                matchId: result[0].id,
                 isAIMatch,
                 aiProfileId: isAIMatch ? aiProfileId : null
-            }),
+            })
         };
-        
+
     } catch (error) {
         console.error('Fehler in create_match:', error);
-        return { 
-            statusCode: 500, 
-            headers, 
-            body: JSON.stringify({ error: error.message }) 
-        };
+        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
     }
 };
