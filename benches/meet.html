@@ -3769,7 +3769,7 @@
 			}
 
 			// Check if this is an AI chat - if so, redirect to AI function
-			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
+			const isAIChat = chatState.isAI;
 			if (isAIChat) {
 				loadAIMessages();
 				return;
@@ -3885,8 +3885,8 @@
 			}
 			
 			// Check if this is an AI chat
-			const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
-
+			const isAIChat = chatState.isAI;
+			
 			// Optimistic update: Show message immediately
 			const chatMessages = document.getElementById('chatMessages');
 			const messageElement = document.createElement('div');
