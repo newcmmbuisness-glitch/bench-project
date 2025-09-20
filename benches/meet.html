@@ -4129,7 +4129,7 @@
 		  }
 		  
 		  // Determine if this is an AI chat based on matchUserId being 0
-		  const isAIChat = Number(matchUserId) === 0 && matchId && chatState?.aiProfileId;
+		  const isAIChat = Number(matchUserId) === 0;
 		  
 		  // Ensure matchId is a number for database operations
 		  const numericMatchId = parseInt(matchId);
