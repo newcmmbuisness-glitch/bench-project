@@ -127,8 +127,9 @@ async function analyzeChatData(pool) {
     throw error;
   }
 }
+
 // ===================
-// Generiert AI-Antwort basierend auf gelernten Trainingsdaten
+// Generiert AI-Antwort basierend auf Training inkl. User→User
 // ===================
 async function generateAIResponse(pool, aiId, userMessage) {
   const trimmedMsg = userMessage.trim().toLowerCase().replace(/[!?.]/g, '');
@@ -137,11 +138,16 @@ async function generateAIResponse(pool, aiId, userMessage) {
   let trainingData = [];
   if (aiId > 0) {
     const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
-    if (profileQuery.rows.length > 0) trainingData = profileQuery.rows[0].training_data || [];
+    if (profileQuery.rows.length > 0) trainingData = JSON.parse(profileQuery.rows[0].training_data || [];
   } else {
+    // User→User Paare als Input/Output
     const userPairsQuery = await pool.query(`
-      SELECT input, output FROM chat_messages
-      WHERE sender_id <> 0
+      SELECT cm1.message_text AS input, cm2.message_text AS output
+      FROM chat_messages cm1
+      JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
+      WHERE cm2.sent_at > cm1.sent_at
+        AND LENGTH(cm1.message_text) > 1
+        AND LENGTH(cm2.message_text) > 1
       LIMIT 500
     `);
     trainingData = userPairsQuery.rows;
@@ -150,10 +156,13 @@ async function generateAIResponse(pool, aiId, userMessage) {
   // 1️⃣ Exaktes Match zuerst
   for (const item of trainingData) {
     const dbInput = item.input.toLowerCase().trim().replace(/[!?.]/g, '');
-    if (dbInput === trimmedMsg) return item.output;
+    if (dbInput === trimmedMsg) {
+      // leichte Variation einbauen
+      return addVariation(item.output);
+    }
   }
 
-  // 2️⃣ Sonst unscharfes Match via similarity
+  // 2️⃣ Unscharfes Match via Wort-Overlap
   let bestMatch = null;
   let highestScore = 0;
   for (const item of trainingData) {
@@ -163,32 +172,45 @@ async function generateAIResponse(pool, aiId, userMessage) {
       bestMatch = item;
     }
   }
-  if (bestMatch && highestScore > 0.3) return bestMatch.output;
 
-  // 3️⃣ Nur minimaler Fallback
-  return '?';
-}
-
-
-
-// ===================
-// Sehr einfache Text-Ähnlichkeit (Overlap von Wörtern)
-// ===================
-function similarity(text1, text2) {
-  const t1 = text1.toLowerCase().trim();
-  const t2 = text2.toLowerCase().trim();
-
-  // Kurze Texte exakt matchen
-  if (t1.length < 5 && t2.length < 5) {
-    return t1 === t2 ? 1 : 0;
+  if (bestMatch && highestScore > 0.2) { // niedriger Threshold für kurze Nachrichten
+    return addVariation(bestMatch.output);
   }
 
-  const words1 = t1.split(/\s+/);
-  const words2 = t2.split(/\s+/);
+  // 3️⃣ Minimaler Fallback
+  return generateFallbackResponse();
+}
+
+// ===================
+// Variation einbauen
+// ===================
+function addVariation(text) {
+  let newText = text;
+
+  // zufällige Emoji-Ergänzung
+  const emojis = ['😊','😄','😉','🙂','😎'];
+  if (Math.random() < 0.3) newText += ` ${emojis[Math.floor(Math.random()*emojis.length)]}`;
+
+  // kleine Synonym-Ersetzungen (optional erweitern)
+  newText = newText.replace(/\b(hallo|hi|hey)\b/gi, 'Hey');
+
+  // Kürze lange Sätze leicht ab oder baue Frage ein
+  if (newText.length > 80 && Math.random() < 0.5) {
+    newText = newText.split(/[,.]/)[0] + '?';
+  }
+
+  return newText;
+}
+
+// ===================
+// Wort-Overlap Ähnlichkeit
+// ===================
+function similarity(text1, text2) {
+  const words1 = text1.toLowerCase().trim().split(/\s+/);
+  const words2 = text2.toLowerCase().trim().split(/\s+/);
   const common = words1.filter(w => words2.includes(w));
   return common.length / Math.max(words1.length, words2.length);
 }
-
 
 // Häufige Phrases analysieren
 async function analyzeFrequentPhrases(pool) {
