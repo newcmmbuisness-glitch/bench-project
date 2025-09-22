@@ -172,7 +172,7 @@ async function generateAIResponse(pool, aiId, userMessage) {
     }
   }
 
-  if (bestMatch && highestScore > 0.3) return bestMatch.output;
+  if (bestMatch && highestScore > 0.6) return bestMatch.output;
   return "Erzähl mal mehr!";
 }
 
