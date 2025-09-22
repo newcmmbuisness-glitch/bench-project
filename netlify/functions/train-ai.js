@@ -134,9 +134,11 @@ async function analyzeChatData(pool) {
 async function generateAIResponse(pool, aiId, userMessage) {
   const trimmedMsg = userMessage.trim().toLowerCase().replace(/[!?.]/g, '');
 
-  // Trainingsdaten laden
+  // Trainingsdaten korrekt laden
   let trainingData = [];
+  
   if (aiId > 0) {
+    // AI-spezifische Trainingsdaten
     const profileQuery = await pool.query(
       'SELECT training_data FROM ai_profiles WHERE id = $1',
       [aiId]
@@ -150,25 +152,58 @@ async function generateAIResponse(pool, aiId, userMessage) {
       }
     }
   } else {
+    // KORRIGIERT: User-zu-User Paare richtig extrahieren
     const userPairsQuery = await pool.query(`
-      SELECT cm1.message_text AS input, cm2.message_text AS output
+      SELECT 
+        cm1.message_text AS input, 
+        cm2.message_text AS output,
+        cm1.sender_id AS sender1,
+        cm2.sender_id AS sender2
       FROM chat_messages cm1
       JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
       WHERE cm2.sent_at > cm1.sent_at
+        AND cm2.sent_at - cm1.sent_at < INTERVAL '30 minutes'
         AND LENGTH(cm1.message_text) > 1
         AND LENGTH(cm2.message_text) > 1
+        AND cm1.sender_id != cm2.sender_id  -- WICHTIG: Verschiedene Sender
+        AND cm1.sender_id != 0              -- User 1 ist kein AI
+        AND cm2.sender_id != 0              -- User 2 ist kein AI (oder = 0 für AI)
+      ORDER BY cm1.sent_at DESC
       LIMIT 500
     `);
-    trainingData = userPairsQuery.rows;
+    
+    trainingData = userPairsQuery.rows.map(row => ({
+      input: row.input,
+      output: row.output
+    }));
   }
 
-  // Debug: prüfen ob Daten da sind
-  console.info("👉 Geladene Trainingsdaten:", trainingData.slice(0, 5));
+  // Filtere ungültige Paare heraus (identische oder zu ähnliche)
+  trainingData = trainingData.filter(item => {
+    if (!item.input || !item.output) return false;
+    
+    const inputClean = item.input.toLowerCase().trim();
+    const outputClean = item.output.toLowerCase().trim();
+    
+    // Verhindere identische Paare
+    if (inputClean === outputClean) return false;
+    
+    // Verhindere zu ähnliche Paare (Echo)
+    const sim = similarity(inputClean, outputClean);
+    if (sim > 0.85) return false;
+    
+    // Verhindere zu kurze Antworten
+    if (item.output.length < 2) return false;
+    
+    return true;
+  });
+
+  console.info("👉 Gültige Trainingsdaten nach Filterung:", trainingData.length);
+  console.info("👉 Beispiele:", trainingData.slice(0, 3));
   console.info("👉 Suche nach:", trimmedMsg);
 
-  // 1️⃣ Exaktes Match
+  // Exact Match
   for (const item of trainingData) {
-    if (!item.input || !item.output) continue; // skip kaputte Einträge
     const dbInput = item.input.toLowerCase().trim().replace(/[!?.]/g, '');
     if (dbInput === trimmedMsg) {
       console.info("✅ Direktes Match gefunden:", item);
@@ -176,29 +211,32 @@ async function generateAIResponse(pool, aiId, userMessage) {
     }
   }
 
-  // 2️⃣ Unscharfes Match
+  // Fuzzy Match
   let bestMatch = null;
   let highestScore = 0;
   for (const item of trainingData) {
-    if (!item.input || !item.output) continue;
     const score = similarity(userMessage, item.input);
-    if (score > highestScore) {
+    if (score > highestScore && score > 0.3) {
       highestScore = score;
       bestMatch = item;
     }
   }
 
-  if (bestMatch && highestScore > 0.2) {
+  if (bestMatch && highestScore > 0.3) {
     console.info("✅ Unscharfes Match gefunden:", bestMatch, "Score:", highestScore);
     return addVariation(bestMatch.output);
   }
 
-  // 3️⃣ Minimaler Fallback
+  // Intent-basierte Fallbacks
+  const intentResponse = generateIntentBasedResponse(userMessage);
+  if (intentResponse) {
+    console.info("✅ Intent-basierte Antwort verwendet");
+    return intentResponse;
+  }
+
   console.info("⚠️ Kein Match → Fallback");
   return generateFallbackResponse();
 }
-
-
 // ===================
 // Variation einbauen
 // ===================
