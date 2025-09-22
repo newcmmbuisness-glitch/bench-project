@@ -757,7 +757,7 @@ function generateProfileUpdates(profile, inputPatterns, responsePatterns, stats)
   const currentInterests = profile.interests || [];
   const newInterests = [...currentInterests];
 
-  if (inputPatterns.find(p => p.pattern === 'date_request' && p.frequency > 0.2)) {
+  if (inputPatterns.find(p => p.pattern === 'date_request' && p.frequency > 0.1)) {
     if (!newInterests.includes('Dating')) {
       newInterests.push('Dating');
     }
