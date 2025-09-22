@@ -273,7 +273,7 @@ async function identifySuccessfulPatterns(pool) {
         ARRAY_AGG(message_text ORDER BY sent_at) as messages
       FROM chat_messages
       GROUP BY match_id
-      HAVING COUNT(*) > 5 AND COUNT(DISTINCT sender_id) > 1
+      HAVING COUNT(*) > 4 AND COUNT(DISTINCT sender_id) > 1
       ORDER BY message_count DESC
       LIMIT 20
     `);
