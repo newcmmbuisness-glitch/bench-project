@@ -224,11 +224,28 @@ function addVariation(text) {
 // Wort-Overlap Ähnlichkeit
 // ===================
 function similarity(text1, text2) {
-  const words1 = text1.toLowerCase().trim().split(/\s+/);
-  const words2 = text2.toLowerCase().trim().split(/\s+/);
+  const t1 = text1.toLowerCase().trim();
+  const t2 = text2.toLowerCase().trim();
+
+  // Sonderfall: exakt gleich
+  if (t1 === t2) return 1;
+
+  // Wenn beide nur 1 Wort haben → Zeichen-Overlap statt Wort-Overlap
+  if (!t1.includes(" ") && !t2.includes(" ")) {
+    let matches = 0;
+    for (let char of t1) {
+      if (t2.includes(char)) matches++;
+    }
+    return matches / Math.max(t1.length, t2.length);
+  }
+
+  // Standard: Wort-Overlap
+  const words1 = t1.split(/\s+/);
+  const words2 = t2.split(/\s+/);
   const common = words1.filter(w => words2.includes(w));
   return common.length / Math.max(words1.length, words2.length);
 }
+
 
 // Häufige Phrases analysieren
 async function analyzeFrequentPhrases(pool) {
