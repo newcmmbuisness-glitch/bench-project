@@ -273,15 +273,44 @@ function addVariation(text) {
   return newText;
 }
 
+const { distance: levenshtein } = require("fastest-levenshtein");
+const natural = require("natural");
+
 function similarity(text1, text2) {
-  const t1 = text1.toLowerCase().trim();
-  const t2 = text2.toLowerCase().trim();
-  if (t1 === t2) return 1;
-  const words1 = t1.split(/\s+/);
-  const words2 = t2.split(/\s+/);
-  const common = words1.filter(w => words2.includes(w));
-  return common.length / Math.max(words1.length, words2.length);
+  const a = text1.toLowerCase().trim();
+  const b = text2.toLowerCase().trim();
+
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+
+  // Levenshtein-Ähnlichkeit
+  const levDist = levenshtein(a, b);
+  const maxLen = Math.max(a.length, b.length);
+  const levScore = 1 - levDist / maxLen; // 1 = identisch, 0 = komplett verschieden
+
+  // Jaro-Winkler für kurze Wörter ("hi", "hey", "hallo")
+  const jwScore = natural.JaroWinklerDistance(a, b);
+
+  // Cosine Similarity (Bag of Words)
+  const tokenizer = new natural.WordTokenizer();
+  const tokensA = tokenizer.tokenize(a);
+  const tokensB = tokenizer.tokenize(b);
+
+  const tfidf = new natural.TfIdf();
+  tfidf.addDocument(tokensA.join(" "));
+  tfidf.addDocument(tokensB.join(" "));
+
+  let cosineScore = 0;
+  try {
+    cosineScore = natural.CosineSimilarity(tokensA, tokensB) || 0;
+  } catch {
+    cosineScore = 0;
+  }
+
+  // Finale Ähnlichkeit = Max aus allen drei
+  return Math.max(levScore, jwScore, cosineScore);
 }
+
 
 
 // Intelligente Response-Generierung
