@@ -369,7 +369,7 @@ async function updateAIProfiles(pool, successfulPatterns) {
       );
 
       if (profilePatterns.length > 0) {
-        // Sammle erfolgreiche Key Phrases
+        // Top Phrases sammeln
         const successfulPhrases = profilePatterns
           .flatMap(p => p.keyPhrases)
           .reduce((acc, phrase) => {
@@ -377,47 +377,59 @@ async function updateAIProfiles(pool, successfulPatterns) {
             return acc;
           }, {});
 
-        // Top 5 erfolgreiche Phrases
         const topPhrases = Object.entries(successfulPhrases)
           .sort((a, b) => b[1] - a[1])
           .slice(0, 5)
           .map(([phrase]) => phrase);
 
-        // Interests aktualisieren wenn neue erfolgreiche Themen gefunden
+        // Interests aktualisieren
         const currentInterests = profile.interests || [];
         const newInterests = [...new Set([...currentInterests, ...topPhrases])];
-        
         if (newInterests.length !== currentInterests.length) {
           updates.interests = newInterests;
           hasUpdates = true;
         }
-      }
 
-      // Prompt/Answer Paare basierend auf erfolgreichen Mustern generieren
-      if (profilePatterns.length > 0) {
-        const bestPattern = profilePatterns[0]; // Bestes Pattern nehmen
-        
+        // Prompt/Answer Paare basierend auf Mustern generieren
+        const bestPattern = profilePatterns[0];
         if (bestPattern.keyPhrases.includes('treffen') || bestPattern.keyPhrases.includes('date')) {
           updates.prompt_1 = 'Hast du Lust auf ein Date?';
           updates.answer_1 = 'Ja gerne! Ich würde mich freuen dich kennenzulernen 😊';
           hasUpdates = true;
         }
-        
         if (bestPattern.keyPhrases.includes('lustig') || bestPattern.keyPhrases.includes('lachen')) {
           updates.prompt_2 = 'Erzählst du mir einen Witz?';
           updates.answer_2 = 'Klar! Was macht ein Keks unter einem Baum? Krümel! 😄';
           hasUpdates = true;
         }
+
+        // --- Neu: Trainingsdaten & Response-Patterns ---
+        const trainingData = profilePatterns.flatMap(p => 
+          (p.messages || []).map(msg => ({
+            input: msg,        // hier könnte man auch user→AI unterscheiden
+            output: msg,
+            quality: 'high'
+          }))
+        );
+
+        if (trainingData.length > 0) {
+          updates.training_data = JSON.stringify(trainingData);
+
+          const responsePatterns = profilePatterns.flatMap(p => p.keyPhrases);
+          updates.response_patterns = JSON.stringify(responsePatterns);
+
+          hasUpdates = true; // wichtig: selbst bei kleinen Chats
+        }
       }
 
-      // Updates in Datenbank schreiben
+      // Updates in DB schreiben
       if (hasUpdates) {
         const updateFields = Object.keys(updates);
         const updateValues = Object.values(updates);
         const setClause = updateFields.map((field, index) => `${field} = $${index + 1}`).join(', ');
 
         await pool.query(
-          `UPDATE ai_profiles SET ${setClause} WHERE id = $${updateFields.length + 1}`,
+          `UPDATE ai_profiles SET ${setClause}, last_trained = NOW() WHERE id = $${updateFields.length + 1}`,
           [...updateValues, profile.id]
         );
 
@@ -436,6 +448,7 @@ async function updateAIProfiles(pool, successfulPatterns) {
     return [];
   }
 }
+
 
 // Verbesserungsvorschläge generieren
 function generateImprovementSuggestions(aiStats, frequentPhrases) {
