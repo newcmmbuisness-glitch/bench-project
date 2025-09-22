@@ -131,7 +131,7 @@ async function analyzeChatData(pool) {
 // Generiert AI-Antwort basierend auf gelernten Trainingsdaten
 // ===================
 async function generateAIResponse(pool, aiId, userMessage) {
-  const trimmedMsg = userMessage.trim().toLowerCase();
+  const trimmedMsg = userMessage.trim().toLowerCase().replace(/[!?.]/g, '');
 
   // Trainingsdaten laden
   let trainingData = [];
@@ -141,35 +141,32 @@ async function generateAIResponse(pool, aiId, userMessage) {
   } else {
     const userPairsQuery = await pool.query(`
       SELECT input, output FROM chat_messages
-      WHERE sender_id <> 0 AND match_id IN (
-        SELECT match_id FROM chat_messages
-        GROUP BY match_id
-        HAVING COUNT(DISTINCT sender_id) > 1
-      )
+      WHERE sender_id <> 0
       LIMIT 500
     `);
     trainingData = userPairsQuery.rows;
   }
 
-  // Wenn Trainingsdaten da sind, bestMatch suchen
-  if (trainingData.length) {
-    let bestMatch = null;
-    let highestScore = 0;
-    for (const item of trainingData) {
-      const score = similarity(userMessage, item.input);
-      if (score > highestScore) {
-        highestScore = score;
-        bestMatch = item;
-      }
-    }
-    if (bestMatch && highestScore > 0.3) return bestMatch.output; // <- genau DB-Antwort zurück
+  // 1️⃣ Exaktes Match zuerst
+  for (const item of trainingData) {
+    const dbInput = item.input.toLowerCase().trim().replace(/[!?.]/g, '');
+    if (dbInput === trimmedMsg) return item.output;
   }
 
-  // Nur wenn keine Trainingsdaten matchen: kurze Greetings als Fallback
-  const greetings = ['hi', 'hey', 'hallo', 'huhu', 'moin'];
-  if (greetings.includes(trimmedMsg)) return '?';
+  // 2️⃣ Sonst unscharfes Match via similarity
+  let bestMatch = null;
+  let highestScore = 0;
+  for (const item of trainingData) {
+    const score = similarity(userMessage, item.input);
+    if (score > highestScore) {
+      highestScore = score;
+      bestMatch = item;
+    }
+  }
+  if (bestMatch && highestScore > 0.3) return bestMatch.output;
 
-  return '?'; // minimaler Fallback, falls nix gefunden
+  // 3️⃣ Nur minimaler Fallback
+  return '?';
 }
 
 
