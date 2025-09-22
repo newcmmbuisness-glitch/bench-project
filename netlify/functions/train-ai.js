@@ -334,7 +334,8 @@ function analyzeSuccessfulChat(chat) {
     const allText = messages.join(' ').toLowerCase();
     const commonSuccessWords = [
       'lachen', 'lustig', 'interessant', 'cool', 'toll', 'schön',
-      'treffen', 'date', 'whatsapp', 'nummer', 'gerne', 'ja'
+      'treffen', 'date', 'whatsapp', 'nummer', 'gerne', 'ja',
+      'hey', 'hallo', 'hi'
     ];
 
     commonSuccessWords.forEach(word => {
