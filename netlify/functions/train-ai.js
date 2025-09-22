@@ -163,7 +163,7 @@ async function generateAIResponse(pool, aiId, userMessage) {
   }
 
   // Debug: prüfen ob Daten da sind
-  console.info"👉 Geladene Trainingsdaten:", trainingData.slice(0, 5));
+  console.info("👉 Geladene Trainingsdaten:", trainingData.slice(0, 5));
   console.info("👉 Suche nach:", trimmedMsg);
 
   // 1️⃣ Exaktes Match
