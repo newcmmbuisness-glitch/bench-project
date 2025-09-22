@@ -363,49 +363,36 @@ async function updateAIProfiles(pool, successfulPatterns) {
       const updates = {};
       let hasUpdates = false;
 
-      // Erfolgreiche Phrases für dieses Profil sammeln
-      const profilePatterns = successfulPatterns.filter(p => 
-        p.keyPhrases && p.keyPhrases.length > 0
-      );
+      // ✅ Alle erfolgreichen Patterns berücksichtigen, auch wenn keyPhrases leer sind
+      const profilePatterns = successfulPatterns.filter(p => p.messageCount > 2);
 
       if (profilePatterns.length > 0) {
-        // Sammle erfolgreiche Key Phrases
-        const successfulPhrases = profilePatterns
-          .flatMap(p => p.keyPhrases)
-          .reduce((acc, phrase) => {
-            acc[phrase] = (acc[phrase] || 0) + 1;
-            return acc;
-          }, {});
+        // Interests erweitern: erfolgreiche Phrases + SmallTalk
+        const keyPhrases = profilePatterns.flatMap(p => p.keyPhrases || []);
+        let newInterests = profile.interests || [];
 
-        // Top 5 erfolgreiche Phrases
-        const topPhrases = Object.entries(successfulPhrases)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([phrase]) => phrase);
+        if (keyPhrases.length > 0) {
+          newInterests = [...new Set([...newInterests, ...keyPhrases])];
+        } else {
+          // Smalltalk-Themen hinzufügen, wenn keine speziellen Phrases
+          newInterests.push('SmallTalk');
+          newInterests = [...new Set(newInterests)];
+        }
 
-        // Interests aktualisieren wenn neue erfolgreiche Themen gefunden
-        const currentInterests = profile.interests || [];
-        const newInterests = [...new Set([...currentInterests, ...topPhrases])];
-        
-        if (newInterests.length !== currentInterests.length) {
+        if (newInterests.length !== (profile.interests || []).length) {
           updates.interests = newInterests;
           hasUpdates = true;
         }
-      }
 
-      // Prompt/Answer Paare basierend auf erfolgreichen Mustern generieren
-      if (profilePatterns.length > 0) {
-        const bestPattern = profilePatterns[0]; // Bestes Pattern nehmen
-        
-        if (bestPattern.keyPhrases.includes('treffen') || bestPattern.keyPhrases.includes('date')) {
-          updates.prompt_1 = 'Hast du Lust auf ein Date?';
-          updates.answer_1 = 'Ja gerne! Ich würde mich freuen dich kennenzulernen 😊';
+        // Prompt/Answer generieren
+        if (!updates.prompt_1) {
+          updates.prompt_1 = "Hey, was machst du gerade?";
+          updates.answer_1 = "Chille gerade und schaue Netflix 😊";
           hasUpdates = true;
         }
-        
-        if (bestPattern.keyPhrases.includes('lustig') || bestPattern.keyPhrases.includes('lachen')) {
-          updates.prompt_2 = 'Erzählst du mir einen Witz?';
-          updates.answer_2 = 'Klar! Was macht ein Keks unter einem Baum? Krümel! 😄';
+        if (!updates.prompt_2) {
+          updates.prompt_2 = "Was schaust du gerade?";
+          updates.answer_2 = "Eine Serie, sehr spannend! 📺";
           hasUpdates = true;
         }
       }
