@@ -141,15 +141,16 @@ async function generateAIResponse(pool, aiId, userMessage) {
   // User-zu-User Paare berücksichtigen
   if (aiId === 0) {
     const userPairsQuery = await pool.query(`
-      SELECT cm1.message_text AS input, cm2.message_text AS output
-      FROM chat_messages cm1
-      JOIN chat_messages cm2 
-        ON cm1.match_id = cm2.match_id AND cm2.sent_at > cm1.sent_at
-      WHERE LENGTH(cm1.message_text) > 1 
-        AND LENGTH(cm2.message_text) > 1
-      LIMIT 1000
+      SELECT input, output FROM chat_messages
+      WHERE sender_id <> 0 AND match_id IN (
+        SELECT match_id FROM chat_messages
+        GROUP BY match_id
+        HAVING COUNT(DISTINCT sender_id) > 1
+      )
+      LIMIT 500
     `);
-    const userPairs = userPairsQuery.rows;
+    trainingData = userPairsQuery.rows;
+  }
 
   if (!trainingData.length) return "Hmm, ich weiß gerade nicht, was ich sagen soll.";
 
@@ -578,15 +579,7 @@ async function batchTrainAllProfiles(pool) {
   // Alle AI-Profile laden, inkl. Dummy 0
   const profilesQuery = await pool.query('SELECT * FROM ai_profiles');
   const profiles = profilesQuery.rows;
-  // Alle User-Paare für AI-Profile extrahieren
-  const userPairs = trainingData.filter(d => d.aiId === 0);
-  
-  for (const profile of profiles) {
-    if (profile.id > 0) {
-      await trainSpecificAI(pool, profile.id, userPairs);
-    }
-  }
-    
+
   // Dummy-Profil hinzufügen, falls nicht vorhanden
   if (!profiles.some(p => p.id === 0)) {
     profiles.push({ id: 0, profile_name: 'Dummy AI', description: '', interests: [] });
