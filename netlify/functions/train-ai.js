@@ -133,21 +133,12 @@ async function analyzeChatData(pool) {
 async function generateAIResponse(pool, aiId, userMessage) {
   const trimmedMsg = userMessage.trim().toLowerCase();
 
-  // Kurz-Greetings abfangen
-  const greetings = ['hi', 'hey', 'hallo', 'huhu', 'moin'];
-  if (greetings.includes(trimmedMsg)) {
-    return userMessage.trim(); // exakt zurückgeben
-  }
-  
+  // Trainingsdaten laden
   let trainingData = [];
-
   if (aiId > 0) {
     const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
     if (profileQuery.rows.length > 0) trainingData = profileQuery.rows[0].training_data || [];
-  }
-
-  // User-zu-User Paare berücksichtigen
-  if (aiId === 0) {
+  } else {
     const userPairsQuery = await pool.query(`
       SELECT input, output FROM chat_messages
       WHERE sender_id <> 0 AND match_id IN (
@@ -160,21 +151,27 @@ async function generateAIResponse(pool, aiId, userMessage) {
     trainingData = userPairsQuery.rows;
   }
 
-  if (!trainingData.length) return "Hmm, ich weiß gerade nicht, was ich sagen soll.";
-
-  let bestMatch = null;
-  let highestScore = 0;
-  for (const item of trainingData) {
-    const score = similarity(userMessage, item.input);
-    if (score > highestScore) {
-      highestScore = score;
-      bestMatch = item;
+  // Wenn Trainingsdaten da sind, bestMatch suchen
+  if (trainingData.length) {
+    let bestMatch = null;
+    let highestScore = 0;
+    for (const item of trainingData) {
+      const score = similarity(userMessage, item.input);
+      if (score > highestScore) {
+        highestScore = score;
+        bestMatch = item;
+      }
     }
+    if (bestMatch && highestScore > 0.3) return bestMatch.output; // <- genau DB-Antwort zurück
   }
 
-  if (bestMatch && highestScore > 0.6) return bestMatch.output;
-  return "Erzähl mal mehr!";
+  // Nur wenn keine Trainingsdaten matchen: kurze Greetings als Fallback
+  const greetings = ['hi', 'hey', 'hallo', 'huhu', 'moin'];
+  if (greetings.includes(trimmedMsg)) return '?';
+
+  return '?'; // minimaler Fallback, falls nix gefunden
 }
+
 
 
 // ===================
