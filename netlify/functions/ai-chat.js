@@ -211,6 +211,15 @@ async function generateAIResponse(pool, aiId, userMessage) {
   console.info("⚠️ Kein Match → Fallback");
   return generateFallbackResponse();
 }
+function similarity(text1, text2) {
+  const t1 = text1.toLowerCase().trim();
+  const t2 = text2.toLowerCase().trim();
+  if (t1 === t2) return 1;
+  const words1 = t1.split(/\s+/);
+  const words2 = t2.split(/\s+/);
+  const common = words1.filter(w => words2.includes(w));
+  return common.length / Math.max(words1.length, words2.length);
+}
 
 
 // Intelligente Response-Generierung
