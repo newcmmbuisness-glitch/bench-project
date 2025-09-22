@@ -567,34 +567,41 @@ async function extractTrainingDataForAllProfiles(pool) {
   return pairsQuery.rows;
 }
 
+
 // Vollautomatisches Batch-Training für alle AI-Profile
 async function batchTrainAllProfiles(pool) {
   console.log('Starte Batch-Training für alle AI-Profile...');
 
-  // 1️⃣ Alle Trainingsdaten extrahieren
-  const trainingData = await extractAllTrainingData(pool);
+  // Alle Trainingsdaten extrahieren inkl. Dummy 0
+  const trainingData = await extractTrainingDataForAllProfiles(pool);
   if (!trainingData.length) return [];
 
-  // 2️⃣ Alle AI-Profile laden
+  // Alle AI-Profile laden, inkl. Dummy 0
   const profilesQuery = await pool.query('SELECT * FROM ai_profiles');
   const profiles = profilesQuery.rows;
+
+  // Dummy-Profil hinzufügen, falls nicht vorhanden
+  if (!profiles.some(p => p.id === 0)) {
+    profiles.push({ id: 0, profile_name: 'Dummy AI', description: '', interests: [] });
+  }
 
   const results = [];
 
   for (const profile of profiles) {
-    // 3️⃣ Trainingsdaten auf dieses Profil anwenden (alle User→User inkl. aiId = 0)
-    const profileData = trainingData.map(item => ({
-      input: item.input,
-      output: item.output,
-      quality: 'medium'
-    }));
+    const profileData = trainingData.filter(d => d.ai_id === profile.id || profile.id === 0);
 
-    const updates = generateProfileUpdates(profile, analyzeInputPatterns(profileData.map(d => d.input)), analyzeResponsePatterns(profileData.map(d => d.output)), { totalExamples: profileData.length });
-    
-    if (Object.keys(updates).length > 0) {
+    if (!profileData.length) continue;
+
+    const inputPatterns = analyzeInputPatterns(profileData.map(d => d.input));
+    const responsePatterns = analyzeResponsePatterns(profileData.map(d => d.output));
+
+    const updates = generateProfileUpdates(profile, inputPatterns, responsePatterns, { totalExamples: profileData.length });
+
+    if (Object.keys(updates).length > 0 && profile.id !== 0) {
       const fields = Object.keys(updates);
       const values = Object.values(updates);
       const setClause = fields.map((f, i) => `${f} = $${i + 1}`).join(', ');
+
       await pool.query(`UPDATE ai_profiles SET ${setClause} WHERE id = $${fields.length + 1}`, [...values, profile.id]);
     }
 
@@ -604,6 +611,7 @@ async function batchTrainAllProfiles(pool) {
   console.log('Batch-Training abgeschlossen');
   return results;
 }
+
 
 // Spezifische AI trainieren (DB-Updates)
 async function trainSpecificAI(pool, aiId, trainingData) {
