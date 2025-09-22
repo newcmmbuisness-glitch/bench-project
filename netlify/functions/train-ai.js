@@ -506,12 +506,17 @@ async function updateAIProfiles(pool, successfulPatterns) {
         }
 
         // --- Neu: Trainingsdaten & Response-Patterns ---
-        const trainingData = profilePatterns.flatMap(p => 
-          (p.messages || []).map(msg => ({
-            input: msg,        // hier könnte man auch user→AI unterscheiden
-            output: msg,
-            quality: 'high'
-          }))
+        const trainingData = profilePatterns.flatMap(p =>
+          (p.messages || []).map((msg, i, arr) => {
+            const nextMsg = arr[i + 1];
+            // Nur, wenn es ein Antwort-Paar gibt
+            if(!nextMsg) return null;
+            return {
+              input: msg,       // die ursprüngliche Nachricht
+              output: nextMsg,  // die nächste Nachricht als Antwort
+              quality: 'high'
+            };
+          }).filter(Boolean)
         );
 
         if (trainingData.length > 0) {
