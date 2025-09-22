@@ -1,4 +1,6 @@
-// AI Training Function - VERBESSERT für echtes Lernen
+// AI Training Function - Analysiert Chat-Verläufe und verbessert AI-Antworten
+// Ersetzt train_bot.py durch JavaScript-basiertes Training
+
 const { Pool } = require('pg');
 
 exports.handler = async (event, context) => {
@@ -13,43 +15,48 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Datenbank-Verbindung
     const pool = new Pool({
       connectionString: process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false }
     });
 
-    console.log('🚀 Starte ECHTES AI-Training aus User-Chats...');
+    console.log('Starte AI-Training...');
 
-    // 1. Echte User-zu-User Konversationspaare aus deiner DB extrahieren
-    const userChatPairs = await extractUserChatPairs(pool);
-    console.log(`📚 ${userChatPairs.length} User-Chat-Paare gefunden`);
-
-    // 2. Alle AI-Profile mit diesen echten Daten trainieren  
-    const trainedProfiles = await fillAITrainingData(pool, userChatPairs);
-    console.log(`🎯 ${trainedProfiles.length} AI-Profile trainiert`);
-
-    // 3. Training-Statistiken
+    // 1. Chat-Daten analysieren
+    const chatAnalysis = await analyzeChatData(pool);
+    
+    // 2. Erfolgreiche Gesprächsverläufe identifizieren
+    const successfulPatterns = await identifySuccessfulPatterns(pool);
+    
+    // 3. AI-Profile aktualisieren
+    const updatedProfiles = await updateAIProfiles(pool, successfulPatterns);
+    
+    // 4. Training-Statistiken erstellen
     const trainingStats = {
-      analyzedMessages: userChatPairs.length,
-      trainedProfiles: trainedProfiles.length,
+      analyzedMessages: chatAnalysis.totalMessages,
+      successfulConversations: successfulPatterns.length,
+      updatedProfiles: updatedProfiles.length,
       trainingDate: new Date().toISOString(),
-      success: true
+      improvements: chatAnalysis.improvements
     };
-
-    // Stats speichern
+    
     await pool.query(
       `INSERT INTO training_stats 
          (ai_profile_id, training_date, messages_analyzed, patterns_learned, improvements) 
        VALUES ($1, $2, $3, $4, $5)`,
       [
-        null,
+        null, // oder eine konkrete ai_profile_id falls verfügbar
         trainingStats.trainingDate,
         trainingStats.analyzedMessages,
-        JSON.stringify({ trainedProfiles: trainingStats.trainedProfiles }),
-        JSON.stringify(userChatPairs.slice(0, 10))
+        JSON.stringify({
+          successfulConversations: trainingStats.successfulConversations,
+          updatedProfiles: trainingStats.updatedProfiles
+        }),
+        JSON.stringify(trainingStats.improvements || [])
       ]
     );
-
+        
     await pool.end();
 
     return {
@@ -57,15 +64,13 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: true,
-        message: `🎉 Training abgeschlossen! ${trainedProfiles.length} AIs haben aus ${userChatPairs.length} User-Gesprächen gelernt.`,
-        stats: trainingStats,
-        examples: userChatPairs.slice(0, 5).map(p => `"${p.input}" → "${p.output}"`),
-        trainedProfiles: trainedProfiles
+        message: 'AI-Training erfolgreich abgeschlossen!',
+        stats: trainingStats
       })
     };
 
   } catch (error) {
-    console.error('❌ Training-Fehler:', error);
+    console.error('Fehler beim AI-Training:', error);
     
     return {
       statusCode: 500,
@@ -79,531 +84,761 @@ exports.handler = async (event, context) => {
   }
 };
 
-// ============================================================================
-// ECHTE User-zu-User Chat-Paare aus deiner DB extrahieren
-// ============================================================================
-async function extractUserChatPairs(pool) {
+// Chat-Daten analysieren
+async function analyzeChatData(pool) {
   try {
-    console.log('📖 Extrahiere User-zu-User Konversationspaare...');
+    // Gesamtstatistiken
+    const totalMessagesQuery = await pool.query('SELECT COUNT(*) as count FROM chat_messages');
+    const totalMessages = parseInt(totalMessagesQuery.rows[0].count);
 
-    // Deine echten User-Gespräche aus der DB holen
-    const userChatQuery = await pool.query(`
+    // Nachrichten nach AI-Profilen gruppieren
+    const aiMessagesQuery = await pool.query(`
       SELECT 
-        cm1.message_text as input,
-        cm2.message_text as output,
+        sender_id,
+        COUNT(*) as message_count,
+        AVG(LENGTH(message_text)) as avg_length,
+        MIN(sent_at) as first_message,
+        MAX(sent_at) as last_message
+      FROM chat_messages 
+      WHERE sender_id > 1000 
+      GROUP BY sender_id
+      ORDER BY message_count DESC
+    `);
+
+    const aiStats = aiMessagesQuery.rows;
+
+    // Häufige Wörter und Phrases analysieren
+    const frequentPhrases = await analyzeFrequentPhrases(pool);
+
+    // Response-Zeiten analysieren (wenn verfügbar)
+    const responsePatterns = await analyzeResponsePatternsFromDB(pool);
+
+
+    return {
+      totalMessages,
+      aiStats,
+      frequentPhrases,
+      responsePatterns,
+      improvements: generateImprovementSuggestions(aiStats, frequentPhrases)
+    };
+
+  } catch (error) {
+    console.error('Fehler bei Chat-Analyse:', error);
+    throw error;
+  }
+}
+// ===================
+// Generiert AI-Antwort basierend auf gelernten Trainingsdaten
+// ===================
+async function generateAIResponse(pool, aiId, userMessage) {
+  let trainingData = [];
+
+  if (aiId > 0) {
+    const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
+    if (profileQuery.rows.length > 0) trainingData = profileQuery.rows[0].training_data || [];
+  }
+
+  // User-zu-User Paare berücksichtigen
+  if (aiId === 0) {
+    const userPairsQuery = await pool.query(`
+      SELECT input, output FROM chat_messages
+      WHERE sender_id <> 0 AND match_id IN (
+        SELECT match_id FROM chat_messages
+        GROUP BY match_id
+        HAVING COUNT(DISTINCT sender_id) > 1
+      )
+      LIMIT 500
+    `);
+    trainingData = userPairsQuery.rows;
+  }
+
+  if (!trainingData.length) return "Hmm, ich weiß gerade nicht, was ich sagen soll.";
+
+  let bestMatch = null;
+  let highestScore = 0;
+  for (const item of trainingData) {
+    const score = similarity(userMessage, item.input);
+    if (score > highestScore) {
+      highestScore = score;
+      bestMatch = item;
+    }
+  }
+
+  if (bestMatch && highestScore > 0.3) return bestMatch.output;
+  return "Erzähl mal mehr!";
+}
+
+
+// ===================
+// Sehr einfache Text-Ähnlichkeit (Overlap von Wörtern)
+// ===================
+function similarity(text1, text2) {
+  const words1 = text1.toLowerCase().split(/\s+/);
+  const words2 = text2.toLowerCase().split(/\s+/);
+  const common = words1.filter(w => words2.includes(w));
+  return common.length / Math.max(words1.length, words2.length);
+}
+
+// Häufige Phrases analysieren
+async function analyzeFrequentPhrases(pool) {
+  try {
+    const messagesQuery = await pool.query(`
+      SELECT message_text 
+      FROM chat_messages 
+      WHERE LENGTH(message_text) > 10 AND LENGTH(message_text) < 200
+      ORDER BY sent_at DESC 
+      LIMIT 1000
+    `);
+
+    const messages = messagesQuery.rows;
+    const phraseCount = {};
+
+    // Einfache Phrase-Extraktion
+    messages.forEach(msg => {
+      const text = msg.message_text.toLowerCase();
+      const words = text.split(/\s+/);
+      
+      // 2-3 Wort Kombinationen extrahieren
+      for (let i = 0; i < words.length - 1; i++) {
+        const phrase2 = `${words[i]} ${words[i + 1]}`;
+        phraseCount[phrase2] = (phraseCount[phrase2] || 0) + 1;
+        
+        if (i < words.length - 2) {
+          const phrase3 = `${words[i]} ${words[i + 1]} ${words[i + 2]}`;
+          phraseCount[phrase3] = (phraseCount[phrase3] || 0) + 1;
+        }
+      }
+    });
+
+    // Top Phrases sortieren
+    const sortedPhrases = Object.entries(phraseCount)
+      .filter(([phrase, count]) => count > 3 && phrase.length > 5)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20);
+
+    return sortedPhrases;
+
+  } catch (error) {
+    console.error('Fehler bei Phrase-Analyse:', error);
+    return [];
+  }
+}
+
+// Response-Muster analysieren
+async function analyzeResponsePatternsFromDB(pool) {
+  try {
+    // Aufeinanderfolgende Nachrichten analysieren
+    const conversationQuery = await pool.query(`
+      SELECT 
+        cm1.message_text as user_message,
+        cm2.message_text as ai_response,
         cm1.match_id,
-        cm1.sent_at
+        cm2.sender_id as ai_id
       FROM chat_messages cm1
       JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
-      JOIN matches m ON cm1.match_id = m.id
       WHERE cm2.sent_at > cm1.sent_at
-        AND cm2.sent_at - cm1.sent_at < INTERVAL '2 hours'
-        AND cm1.sender_id != cm2.sender_id
-        AND cm1.sender_id > 0 AND cm2.sender_id > 0    -- Nur echte User, keine AI
-        AND cm1.is_ai = false AND cm2.is_ai = false
-        AND LENGTH(cm1.message_text) > 0
-        AND LENGTH(cm2.message_text) > 0
-        AND LENGTH(cm1.message_text) < 200
-        AND LENGTH(cm2.message_text) < 200
+        AND cm2.sent_at - cm1.sent_at < INTERVAL '1 hour'
       ORDER BY cm1.sent_at DESC
       LIMIT 500
     `);
 
-    const chatPairs = userChatQuery.rows.map(row => ({
-      input: row.input.trim(),
-      output: row.output.trim(),
-      matchId: row.match_id,
-      quality: 'user_to_user'
-    }));
+    const pairs = conversationQuery.rows;
+    const patterns = {};
 
-    console.log(`✅ ${chatPairs.length} User-Chat-Paare extrahiert`);
-    
-    // Debug: Zeige ein paar Beispiele
-    chatPairs.slice(0, 3).forEach(pair => {
-      console.log(`📝 "${pair.input}" → "${pair.output}"`);
+    pairs.forEach(pair => {
+      const userIntent = classifyUserIntent(pair.user_message);
+      const aiResponse = pair.ai_response;
+      
+      if (!patterns[userIntent]) {
+        patterns[userIntent] = [];
+      }
+      
+      patterns[userIntent].push({
+        userMsg: pair.user_message,
+        aiResponse: aiResponse,
+        aiId: pair.ai_id
+      });
     });
 
-    return chatPairs;
+    return patterns;
 
   } catch (error) {
-    console.error('❌ Fehler beim Extrahieren der User-Chat-Paare:', error);
-    return [];
+    console.error('Fehler bei Response-Pattern-Analyse:', error);
+    return {};
   }
 }
 
-// ============================================================================
-// AI-Profile mit echten Trainingsdaten füllen (DAS FEHLT!)
-// ============================================================================
-async function fillAITrainingData(pool, userChatPairs) {
-  try {
-    console.log('🤖 Fülle AI-Profile mit Trainingsdaten...');
-
-    // Alle AI-Profile laden
-    const profilesQuery = await pool.query('SELECT id, profile_name FROM ai_profiles ORDER BY id');
-    const profiles = profilesQuery.rows;
-    
-    const trainedProfiles = [];
-
-    for (const profile of profiles) {
-      console.log(`🎯 Trainiere AI: ${profile.profile_name}`);
-
-      // Trainingsdaten für diese AI vorbereiten
-      const aiTrainingData = prepareTrainingForAI(userChatPairs, profile);
-
-      if (aiTrainingData.length > 0) {
-        // ⭐ WICHTIG: training_data Spalte mit JSON befüllen
-        await pool.query(
-          `UPDATE ai_profiles 
-           SET training_data = $1::jsonb,
-               updated_at = NOW()
-           WHERE id = $2`,
-          [
-            JSON.stringify(aiTrainingData),
-            profile.id
-          ]
-        );
-
-        trainedProfiles.push({
-          profileId: profile.id,
-          profileName: profile.profile_name,
-          trainingCount: aiTrainingData.length
-        });
-
-        console.log(`✅ ${profile.profile_name}: ${aiTrainingData.length} Trainingsdaten hinzugefügt`);
-      }
-    }
-
-    return trainedProfiles;
-
-  } catch (error) {
-    console.error('❌ Fehler beim Füllen der AI-Trainingsdaten:', error);
-    return [];
-  }
-}
-
-// ============================================================================
-// Trainingsdaten für spezifische AI aufbereiten
-// ============================================================================
-function prepareTrainingForAI(userChatPairs, profile) {
-  console.log(`📋 Bereite Trainingsdaten für ${profile.profile_name} auf...`);
-
-  // Alle User-Paare als Basis
-  let trainingData = userChatPairs.map(pair => ({
-    input: pair.input,
-    output: pair.output
-  }));
-
-  // Spezielle Verbesserungen für häufige Muster
-  const improvedData = [];
-
-  // Hey-Pattern verstärken (dein Problem!)
-  const heyInputs = trainingData.filter(d => 
-    /^(hey|hi|hallo)$/i.test(d.input.trim())
-  );
+// User-Intent klassifizieren (vereinfacht)
+function classifyUserIntent(message) {
+  const lowerMsg = message.toLowerCase();
   
-  if (heyInputs.length > 0) {
-    // Die besten "Hey"-Antworten mehrfach hinzufügen
-    heyInputs.forEach(hey => {
-      improvedData.push(hey);
-      // Variationen hinzufügen
-      if (hey.output.length > 5) {
-        improvedData.push({
-          input: "hey",
-          output: hey.output
-        });
-        improvedData.push({
-          input: "Hi", 
-          output: hey.output
-        });
-      }
-    });
-  }
-
-  // Fallback für "Hey" wenn keine User-Daten vorhanden
-  if (heyInputs.length === 0) {
-    improvedData.push(
-      { input: "hey", output: "Hey! Wie geht's dir? Was machst du so?" },
-      { input: "Hey", output: "Hallo! Schön von dir zu hören! Erzähl mal!" },
-      { input: "hi", output: "Hi! Freut mich dich kennenzulernen!" }
-    );
-  }
-
-  // Kombiniere originale + verbesserte Daten
-  const finalData = [...trainingData, ...improvedData];
-
-  // Maximal 150 Trainingsdaten pro AI (Performance)
-  return finalData.slice(0, 150);
+  if (/^(hi|hey|hallo)/.test(lowerMsg)) return 'greeting';
+  if (/(schön|süß|nett|toll)/.test(lowerMsg)) return 'compliment';
+  if (/(treffen|date|kaffee)/.test(lowerMsg)) return 'meetup_request';
+  if (/\?/.test(message)) return 'question';
+  if (lowerMsg.length < 20) return 'short_response';
+  
+  return 'general';
 }
 
-// ============================================================================
-// Spezifisches Training für "Hey" Pattern
-// ============================================================================
-async function learnHeyPatterns(pool) {
+// Erfolgreiche Gesprächsmuster identifizieren
+async function identifySuccessfulPatterns(pool) {
   try {
-    console.log('👋 Lerne "Hey"-Antwortmuster...');
-
-    // Alle "Hey" Nachrichten und deren Antworten finden
-    const heyPatternsQuery = await pool.query(`
+    // Gespräche mit vielen Nachrichten = erfolgreich
+    const successfulChatsQuery = await pool.query(`
       SELECT 
-        cm1.message_text as hey_input,
-        cm2.message_text as response,
-        cm1.match_id,
-        cm2.sender_id
-      FROM chat_messages cm1
-      JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
-      JOIN matches m ON cm1.match_id = m.id
-      WHERE LOWER(cm1.message_text) SIMILAR TO '%(hey|hi|hallo)%'
-        AND cm2.sent_at > cm1.sent_at
-        AND cm2.sent_at - cm1.sent_at < INTERVAL '1 hour'
-        AND cm1.sender_id != cm2.sender_id
-        AND cm1.is_ai = false AND cm2.is_ai = false  -- Nur echte User-Antworten
-        AND LENGTH(cm2.message_text) > 2
-      ORDER BY cm1.sent_at DESC
-      LIMIT 100
+        match_id,
+        COUNT(*) as message_count,
+        COUNT(DISTINCT sender_id) as participant_count,
+        MAX(sent_at) - MIN(sent_at) as duration,
+        ARRAY_AGG(message_text ORDER BY sent_at) as messages
+      FROM chat_messages
+      GROUP BY match_id
+      HAVING COUNT(*) > 4 AND COUNT(DISTINCT sender_id) > 1
+      ORDER BY message_count DESC
+      LIMIT 20
     `);
 
-    const heyPatterns = heyPatternsQuery.rows.map(row => ({
-      input: row.hey_input.trim(),
-      output: row.response.trim(),
-      pattern_type: 'greeting_response'
-    }));
+    const successfulChats = successfulChatsQuery.rows;
+    const patterns = [];
 
-    // Die besten "Hey"-Antworten identifizieren
-    const goodHeyResponses = heyPatterns
-      .filter(p => 
-        p.output.length > 5 && 
-        p.output.length < 100 &&
-        !p.output.toLowerCase().includes('fallback')
-      )
-      .slice(0, 20);
+    successfulChats.forEach(chat => {
+      const pattern = analyzeSuccessfulChat(chat);
+      if (pattern) {
+        patterns.push(pattern);
+      }
+    });
 
-    console.log(`✅ ${goodHeyResponses.length} gute "Hey"-Antworten gefunden`);
-    return goodHeyResponses;
+    return patterns;
 
   } catch (error) {
-    console.error('❌ Fehler beim Lernen der Hey-Pattern:', error);
+    console.error('Fehler bei Erfolgs-Pattern-Analyse:', error);
     return [];
   }
 }
 
-// ============================================================================
-// Alle AI-Profile mit echten Trainingsdaten trainieren
-// ============================================================================
-async function trainAllAIProfiles(pool, trainingData) {
+// Erfolgreichen Chat analysieren
+function analyzeSuccessfulChat(chat) {
   try {
-    console.log('🎯 Trainiere alle AI-Profile...');
+    const messages = chat.messages;
+    const pattern = {
+      matchId: chat.match_id,
+      messageCount: chat.message_count,
+      duration: chat.duration,
+      keyPhrases: [],
+      responseStyles: [],
+      engagement: 'high'
+    };
 
-    // Alle AI-Profile laden
-    const profilesQuery = await pool.query('SELECT * FROM ai_profiles ORDER BY id');
-    const profiles = profilesQuery.rows;
-    
-    const trainedProfiles = [];
-
-    for (const profile of profiles) {
-      console.log(`🤖 Trainiere Profil: ${profile.profile_name}`);
-
-      // Training-Daten für dieses Profil aufbereiten
-      const profileTrainingData = prepareTrainingDataForProfile(profile, trainingData);
-
-      if (profileTrainingData.length > 0) {
-        // ⭐ WICHTIG: training_data Spalte richtig füllen!
-        await pool.query(
-          `UPDATE ai_profiles 
-           SET training_data = $1::jsonb,
-               updated_at = NOW()
-           WHERE id = $2`,
-          [
-            JSON.stringify(profileTrainingData),
-            profile.id
-          ]
-        );
-
-        // Zusätzliche Verbesserungen am Profil
-        const improvements = generateProfileImprovements(profile, profileTrainingData);
-        
-        if (Object.keys(improvements).length > 0) {
-          const updateFields = Object.keys(improvements);
-          const updateValues = Object.values(improvements);
-          const setClause = updateFields.map((field, index) => `${field} = $${index + 1}`).join(', ');
-
-          await pool.query(
-            `UPDATE ai_profiles SET ${setClause} WHERE id = $${updateFields.length + 1}`,
-            [...updateValues, profile.id]
-          );
-        }
-
-        trainedProfiles.push({
-          profileId: profile.id,
-          profileName: profile.profile_name,
-          trainingDataCount: profileTrainingData.length,
-          improvements: improvements
-        });
-
-        console.log(`✅ ${profile.profile_name}: ${profileTrainingData.length} Trainingsdaten hinzugefügt`);
-      }
-    }
-
-    return trainedProfiles;
-
-  } catch (error) {
-    console.error('❌ Fehler beim Training der Profile:', error);
-    return [];
-  }
-}
-
-// ============================================================================
-// Trainingsdaten für spezifisches Profil aufbereiten
-// ============================================================================
-function prepareTrainingDataForProfile(profile, globalTrainingData) {
-  console.log(`📋 Bereite Trainingsdaten für ${profile.profile_name} auf...`);
-
-  // Basis-Trainingsdaten (alle guten Gespräche)
-  let profileData = globalTrainingData.filter(data => 
-    data.quality === 'real_user' && 
-    data.input.length > 2 && 
-    data.output.length > 2
-  );
-
-  // Spezielle "Hey"-Antworten hinzufügen
-  const heyResponses = [
-    { input: "hey", output: "Hey! Wie geht's dir denn? 😊" },
-    { input: "Hey", output: "Hallo! Schön von dir zu hören! Was machst du so?" },
-    { input: "hi", output: "Hi! Freut mich dich kennenzulernen! Erzähl mal von dir 😄" },
-    { input: "hallo", output: "Hallo! Wie ist dein Tag bisher gelaufen?" },
-    { input: "Hey was geht?", output: "Hey! Bei mir läuft's gut! Und bei dir? Was treibst du so?" }
-  ];
-
-  profileData = [...profileData, ...heyResponses];
-
-  // Profil-spezifische Anpassungen basierend auf Interessen
-  if (profile.interests) {
-    const interests = Array.isArray(profile.interests) ? profile.interests : [];
-    
-    // Interessens-basierte Antworten hinzufügen
-    if (interests.includes('Sport')) {
-      profileData.push(
-        { input: "Was machst du gerne?", output: "Ich liebe Sport! Gehst du auch gerne ins Fitnessstudio?" },
-        { input: "hey", output: "Hey Sportsfreund! 💪 Warst du heute schon aktiv?" }
-      );
-    }
-    
-    if (interests.includes('Reisen')) {
-      profileData.push(
-        { input: "Was machst du so?", output: "Ich liebe es zu reisen! Warst du schon mal im Ausland?" },
-        { input: "hey", output: "Hey! Ich träume gerade vom nächsten Urlaub ✈️ Du auch?" }
-      );
-    }
-  }
-
-  // Maximal 200 Trainingsdaten pro Profil (Performance)
-  return profileData.slice(0, 200);
-}
-
-// ============================================================================
-// Profil-Verbesserungen basierend auf Trainingsdaten generieren
-// ============================================================================
-function generateProfileImprovements(profile, trainingData) {
-  const improvements = {};
-
-  // Häufige Input-Pattern analysieren
-  const inputPatterns = analyzeInputPatterns(trainingData.map(d => d.input));
-  const outputPatterns = analyzeOutputPatterns(trainingData.map(d => d.output));
-
-  // Greetings verbessern
-  const greetingData = trainingData.filter(d => 
-    /^(hey|hi|hallo)/i.test(d.input)
-  );
-
-  if (greetingData.length > 0 && (!profile.prompt_1 || profile.prompt_1.includes('fallback'))) {
-    const bestGreeting = greetingData.find(d => 
-      d.output.length > 10 && d.output.length < 80
-    );
-    
-    if (bestGreeting) {
-      improvements.prompt_1 = bestGreeting.input;
-      improvements.answer_1 = bestGreeting.output;
-    }
-  }
-
-  // Fragen verbessern
-  const questionData = trainingData.filter(d => d.input.includes('?'));
-  if (questionData.length > 0 && (!profile.prompt_2 || profile.prompt_2.includes('fallback'))) {
-    const bestQuestion = questionData.find(d => 
-      d.output.length > 15 && !d.output.toLowerCase().includes('weiß nicht')
-    );
-    
-    if (bestQuestion) {
-      improvements.prompt_2 = bestQuestion.input;
-      improvements.answer_2 = bestQuestion.output;
-    }
-  }
-
-  // Beschreibung erweitern wenn zu kurz
-  if (!profile.description || profile.description.length < 50) {
-    const communicationStyle = outputPatterns.enthusiastic > 0.3 ? 'sehr gesprächig und positiv' : 'freundlich und aufmerksam';
-    improvements.description = `Ich bin eine ${communicationStyle}e Person, die gerne neue Leute kennenlernt und interessante Gespräche führt! 😊`;
-  }
-
-  return improvements;
-}
-
-// Input-Pattern-Analyse (vereinfacht)
-function analyzeInputPatterns(inputs) {
-  const patterns = {
-    greetings: inputs.filter(i => /^(hey|hi|hallo)/i.test(i)).length,
-    questions: inputs.filter(i => i.includes('?')).length,
-    short: inputs.filter(i => i.length < 15).length,
-    long: inputs.filter(i => i.length > 50).length
-  };
-
-  const total = inputs.length || 1;
-  return {
-    greetings: patterns.greetings / total,
-    questions: patterns.questions / total,
-    short: patterns.short / total,
-    long: patterns.long / total
-  };
-}
-
-// Output-Pattern-Analyse
-function analyzeOutputPatterns(outputs) {
-  const patterns = {
-    enthusiastic: outputs.filter(o => /[😊😄😉😍🥰💪✈️]/.test(o)).length,
-    questions: outputs.filter(o => o.includes('?')).length,
-    long: outputs.filter(o => o.length > 50).length
-  };
-
-  const total = outputs.length || 1;
-  return {
-    enthusiastic: patterns.enthusiastic / total,
-    questions: patterns.questions / total,
-    long: patterns.long / total
-  };
-}
-
-// ============================================================================
-// Verbesserte AI-Response-Generierung (für deine Chat-Function)
-// ============================================================================
-async function generateImprovedAIResponse(pool, aiId, userMessage) {
-  try {
-    console.log(`🤖 Generiere Antwort für AI ${aiId} auf: "${userMessage}"`);
-
-    // AI-Profil und Trainingsdaten laden
-    const profileQuery = await pool.query(
-      'SELECT * FROM ai_profiles WHERE id = $1', 
-      [aiId]
-    );
-
-    if (profileQuery.rows.length === 0) {
-      return "Hey! Ich bin noch am Lernen... Erzähl mir mehr! 😊";
-    }
-
-    const profile = profileQuery.rows[0];
-    const trainingData = profile.training_data || [];
-
-    console.log(`📚 ${trainingData.length} Trainingsdaten für AI ${profile.profile_name} geladen`);
-
-    // Spezielle "Hey" Behandlung
-    if (/^(hey|hi|hallo)$/i.test(userMessage.trim())) {
-      const heyResponses = trainingData.filter(d => 
-        /^(hey|hi|hallo)/i.test(d.input)
-      );
-      
-      if (heyResponses.length > 0) {
-        const randomResponse = heyResponses[Math.floor(Math.random() * heyResponses.length)];
-        console.log(`👋 Hey-Response gefunden: ${randomResponse.output}`);
-        return randomResponse.output;
-      }
-    }
-
-    // Beste Übereinstimmung in Trainingsdaten finden
-    if (trainingData.length > 0) {
-      let bestMatch = null;
-      let highestScore = 0;
-
-      for (const trainItem of trainingData) {
-        const score = calculateSimilarity(userMessage.toLowerCase(), trainItem.input.toLowerCase());
-        if (score > highestScore) {
-          highestScore = score;
-          bestMatch = trainItem;
-        }
-      }
-
-      if (bestMatch && highestScore > 0.4) {
-        console.log(`🎯 Beste Übereinstimmung (${Math.round(highestScore * 100)}%): ${bestMatch.output}`);
-        return bestMatch.output;
-      }
-    }
-
-    // Fallback zu Profil-spezifischen Antworten
-    if (profile.prompt_1 && /^(hey|hi|hallo)/i.test(userMessage)) {
-      return profile.answer_1 || "Hey! Wie geht's dir? 😊";
-    }
-
-    // Letzte Fallback-Option
-    const fallbackResponses = [
-      "Das klingt interessant! Erzähl mir mehr davon! 😊",
-      "Cool! Wie ist das denn so für dich?",
-      "Wow, das hätte ich nicht erwartet! Was denkst du darüber?",
-      "Das ist ja spannend! Magst du mir mehr dazu erzählen?",
-      "Interessant! Wie bist du denn dazu gekommen?"
+    // Key Phrases extrahieren
+    const allText = messages.join(' ').toLowerCase();
+    const commonSuccessWords = [
+      'lachen', 'lustig', 'interessant', 'cool', 'toll', 'schön',
+      'treffen', 'date', 'whatsapp', 'nummer', 'gerne', 'ja',
+      'hey', 'hallo', 'hi'
     ];
 
-    return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+    commonSuccessWords.forEach(word => {
+      if (allText.includes(word)) {
+        pattern.keyPhrases.push(word);
+      }
+    });
+
+    return pattern;
 
   } catch (error) {
-    console.error('❌ Fehler bei AI-Response-Generierung:', error);
-    return "Hey! Entschuldige, ich bin gerade etwas durcheinander. Wie geht's dir denn? 😊";
+    console.error('Fehler bei Chat-Pattern-Analyse:', error);
+    return null;
   }
 }
 
-// Export der verbesserten generateAIResponse für Chat-Handler
-module.exports = {
-  handler: exports.handler,
-  // Diese Funktion solltest du in deinem Chat-Handler verwenden
-  generateAIResponse: async function(pool, aiId, userMessage) {
-    try {
-      console.log(`🤖 AI ${aiId} antwortet auf: "${userMessage}"`);
+// AI-Profile basierend auf Lerndaten aktualisieren
+async function updateAIProfiles(pool, successfulPatterns) {
+  try {
+    const profilesQuery = await pool.query('SELECT * FROM ai_profiles');
+    const profiles = profilesQuery.rows;
+    const updatedProfiles = [];
 
-      // AI-Profil und Trainingsdaten laden
-      const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
-      if (profileQuery.rows.length === 0) {
-        return "Hey! Ich bin noch am Lernen... Erzähl mir mehr!";
-      }
+    for (const profile of profiles) {
+      const updates = {};
+      let hasUpdates = false;
 
-      const profile = profileQuery.rows[0];
-      const trainingData = profile.training_data || [];
+      // Erfolgreiche Phrases für dieses Profil sammeln
+      const profilePatterns = successfulPatterns.filter(p => 
+        p.keyPhrases && p.keyPhrases.length > 0
+      );
 
-      console.log(`📚 ${trainingData.length} Trainingsdaten verfügbar`);
+      if (profilePatterns.length > 0) {
+        // Sammle erfolgreiche Key Phrases
+        const successfulPhrases = profilePatterns
+          .flatMap(p => p.keyPhrases)
+          .reduce((acc, phrase) => {
+            acc[phrase] = (acc[phrase] || 0) + 1;
+            return acc;
+          }, {});
 
-      if (trainingData.length === 0) {
-        return "Hmm, ich weiß gerade nicht, was ich sagen soll. Aber erzähl gerne mehr!";
-      }
+        // Top 5 erfolgreiche Phrases
+        const topPhrases = Object.entries(successfulPhrases)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([phrase]) => phrase);
 
-      // Beste Übereinstimmung finden
-      let bestMatch = null;
-      let highestScore = 0;
-
-      for (const trainItem of trainingData) {
-        const score = similarity(userMessage.toLowerCase(), trainItem.input.toLowerCase());
-        if (score > highestScore) {
-          highestScore = score;
-          bestMatch = trainItem;
+        // Interests aktualisieren wenn neue erfolgreiche Themen gefunden
+        const currentInterests = profile.interests || [];
+        const newInterests = [...new Set([...currentInterests, ...topPhrases])];
+        
+        if (newInterests.length !== currentInterests.length) {
+          updates.interests = newInterests;
+          hasUpdates = true;
         }
       }
 
-      console.log(`🎯 Beste Übereinstimmung: ${highestScore} für "${bestMatch?.input}"`);
-
-      if (bestMatch && highestScore > 0.3) {
-        return bestMatch.output;
+      // Prompt/Answer Paare basierend auf erfolgreichen Mustern generieren
+      if (profilePatterns.length > 0) {
+        const bestPattern = profilePatterns[0]; // Bestes Pattern nehmen
+        
+        if (bestPattern.keyPhrases.includes('treffen') || bestPattern.keyPhrases.includes('date')) {
+          updates.prompt_1 = 'Hast du Lust auf ein Date?';
+          updates.answer_1 = 'Ja gerne! Ich würde mich freuen dich kennenzulernen 😊';
+          hasUpdates = true;
+        }
+        
+        if (bestPattern.keyPhrases.includes('lustig') || bestPattern.keyPhrases.includes('lachen')) {
+          updates.prompt_2 = 'Erzählst du mir einen Witz?';
+          updates.answer_2 = 'Klar! Was macht ein Keks unter einem Baum? Krümel! 😄';
+          hasUpdates = true;
+        }
       }
 
-      // Fallback
-      return "Das ist interessant! Erzähl mir mehr davon!";
+      // Updates in Datenbank schreiben
+      if (hasUpdates) {
+        const updateFields = Object.keys(updates);
+        const updateValues = Object.values(updates);
+        const setClause = updateFields.map((field, index) => `${field} = $${index + 1}`).join(', ');
 
-    } catch (error) {
-      console.error(`❌ Fehler bei AI ${aiId}:`, error);
-      return "Hey! Entschuldige, ich bin gerade etwas durcheinander. Wie geht's dir?";
+        await pool.query(
+          `UPDATE ai_profiles SET ${setClause} WHERE id = $${updateFields.length + 1}`,
+          [...updateValues, profile.id]
+        );
+
+        updatedProfiles.push({
+          profileId: profile.id,
+          profileName: profile.profile_name,
+          updates: updates
+        });
+      }
+    }
+
+    return updatedProfiles;
+
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren der AI-Profile:', error);
+    return [];
+  }
+}
+
+// Verbesserungsvorschläge generieren
+function generateImprovementSuggestions(aiStats, frequentPhrases) {
+  const suggestions = [];
+
+  // AI mit wenig Nachrichten
+  aiStats.forEach(stat => {
+    if (stat.message_count < 50) {
+      suggestions.push({
+        type: 'low_activity',
+        aiId: stat.sender_id,
+        suggestion: 'Mehr Engagement-Training erforderlich',
+        priority: 'medium'
+      });
+    }
+
+    if (stat.avg_length < 20) {
+      suggestions.push({
+        type: 'short_responses',
+        aiId: stat.sender_id,
+        suggestion: 'Längere, detailliertere Antworten trainieren',
+        priority: 'high'
+      });
+    }
+  });
+
+  // Häufige Phrases nutzen
+  if (frequentPhrases.length > 0) {
+    suggestions.push({
+      type: 'phrase_integration',
+      suggestion: `Top Phrases integrieren: ${frequentPhrases.slice(0, 3).map(p => p[0]).join(', ')}`,
+      priority: 'low'
+    });
+  }
+
+  return suggestions;
+}
+
+// Training-Daten aus vorhandenen Chats extrahieren
+async function extractTrainingData(pool) {
+  try {
+    // Erfolgreiche Konversationspaare extrahieren
+    const trainingPairsQuery = await pool.query(`
+      WITH conversation_pairs AS (
+        SELECT 
+          cm1.message_text as input_message,
+          cm2.message_text as response_message,
+          cm1.match_id,
+          cm1.sender_id as sender_1,
+          cm2.sender_id as sender_2,
+          cm1.sent_at as sent_at_1,
+          cm2.sent_at as sent_at_2,
+          ROW_NUMBER() OVER (PARTITION BY cm1.match_id ORDER BY cm1.sent_at) as msg_order
+        FROM chat_messages cm1
+        JOIN chat_messages cm2 
+          ON cm1.match_id = cm2.match_id
+          AND cm2.sent_at > cm1.sent_at
+          AND cm2.sent_at - cm1.sent_at < INTERVAL '10 minutes'
+      ),
+      conversation_stats AS (
+        SELECT 
+          match_id,
+          COUNT(*) as total_messages,
+          MAX(sent_at) - MIN(sent_at) as conversation_duration
+        FROM chat_messages
+        GROUP BY match_id
+      )
+      SELECT 
+        cp.input_message,
+        cp.response_message,
+        CASE 
+          WHEN cp.sender_2 > 1000 THEN cp.sender_2  -- AI
+          ELSE 0                                     -- User-zu-User
+        END as ai_id,
+        cp.sender_1,
+        cp.sender_2,
+        cs.total_messages,
+        cs.conversation_duration
+      FROM conversation_pairs cp
+      JOIN conversation_stats cs ON cp.match_id = cs.match_id
+      WHERE cs.total_messages > 2 
+        AND LENGTH(cp.input_message) > 1
+        AND LENGTH(cp.response_message) > 1
+      ORDER BY cs.total_messages DESC, cp.sent_at_1 DESC
+      LIMIT 500
+    `);
+
+
+    const trainingPairs = trainingPairsQuery.rows;
+
+    // Training-Daten strukturieren
+    const structuredData = trainingPairs.map(pair => ({
+      input: pair.input_message.trim(),
+      output: pair.response_message.trim(),
+      aiId: pair.ai_id,
+      quality: pair.total_messages > 10 ? 'high' : 'medium',
+      context: {
+        conversationLength: pair.total_messages,
+        duration: pair.conversation_duration
+      }
+    }));
+
+    return structuredData;
+
+  } catch (error) {
+    console.error('Fehler beim Extrahieren der Training-Daten:', error);
+    return [];
+  }
+}
+async function extractTrainingDataForAllProfiles(pool) {
+  // Alle relevanten Paare aus DB, inkl. User→User (aiId = 0)
+  const pairsQuery = await pool.query(`
+    SELECT 
+      cm1.message_text AS input,
+      cm2.message_text AS output,
+      CASE 
+        WHEN cm2.sender_id > 1000 THEN cm2.sender_id
+        ELSE 0  -- Dummy AI
+      END AS ai_id
+    FROM chat_messages cm1
+    JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
+    WHERE cm2.sent_at > cm1.sent_at
+      AND cm2.sent_at - cm1.sent_at < INTERVAL '10 minutes'
+      AND LENGTH(cm1.message_text) > 1
+      AND LENGTH(cm2.message_text) > 1
+    LIMIT 1000
+  `);
+
+  return pairsQuery.rows;
+}
+
+// Vollautomatisches Batch-Training für alle AI-Profile
+async function batchTrainAllProfiles(pool) {
+  console.log('Starte Batch-Training für alle AI-Profile...');
+
+  // 1️⃣ Alle Trainingsdaten extrahieren
+  const trainingData = await extractAllTrainingData(pool);
+  if (!trainingData.length) return [];
+
+  // 2️⃣ Alle AI-Profile laden
+  const profilesQuery = await pool.query('SELECT * FROM ai_profiles');
+  const profiles = profilesQuery.rows;
+
+  const results = [];
+
+  for (const profile of profiles) {
+    // 3️⃣ Trainingsdaten auf dieses Profil anwenden (alle User→User inkl. aiId = 0)
+    const profileData = trainingData.map(item => ({
+      input: item.input,
+      output: item.output,
+      quality: 'medium'
+    }));
+
+    const updates = generateProfileUpdates(profile, analyzeInputPatterns(profileData.map(d => d.input)), analyzeResponsePatterns(profileData.map(d => d.output)), { totalExamples: profileData.length });
+    
+    if (Object.keys(updates).length > 0) {
+      const fields = Object.keys(updates);
+      const values = Object.values(updates);
+      const setClause = fields.map((f, i) => `${f} = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE ai_profiles SET ${setClause} WHERE id = $${fields.length + 1}`, [...values, profile.id]);
+    }
+
+    results.push({ profileId: profile.id, updates });
+  }
+
+  console.log('Batch-Training abgeschlossen');
+  return results;
+}
+
+// Spezifische AI trainieren (DB-Updates)
+async function trainSpecificAI(pool, aiId, trainingData) {
+  try {
+    // AI-Profil laden
+    const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
+    if (profileQuery.rows.length === 0) {
+      throw new Error(`AI-Profil ${aiId} nicht gefunden`);
+    }
+    const profile = profileQuery.rows[0];
+
+    // Training-Statistiken
+    const stats = {
+      totalExamples: trainingData.length,
+      highQualityExamples: trainingData.filter(d => d.quality === 'high').length,
+      avgInputLength: trainingData.reduce((sum, d) => sum + d.input.length, 0) / trainingData.length,
+      avgOutputLength: trainingData.reduce((sum, d) => sum + d.output.length, 0) / trainingData.length
+    };
+
+    // Muster analysieren
+    const inputPatterns = analyzeInputPatterns(trainingData.map(d => d.input));
+    const responsePatterns = analyzeResponsePatterns(trainingData.map(d => d.output));
+
+    // DB-Updates vorbereiten
+    const updates = generateProfileUpdates(profile, inputPatterns, responsePatterns, stats);
+
+    if (Object.keys(updates).length > 0) {
+      const updateFields = Object.keys(updates);
+      const updateValues = Object.values(updates);
+      const setClause = updateFields.map((field, index) => `${field} = $${index + 1}`).join(', ');
+
+      await pool.query(
+        `UPDATE ai_profiles SET ${setClause} WHERE id = $${updateFields.length + 1}`,
+        [...updateValues, aiId]
+      );
+
+      console.log(`Profil ${profile.profile_name} erfolgreich aktualisiert:`, updates);
+    }
+
+    return {
+      aiId,
+      profileName: profile.profile_name,
+      success: true,
+      stats,
+      updates,
+      patternsLearned: {
+        inputPatterns: inputPatterns.slice(0, 5),
+        responsePatterns: responsePatterns.slice(0, 5)
+      }
+    };
+
+  } catch (error) {
+    console.error(`Fehler beim Training von AI ${aiId}:`, error);
+    throw error;
+  }
+}
+
+// Input-Patterns analysieren
+function analyzeInputPatterns(inputs) {
+  const patterns = {};
+  
+  inputs.forEach(input => {
+    const lowerInput = input.toLowerCase();
+    
+    // Greetings
+    if (/^(hi|hey|hallo|moin)/.test(lowerInput)) {
+      patterns['greeting'] = (patterns['greeting'] || 0) + 1;
+    }
+    // Questions
+    else if (/\?$/.test(input) || /^(wie|was|wo|wann|warum)/.test(lowerInput)) {
+      patterns['question'] = (patterns['question'] || 0) + 1;
+    }
+    // Compliments
+    else if (/(schön|süß|nett|toll|cool)/.test(lowerInput)) {
+      patterns['compliment'] = (patterns['compliment'] || 0) + 1;
+    }
+    // Date requests
+    else if (/(treffen|date|kaffee|zeit|lust)/.test(lowerInput)) {
+      patterns['date_request'] = (patterns['date_request'] || 0) + 1;
+    }
+    // Short responses
+    else if (input.length < 15) {
+      patterns['short'] = (patterns['short'] || 0) + 1;
+    }
+    // General
+    else {
+      patterns['general'] = (patterns['general'] || 0) + 1;
+    }
+  });
+
+  // Als sortierte Liste zurückgeben
+  return Object.entries(patterns)
+    .sort((a, b) => b[1] - a[1])
+    .map(([pattern, count]) => ({ pattern, count, frequency: count / inputs.length }));
+}
+
+// Response-Patterns analysieren  
+function analyzeResponsePatterns(outputs) {
+  const patterns = {};
+  
+  outputs.forEach(output => {
+    const lowerOutput = output.toLowerCase();
+    
+    // Enthusiastic (with emojis)
+    if (/[😊😄😉😍🥰]/.test(output)) {
+      patterns['enthusiastic'] = (patterns['enthusiastic'] || 0) + 1;
+    }
+    // Question back
+    if (/\?$/.test(output)) {
+      patterns['counter_question'] = (patterns['counter_question'] || 0) + 1;
+    }
+    // Agreement
+    if (/^(ja|genau|stimmt|klar|gerne)/.test(lowerOutput)) {
+      patterns['agreement'] = (patterns['agreement'] || 0) + 1;
+    }
+    // Playful
+    if (/(haha|hihi|lol|witzig)/.test(lowerOutput)) {
+      patterns['playful'] = (patterns['playful'] || 0) + 1;
+    }
+    // Long responses
+    if (output.length > 50) {
+      patterns['detailed'] = (patterns['detailed'] || 0) + 1;
+    }
+    // Short responses
+    else if (output.length < 20) {
+      patterns['concise'] = (patterns['concise'] || 0) + 1;
+    }
+  });
+
+  return Object.entries(patterns)
+    .sort((a, b) => b[1] - a[1])
+    .map(([pattern, count]) => ({ pattern, count, frequency: count / outputs.length }));
+}
+
+// Profile-Updates basierend auf gelernten Patterns generieren
+function generateProfileUpdates(profile, inputPatterns, responsePatterns, stats) {
+  const updates = {};
+
+  // Description erweitern basierend auf Response-Patterns
+  if (responsePatterns.find(p => p.pattern === 'enthusiastic' && p.frequency > 0.3)) {
+    const currentDesc = profile.description || '';
+    if (!currentDesc.includes('begeistert') && !currentDesc.includes('enthusiastisch')) {
+      updates.description = currentDesc + (currentDesc ? ' ' : '') + 'Ich bin eine sehr begeisterte und positive Person!';
     }
   }
-};
+
+  // Interests basierend auf erfolgreichen Patterns
+  const currentInterests = profile.interests || [];
+  const newInterests = [...currentInterests];
+
+  if (inputPatterns.find(p => p.pattern === 'date_request' && p.frequency > 0.2)) {
+    if (!newInterests.includes('Dating')) {
+      newInterests.push('Dating');
+    }
+  }
+
+  if (responsePatterns.find(p => p.pattern === 'playful' && p.frequency > 0.25)) {
+    if (!newInterests.includes('Humor')) {
+      newInterests.push('Humor');
+    }
+  }
+
+  if (newInterests.length !== currentInterests.length) {
+    updates.interests = newInterests;
+  }
+
+  // Prompt/Answer Updates basierend auf häufigsten Patterns
+  const topInputPattern = inputPatterns[0];
+  const topResponsePattern = responsePatterns[0];
+
+  if (topInputPattern && topResponsePattern) {
+    // Beispiel-Prompt/Answer generieren
+    const prompts = generateExamplePrompts(topInputPattern.pattern, topResponsePattern.pattern);
+    
+    if (prompts.prompt1) {
+      updates.prompt_1 = prompts.prompt1;
+      updates.answer_1 = prompts.answer1;
+    }
+    
+    if (prompts.prompt2) {
+      updates.prompt_2 = prompts.prompt2;
+      updates.answer_2 = prompts.answer2;
+    }
+  }
+
+  return updates;
+}
+
+// Beispiel-Prompts generieren
+function generateExamplePrompts(inputPattern, responsePattern) {
+  const prompts = {};
+
+  const promptTemplates = {
+    greeting: {
+      enthusiastic: {
+        prompt1: "Hey, wie geht's dir?",
+        answer1: "Hey! Mir geht's super, danke! 😊 Wie ist dein Tag?"
+      },
+      counter_question: {
+        prompt1: "Hallo!",
+        answer1: "Hallo! Schön dich kennenzulernen! Was machst du denn so?"
+      }
+    },
+    compliment: {
+      agreement: {
+        prompt1: "Du siehst echt nett aus!",
+        answer1: "Aww, das ist lieb von dir! Danke! 😊"
+      },
+      playful: {
+        prompt1: "Du bist hübsch!",
+        answer1: "Hihi, du Schmeichler! Du weißt wie man einer Frau schmeichelt 😉"
+      }
+    },
+    date_request: {
+      enthusiastic: {
+        prompt1: "Hast du Lust auf einen Kaffee?",
+        answer1: "Ja gerne! Das würde mich sehr freuen! ☕😊"
+      },
+      counter_question: {
+        prompt1: "Wollen wir uns mal treffen?",
+        answer1: "Das klingt schön! Wann hättest du denn Zeit?"
+      }
+    }
+  };
+
+  const template = promptTemplates[inputPattern]?.[responsePattern];
+  if (template) {
+    return template;
+  }
+
+  // Fallback-Prompts
+  return {
+    prompt1: "Wie war dein Tag?",
+    answer1: "Ganz gut, danke! Erzähl du mal von dir!",
+    prompt2: "Was machst du gerne?",
+    answer2: "Ich mag es neue Leute kennenzulernen und interessante Gespräche zu führen!"
+  };
+}
