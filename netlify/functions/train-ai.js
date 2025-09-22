@@ -746,55 +746,43 @@ function analyzeResponsePatterns(outputs) {
 function generateProfileUpdates(profile, inputPatterns, responsePatterns, stats) {
   const updates = {};
 
-  // Description erweitern basierend auf Response-Patterns
-  if (responsePatterns.find(p => p.pattern === 'enthusiastic' && p.frequency > 0.3)) {
-    const currentDesc = profile.description || '';
-    if (!currentDesc.includes('begeistert') && !currentDesc.includes('enthusiastisch')) {
-      updates.description = currentDesc + (currentDesc ? ' ' : '') + 'Ich bin eine sehr begeisterte und positive Person!';
-    }
-  }
-
-  // Interests basierend auf erfolgreichen Patterns
   const currentInterests = profile.interests || [];
   const newInterests = [...currentInterests];
 
-  if (inputPatterns.find(p => p.pattern === 'date_request' && p.frequency > 0.1)) {
-    if (!newInterests.includes('Dating')) {
-      newInterests.push('Dating');
-    }
+  // einfache Regeln
+  inputPatterns.forEach(p => {
+    if(p.pattern === 'date_request' && !newInterests.includes('Dating')) newInterests.push('Dating');
+    if(p.pattern === 'greeting' && !newInterests.includes('Greetings')) newInterests.push('Greetings');
+  });
+
+  responsePatterns.forEach(p => {
+    if(p.pattern === 'playful' && !newInterests.includes('Humor')) newInterests.push('Humor');
+    if(p.pattern === 'enthusiastic' && !newInterests.includes('Begeisterung')) newInterests.push('Begeisterung');
+  });
+
+  updates.interests = newInterests;
+
+  // Beispiel-Prompt/Answer auch bei wenigen Daten
+  const topInputPattern = inputPatterns[0] ? inputPatterns[0].pattern : 'general';
+  const topResponsePattern = responsePatterns[0] ? responsePatterns[0].pattern : 'enthusiastic';
+  
+  const prompts = generateExamplePrompts(topInputPattern, topResponsePattern);
+
+  updates.prompt_1 = prompts.prompt1;
+  updates.answer_1 = prompts.answer1;
+  if(prompts.prompt2) {
+    updates.prompt_2 = prompts.prompt2;
+    updates.answer_2 = prompts.answer2;
   }
 
-  if (responsePatterns.find(p => p.pattern === 'playful' && p.frequency > 0.25)) {
-    if (!newInterests.includes('Humor')) {
-      newInterests.push('Humor');
-    }
-  }
-
-  if (newInterests.length !== currentInterests.length) {
-    updates.interests = newInterests;
-  }
-
-  // Prompt/Answer Updates basierend auf häufigsten Patterns
-  const topInputPattern = inputPatterns[0];
-  const topResponsePattern = responsePatterns[0];
-
-  if (topInputPattern && topResponsePattern) {
-    // Beispiel-Prompt/Answer generieren
-    const prompts = generateExamplePrompts(topInputPattern.pattern, topResponsePattern.pattern);
-    
-    if (prompts.prompt1) {
-      updates.prompt_1 = prompts.prompt1;
-      updates.answer_1 = prompts.answer1;
-    }
-    
-    if (prompts.prompt2) {
-      updates.prompt_2 = prompts.prompt2;
-      updates.answer_2 = prompts.answer2;
-    }
+  // Fallback: immer description aktualisieren
+  if(!profile.description || profile.description.length === 0){
+    updates.description = "Profil automatisch trainiert mit vorhandenen Chats";
   }
 
   return updates;
 }
+
 
 // Beispiel-Prompts generieren
 function generateExamplePrompts(inputPattern, responsePattern) {
