@@ -544,54 +544,64 @@ async function extractTrainingData(pool) {
     return [];
   }
 }
+async function extractTrainingDataForAllProfiles(pool) {
+  // Alle relevanten Paare aus DB, inkl. User→User (aiId = 0)
+  const pairsQuery = await pool.query(`
+    SELECT 
+      cm1.message_text AS input,
+      cm2.message_text AS output,
+      CASE 
+        WHEN cm2.sender_id > 1000 THEN cm2.sender_id
+        ELSE 0  -- Dummy AI
+      END AS ai_id
+    FROM chat_messages cm1
+    JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
+    WHERE cm2.sent_at > cm1.sent_at
+      AND cm2.sent_at - cm1.sent_at < INTERVAL '10 minutes'
+      AND LENGTH(cm1.message_text) > 1
+      AND LENGTH(cm2.message_text) > 1
+    LIMIT 1000
+  `);
+
+  return pairsQuery.rows;
+}
 
 // Vollautomatisches Batch-Training für alle AI-Profile
-// Vollautomatisches Batch-Training für alle AI-Profile (parallel)
 async function batchTrainAllProfiles(pool) {
-  try {
-    console.log('Starte automatisches Batch-Training für alle AI-Profile...');
+  console.log('Starte Batch-Training für alle AI-Profile...');
 
-    // 1. Training-Daten aus den Chats extrahieren
-    const trainingData = await extractTrainingData(pool);
-    console.log(`${trainingData.length} Training-Paare extrahiert`);
+  // 1️⃣ Alle Trainingsdaten extrahieren
+  const trainingData = await extractAllTrainingData(pool);
+  if (!trainingData.length) return [];
 
-    if (!trainingData.length) {
-      console.log('Keine Trainingsdaten gefunden, Abbruch.');
-      return [];
+  // 2️⃣ Alle AI-Profile laden
+  const profilesQuery = await pool.query('SELECT * FROM ai_profiles');
+  const profiles = profilesQuery.rows;
+
+  const results = [];
+
+  for (const profile of profiles) {
+    // 3️⃣ Trainingsdaten auf dieses Profil anwenden (alle User→User inkl. aiId = 0)
+    const profileData = trainingData.map(item => ({
+      input: item.input,
+      output: item.output,
+      quality: 'medium'
+    }));
+
+    const updates = generateProfileUpdates(profile, analyzeInputPatterns(profileData.map(d => d.input)), analyzeResponsePatterns(profileData.map(d => d.output)), { totalExamples: profileData.length });
+    
+    if (Object.keys(updates).length > 0) {
+      const fields = Object.keys(updates);
+      const values = Object.values(updates);
+      const setClause = fields.map((f, i) => `${f} = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE ai_profiles SET ${setClause} WHERE id = $${fields.length + 1}`, [...values, profile.id]);
     }
 
-    // 2. Training-Daten nach AI-ID gruppieren
-    const groupedData = trainingData.reduce((acc, item) => {
-      if (!acc[item.aiId]) acc[item.aiId] = [];
-      acc[item.aiId].push(item);
-      return acc;
-    }, {});
-
-    // 3. Alle AIs parallel trainieren
-    const trainingPromises = Object.entries(groupedData).map(async ([aiId, data]) => {
-      try {
-        const result = await trainSpecificAI(pool, parseInt(aiId), data);
-        console.log(`✅ AI ${aiId} trainiert: ${data.length} Beispiele`);
-        return result;
-      } catch (error) {
-        console.error(`❌ Fehler beim Training von AI ${aiId}:`, error);
-        return {
-          aiId: parseInt(aiId),
-          success: false,
-          error: error.message
-        };
-      }
-    });
-
-    const results = await Promise.all(trainingPromises);
-
-    console.log('Automatisches Batch-Training abgeschlossen.');
-    return results;
-
-  } catch (error) {
-    console.error('Fehler beim automatischen Batch-Training:', error);
-    throw error;
+    results.push({ profileId: profile.id, updates });
   }
+
+  console.log('Batch-Training abgeschlossen');
+  return results;
 }
 
 // Spezifische AI trainieren (DB-Updates)
