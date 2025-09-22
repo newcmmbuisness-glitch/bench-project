@@ -151,6 +151,72 @@ exports.handler = async (event) => {
     };
   }
 };
+async function generateAIResponse(pool, aiId, userMessage) {
+  const trimmedMsg = userMessage.trim().toLowerCase().replace(/[!?.]/g, '');
+
+  // Trainingsdaten laden
+  let trainingData = [];
+  if (aiId > 0) {
+    const profileQuery = await pool.query(
+      'SELECT training_data FROM ai_profiles WHERE id = $1',
+      [aiId]
+    );
+    if (profileQuery.rows.length > 0) {
+      try {
+        trainingData = JSON.parse(profileQuery.rows[0].training_data) || [];
+      } catch (e) {
+        console.error("❌ Training-Data JSON fehlerhaft:", e);
+        trainingData = [];
+      }
+    }
+  } else {
+    const userPairsQuery = await pool.query(`
+      SELECT cm1.message_text AS input, cm2.message_text AS output
+      FROM chat_messages cm1
+      JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
+      WHERE cm2.sent_at > cm1.sent_at
+        AND LENGTH(cm1.message_text) > 1
+        AND LENGTH(cm2.message_text) > 1
+      LIMIT 500
+    `);
+    trainingData = userPairsQuery.rows;
+  }
+
+  // Debug: prüfen ob Daten da sind
+  console.info("👉 Geladene Trainingsdaten:", trainingData.slice(0, 5));
+  console.info("👉 Suche nach:", trimmedMsg);
+
+  // 1️⃣ Exaktes Match
+  for (const item of trainingData) {
+    if (!item.input || !item.output) continue; // skip kaputte Einträge
+    const dbInput = item.input.toLowerCase().trim().replace(/[!?.]/g, '');
+    if (dbInput === trimmedMsg) {
+      console.info("✅ Direktes Match gefunden:", item);
+      return addVariation(item.output);
+    }
+  }
+
+  // 2️⃣ Unscharfes Match
+  let bestMatch = null;
+  let highestScore = 0;
+  for (const item of trainingData) {
+    if (!item.input || !item.output) continue;
+    const score = similarity(userMessage, item.input);
+    if (score > highestScore) {
+      highestScore = score;
+      bestMatch = item;
+    }
+  }
+
+  if (bestMatch && highestScore > 0.2) {
+    console.info("✅ Unscharfes Match gefunden:", bestMatch, "Score:", highestScore);
+    return addVariation(bestMatch.output);
+  }
+
+  // 3️⃣ Minimaler Fallback
+  console.info("⚠️ Kein Match → Fallback");
+  return generateFallbackResponse();
+}
 
 // Intelligente Response-Generierung
 async function generateIntelligentResponse(userMessage, aiProfile, chatHistory, pool) {
