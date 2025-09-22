@@ -131,39 +131,44 @@ async function analyzeChatData(pool) {
 // Generiert AI-Antwort basierend auf gelernten Trainingsdaten
 // ===================
 async function generateAIResponse(pool, aiId, userMessage) {
-  // Profil inkl. Trainingsdaten laden
-  const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
-  if (profileQuery.rows.length === 0) return "Hmm, ich weiß gerade nicht, was ich sagen soll.";
+  let trainingData = [];
 
-  const profile = profileQuery.rows[0];
-  const trainingData = profile.training_data || [];
-
-  if (!trainingData.length) {
-    // Fallback auf vordefinierte Prompts/Antworten
-    return profile.answer_1 || "Hallo! Wie geht's dir?";
+  if (aiId > 0) {
+    const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
+    if (profileQuery.rows.length > 0) trainingData = profileQuery.rows[0].training_data || [];
   }
 
-  // Ähnlichste Trainings-Eingabe finden
+  // User-zu-User Paare berücksichtigen
+  if (aiId === 0) {
+    const userPairsQuery = await pool.query(`
+      SELECT input, output FROM chat_messages
+      WHERE sender_id <> 0 AND match_id IN (
+        SELECT match_id FROM chat_messages
+        GROUP BY match_id
+        HAVING COUNT(DISTINCT sender_id) > 1
+      )
+      LIMIT 500
+    `);
+    trainingData = userPairsQuery.rows;
+  }
+
+  if (!trainingData.length) return "Hmm, ich weiß gerade nicht, was ich sagen soll.";
+
   let bestMatch = null;
   let highestScore = 0;
-
   for (const item of trainingData) {
-    const score = similarity(userMessage, item.input); // einfache Ähnlichkeitsberechnung
+    const score = similarity(userMessage, item.input);
     if (score > highestScore) {
       highestScore = score;
       bestMatch = item;
     }
   }
 
-  // Wenn guter Treffer, gib die trainierte Antwort
-  if (bestMatch && highestScore > 0.3) {
-    return bestMatch.output;
-  }
-
-  // Sonst Fallback auf Profil-Prompts
-  if (userMessage.length < 20) return profile.answer_2 || "Erzähl mal mehr!";
-  return profile.answer_1 || "Interessant, erzähl mir mehr!";
+  if (bestMatch && highestScore > 0.3) return bestMatch.output;
+  return "Erzähl mal mehr!";
 }
+
+
 // ===================
 // Sehr einfache Text-Ähnlichkeit (Overlap von Wörtern)
 // ===================
