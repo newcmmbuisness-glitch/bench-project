@@ -131,6 +131,14 @@ async function analyzeChatData(pool) {
 // Generiert AI-Antwort basierend auf gelernten Trainingsdaten
 // ===================
 async function generateAIResponse(pool, aiId, userMessage) {
+  const trimmedMsg = userMessage.trim().toLowerCase();
+
+  // Kurz-Greetings abfangen
+  const greetings = ['hi', 'hey', 'hallo', 'huhu', 'moin'];
+  if (greetings.includes(trimmedMsg)) {
+    return userMessage.trim(); // exakt zurückgeben
+  }
+  
   let trainingData = [];
 
   if (aiId > 0) {
@@ -173,11 +181,20 @@ async function generateAIResponse(pool, aiId, userMessage) {
 // Sehr einfache Text-Ähnlichkeit (Overlap von Wörtern)
 // ===================
 function similarity(text1, text2) {
-  const words1 = text1.toLowerCase().split(/\s+/);
-  const words2 = text2.toLowerCase().split(/\s+/);
+  const t1 = text1.toLowerCase().trim();
+  const t2 = text2.toLowerCase().trim();
+
+  // Kurze Texte exakt matchen
+  if (t1.length < 5 && t2.length < 5) {
+    return t1 === t2 ? 1 : 0;
+  }
+
+  const words1 = t1.split(/\s+/);
+  const words2 = t2.split(/\s+/);
   const common = words1.filter(w => words2.includes(w));
   return common.length / Math.max(words1.length, words2.length);
 }
+
 
 // Häufige Phrases analysieren
 async function analyzeFrequentPhrases(pool) {
