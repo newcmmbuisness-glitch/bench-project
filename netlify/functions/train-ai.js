@@ -138,7 +138,7 @@ async function generateAIResponse(pool, aiId, userMessage) {
   let trainingData = [];
   if (aiId > 0) {
     const profileQuery = await pool.query('SELECT * FROM ai_profiles WHERE id = $1', [aiId]);
-    if (profileQuery.rows.length > 0) trainingData = JSON.parse(profileQuery.rows[0].training_data) || [];
+    if (profileQuery.rows.length > 0) trainingData = profileQuery.rows[0].training_data || [];
   } else {
     // User→User Paare als Input/Output
     const userPairsQuery = await pool.query(`
