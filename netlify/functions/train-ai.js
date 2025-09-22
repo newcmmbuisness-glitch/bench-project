@@ -572,25 +572,25 @@ async function extractTrainingDataForAllProfiles(pool) {
 async function batchTrainAllProfiles(pool) {
   console.log('Starte Batch-Training für alle AI-Profile...');
 
-  // Alle Trainingsdaten extrahieren inkl. Dummy (User→User)
+  // 1. Alle Trainingsdaten extrahieren (inkl. Dummy AI = 0)
   const trainingData = await extractTrainingDataForAllProfiles(pool);
   if (!trainingData.length) return [];
 
-  // Alle AI-Profile laden
+  // 2. Alle AI-Profile laden
   const profilesQuery = await pool.query('SELECT * FROM ai_profiles');
   const profiles = profilesQuery.rows;
 
   const results = [];
 
   for (const profile of profiles) {
-    // Trainingsdaten für das Profil: eigene AI + alle Dummy (0) Daten
-    const profileData = trainingData.filter(d => d.ai_id === profile.id || d.ai_id === 0);
+    // Alle Dummy-Daten für jedes Profil verwenden
+    const profileData = trainingData;  // kein Filtern nach ai_id
 
-    if (!profileData.length) continue;
-
+    // Muster analysieren
     const inputPatterns = analyzeInputPatterns(profileData.map(d => d.input));
     const responsePatterns = analyzeResponsePatterns(profileData.map(d => d.output));
 
+    // Profile aktualisieren
     const updates = generateProfileUpdates(profile, inputPatterns, responsePatterns, { totalExamples: profileData.length });
 
     if (Object.keys(updates).length > 0) {
@@ -607,6 +607,7 @@ async function batchTrainAllProfiles(pool) {
   console.log('Batch-Training abgeschlossen');
   return results;
 }
+
 
 // Spezifische AI trainieren (DB-Updates)
 async function trainSpecificAI(pool, aiId, trainingData) {
