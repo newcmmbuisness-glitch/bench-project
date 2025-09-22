@@ -256,21 +256,44 @@ function addVariation(text) {
 // ===================
 // Wort-Overlap Ähnlichkeit
 // ===================
+const { distance: levenshtein } = require("fastest-levenshtein");
+const natural = require("natural");
+
 function similarity(text1, text2) {
-  const t1 = text1.toLowerCase().trim();
-  const t2 = text2.toLowerCase().trim();
+  const a = text1.toLowerCase().trim();
+  const b = text2.toLowerCase().trim();
 
-  // Sonderfall: exakt gleich
-  if (t1 === t2) return 1;
+  if (!a || !b) return 0;
+  if (a === b) return 1;
 
-  // Wenn beide nur 1 Wort haben → Zeichen-Overlap statt Wort-Overlap
-  if (!t1.includes(" ") && !t2.includes(" ")) {
-    let matches = 0;
-    for (let char of t1) {
-      if (t2.includes(char)) matches++;
-    }
-    return matches / Math.max(t1.length, t2.length);
+  // Levenshtein-Ähnlichkeit
+  const levDist = levenshtein(a, b);
+  const maxLen = Math.max(a.length, b.length);
+  const levScore = 1 - levDist / maxLen; // 1 = identisch, 0 = komplett verschieden
+
+  // Jaro-Winkler für kurze Wörter ("hi", "hey", "hallo")
+  const jwScore = natural.JaroWinklerDistance(a, b);
+
+  // Cosine Similarity (Bag of Words)
+  const tokenizer = new natural.WordTokenizer();
+  const tokensA = tokenizer.tokenize(a);
+  const tokensB = tokenizer.tokenize(b);
+
+  const tfidf = new natural.TfIdf();
+  tfidf.addDocument(tokensA.join(" "));
+  tfidf.addDocument(tokensB.join(" "));
+
+  let cosineScore = 0;
+  try {
+    cosineScore = natural.CosineSimilarity(tokensA, tokensB) || 0;
+  } catch {
+    cosineScore = 0;
   }
+
+  // Finale Ähnlichkeit = Max aus allen drei
+  return Math.max(levScore, jwScore, cosineScore);
+}
+
 
   // Standard: Wort-Overlap
   const words1 = t1.split(/\s+/);
