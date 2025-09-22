@@ -163,15 +163,15 @@ async function generateAIResponse(pool, aiId, userMessage) {
   }
 
   // Debug: prüfen ob Daten da sind
-  console.log("👉 Geladene Trainingsdaten:", trainingData.slice(0, 5));
-  console.log("👉 Suche nach:", trimmedMsg);
+  console.info"👉 Geladene Trainingsdaten:", trainingData.slice(0, 5));
+  console.info("👉 Suche nach:", trimmedMsg);
 
   // 1️⃣ Exaktes Match
   for (const item of trainingData) {
     if (!item.input || !item.output) continue; // skip kaputte Einträge
     const dbInput = item.input.toLowerCase().trim().replace(/[!?.]/g, '');
     if (dbInput === trimmedMsg) {
-      console.log("✅ Direktes Match gefunden:", item);
+      console.info("✅ Direktes Match gefunden:", item);
       return addVariation(item.output);
     }
   }
@@ -189,12 +189,12 @@ async function generateAIResponse(pool, aiId, userMessage) {
   }
 
   if (bestMatch && highestScore > 0.2) {
-    console.log("✅ Unscharfes Match gefunden:", bestMatch, "Score:", highestScore);
+    console.info("✅ Unscharfes Match gefunden:", bestMatch, "Score:", highestScore);
     return addVariation(bestMatch.output);
   }
 
   // 3️⃣ Minimaler Fallback
-  console.log("⚠️ Kein Match → Fallback");
+  console.info("⚠️ Kein Match → Fallback");
   return generateFallbackResponse();
 }
 
