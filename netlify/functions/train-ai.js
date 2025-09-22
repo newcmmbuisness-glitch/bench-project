@@ -326,6 +326,7 @@ function analyzeSuccessfulChat(chat) {
       messageCount: chat.message_count,
       duration: chat.duration,
       keyPhrases: [],
+      messages: messages,
       responseStyles: [],
       engagement: 'high'
     };
