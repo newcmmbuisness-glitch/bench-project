@@ -131,57 +131,71 @@ async function analyzeChatData(pool) {
 // ===================
 // Generiert AI-Antwort basierend auf Training inkl. User→User
 // ===================
-async function generateAIResponse(userMessage, trainingData, aiProfileId) {
-  if (!trainingData || trainingData.length === 0) {
-    console.log("⚠️ Keine Trainingsdaten gefunden, Fallback wird genutzt.");
-    return fallbackResponse();
+async function generateAIResponse(pool, aiId, userMessage) {
+  const trimmedMsg = userMessage.trim().toLowerCase().replace(/[!?.]/g, '');
+
+  // Trainingsdaten laden
+  let trainingData = [];
+  if (aiId > 0) {
+    const profileQuery = await pool.query(
+      'SELECT training_data FROM ai_profiles WHERE id = $1',
+      [aiId]
+    );
+    if (profileQuery.rows.length > 0) {
+      try {
+        trainingData = JSON.parse(profileQuery.rows[0].training_data) || [];
+      } catch (e) {
+        console.error("❌ Training-Data JSON fehlerhaft:", e);
+        trainingData = [];
+      }
+    }
+  } else {
+    const userPairsQuery = await pool.query(`
+      SELECT cm1.message_text AS input, cm2.message_text AS output
+      FROM chat_messages cm1
+      JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
+      WHERE cm2.sent_at > cm1.sent_at
+        AND LENGTH(cm1.message_text) > 1
+        AND LENGTH(cm2.message_text) > 1
+      LIMIT 500
+    `);
+    trainingData = userPairsQuery.rows;
   }
 
-  // 1. Normalisieren
-  const trimmedMsg = userMessage.toLowerCase().trim().replace(/[!?.]/g, '');
-  console.log("🔎 Suche nach:", trimmedMsg);
+  // Debug: prüfen ob Daten da sind
+  console.log("👉 Geladene Trainingsdaten:", trainingData.slice(0, 5));
+  console.log("👉 Suche nach:", trimmedMsg);
 
-  // 2. Begrüßungs-Map → sofortige Antwort
-  const GREETINGS = ['hi', 'hey', 'hallo', 'moin', 'servus'];
-  if (GREETINGS.includes(trimmedMsg)) {
-    console.log("✅ Begrüßung erkannt!");
-    return "Hey! Schön dich zu sehen 😊";
-  }
-
-  // 3. Exaktes Matching in Trainingsdaten
-  for (let item of trainingData) {
+  // 1️⃣ Exaktes Match
+  for (const item of trainingData) {
+    if (!item.input || !item.output) continue; // skip kaputte Einträge
     const dbInput = item.input.toLowerCase().trim().replace(/[!?.]/g, '');
     if (dbInput === trimmedMsg) {
-      console.log("✅ Direktes Match gefunden:", item.output);
+      console.log("✅ Direktes Match gefunden:", item);
       return addVariation(item.output);
     }
   }
 
-  // 4. Unscharfes Matching (Jaccard/Overlap)
+  // 2️⃣ Unscharfes Match
   let bestMatch = null;
   let highestScore = 0;
-
-  for (let item of trainingData) {
-    const dbInput = item.input.toLowerCase().trim().replace(/[!?.]/g, '');
-    const score = similarity(trimmedMsg, dbInput);
-
+  for (const item of trainingData) {
+    if (!item.input || !item.output) continue;
+    const score = similarity(userMessage, item.input);
     if (score > highestScore) {
       highestScore = score;
       bestMatch = item;
     }
   }
 
-  console.log("🔎 Bester Match-Score:", highestScore);
-
-  // 5. Dynamischer Threshold für kurze Nachrichten
-  if (bestMatch && (highestScore > 0.2 || trimmedMsg.length < 5)) {
-    console.log("✅ Unscharfes Match gewählt:", bestMatch.output);
+  if (bestMatch && highestScore > 0.2) {
+    console.log("✅ Unscharfes Match gefunden:", bestMatch, "Score:", highestScore);
     return addVariation(bestMatch.output);
   }
 
-  // 6. Fallback
+  // 3️⃣ Minimaler Fallback
   console.log("⚠️ Kein Match → Fallback");
-  return fallbackResponse();
+  return generateFallbackResponse();
 }
 
 
