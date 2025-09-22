@@ -478,12 +478,15 @@ async function extractTrainingData(pool) {
           cm1.message_text as input_message,
           cm2.message_text as response_message,
           cm1.match_id,
-          cm2.sender_id as ai_id,
-          cm1.sent_at,
+          cm1.sender_id as sender_1,
+          cm2.sender_id as sender_2,
+          cm1.sent_at as sent_at_1,
+          cm2.sent_at as sent_at_2,
           ROW_NUMBER() OVER (PARTITION BY cm1.match_id ORDER BY cm1.sent_at) as msg_order
         FROM chat_messages cm1
-        JOIN chat_messages cm2 ON cm1.match_id = cm2.match_id
-        WHERE cm2.sent_at > cm1.sent_at
+        JOIN chat_messages cm2 
+          ON cm1.match_id = cm2.match_id
+          AND cm2.sent_at > cm1.sent_at
           AND cm2.sent_at - cm1.sent_at < INTERVAL '10 minutes'
       ),
       conversation_stats AS (
@@ -497,17 +500,23 @@ async function extractTrainingData(pool) {
       SELECT 
         cp.input_message,
         cp.response_message,
-        cp.ai_id,
+        CASE 
+          WHEN cp.sender_2 > 1000 THEN cp.sender_2  -- AI
+          ELSE 0                                     -- User-zu-User
+        END as ai_id,
+        cp.sender_1,
+        cp.sender_2,
         cs.total_messages,
         cs.conversation_duration
       FROM conversation_pairs cp
       JOIN conversation_stats cs ON cp.match_id = cs.match_id
-      WHERE cs.total_messages > 2  -- Nur aus längeren Gesprächen lernen
+      WHERE cs.total_messages > 2 
         AND LENGTH(cp.input_message) > 1
         AND LENGTH(cp.response_message) > 1
-      ORDER BY cs.total_messages DESC, cp.sent_at DESC
+      ORDER BY cs.total_messages DESC, cp.sent_at_1 DESC
       LIMIT 500
     `);
+
 
     const trainingPairs = trainingPairsQuery.rows;
 
