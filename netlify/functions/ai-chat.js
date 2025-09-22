@@ -162,12 +162,7 @@ async function generateAIResponse(pool, aiId, userMessage) {
       [aiId]
     );
     if (profileQuery.rows.length > 0) {
-      try {
-        trainingData = JSON.parse(profileQuery.rows[0].training_data) || [];
-      } catch (e) {
-        console.error("❌ Training-Data JSON fehlerhaft:", e);
-        trainingData = [];
-      }
+      trainingData = profileQuery.rows[0].training_data || [];
     }
   } else {
     const userPairsQuery = await pool.query(`
@@ -182,13 +177,12 @@ async function generateAIResponse(pool, aiId, userMessage) {
     trainingData = userPairsQuery.rows;
   }
 
-  // Debug: prüfen ob Daten da sind
   console.info("👉 Geladene Trainingsdaten:", trainingData.slice(0, 5));
   console.info("👉 Suche nach:", trimmedMsg);
 
   // 1️⃣ Exaktes Match
   for (const item of trainingData) {
-    if (!item.input || !item.output) continue; // skip kaputte Einträge
+    if (!item.input || !item.output) continue;
     const dbInput = item.input.toLowerCase().trim().replace(/[!?.]/g, '');
     if (dbInput === trimmedMsg) {
       console.info("✅ Direktes Match gefunden:", item);
@@ -217,6 +211,7 @@ async function generateAIResponse(pool, aiId, userMessage) {
   console.info("⚠️ Kein Match → Fallback");
   return generateFallbackResponse();
 }
+
 
 // Intelligente Response-Generierung
 async function generateIntelligentResponse(userMessage, aiProfile, chatHistory, pool) {
