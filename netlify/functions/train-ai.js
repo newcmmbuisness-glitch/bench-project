@@ -41,20 +41,22 @@ exports.handler = async (event, context) => {
       improvements: chatAnalysis.improvements
     };
     
-    // 4b. Training-Statistiken auch in DB speichern
     await pool.query(
       `INSERT INTO training_stats 
-         (analyzed_messages, successful_conversations, updated_profiles, training_date, improvements) 
+         (ai_profile_id, training_date, messages_analyzed, patterns_learned, improvements) 
        VALUES ($1, $2, $3, $4, $5)`,
       [
-        trainingStats.analyzedMessages,
-        trainingStats.successfulConversations,
-        trainingStats.updatedProfiles,
+        null, // oder eine konkrete ai_profile_id falls verfügbar
         trainingStats.trainingDate,
+        trainingStats.analyzedMessages,
+        JSON.stringify({
+          successfulConversations: trainingStats.successfulConversations,
+          updatedProfiles: trainingStats.updatedProfiles
+        }),
         JSON.stringify(trainingStats.improvements || [])
       ]
     );
-    
+        
     await pool.end();
 
     return {
