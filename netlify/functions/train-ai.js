@@ -191,7 +191,7 @@ async function generateAIResponse(pool, aiId, userMessage) {
     
     // Verhindere zu ähnliche Paare (Echo)
     const sim = similarity(inputClean, outputClean);
-    if (sim > 0.85) return false;
+    if (inputClean.length > 3 && sim > 0.95) return false;
     
     // Verhindere zu kurze Antworten
     if (item.output.length < 2) return false;
@@ -217,13 +217,13 @@ async function generateAIResponse(pool, aiId, userMessage) {
   let highestScore = 0;
   for (const item of trainingData) {
     const score = similarity(userMessage, item.input);
-    if (score > highestScore && score > 0.3) {
+    if (score > highestScore && score > 0.2) {
       highestScore = score;
       bestMatch = item;
     }
   }
 
-  if (bestMatch && highestScore > 0.3) {
+  if (bestMatch && highestScore > 0.2) {
     console.info("✅ Unscharfes Match gefunden:", bestMatch, "Score:", highestScore);
     return addVariation(bestMatch.output);
   }
