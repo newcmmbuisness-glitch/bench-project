@@ -110,7 +110,7 @@ exports.handler = async (event) => {
       await pool.query(`
         INSERT INTO chat_messages (match_id, sender_id, message_text)
         VALUES ($1, $2, $3)
-      `, [conversationId, aiProfileId, response]);
+      `, [conversationId, 0, response]);
     }
 
     await pool.end();
