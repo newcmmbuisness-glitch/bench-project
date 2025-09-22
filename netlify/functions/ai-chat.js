@@ -165,7 +165,8 @@ async function generateAIResponse(pool, aiId, userMessage) {
     );
     if (profileQuery.rows.length > 0) {
       try {
-        trainingData = JSON.parse(profileQuery.rows[0].training_data) || [];
+        trainingData = trainingData = profileQuery.rows[0].training_data || [];
+
       } catch (e) {
         console.error("❌ Training-Data JSON fehlerhaft:", e);
         trainingData = [];
@@ -247,12 +248,6 @@ async function generateAIResponse(pool, aiId, userMessage) {
     return addVariation(bestMatch.output);
   }
 
-  // Intent-basierte Fallbacks
-  const intentResponse = generateIntentBasedResponse(userMessage);
-  if (intentResponse) {
-    console.info("✅ Intent-basierte Antwort verwendet");
-    return intentResponse;
-  }
 
   console.info("⚠️ Kein Match → Fallback");
   return generateFallbackResponse();
