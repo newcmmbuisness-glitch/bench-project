@@ -295,14 +295,6 @@ function similarity(text1, text2) {
 }
 
 
-  // Standard: Wort-Overlap
-  const words1 = t1.split(/\s+/);
-  const words2 = t2.split(/\s+/);
-  const common = words1.filter(w => words2.includes(w));
-  return common.length / Math.max(words1.length, words2.length);
-}
-
-
 // Häufige Phrases analysieren
 async function analyzeFrequentPhrases(pool) {
   try {
