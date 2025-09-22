@@ -211,6 +211,28 @@ async function generateAIResponse(pool, aiId, userMessage) {
   console.info("⚠️ Kein Match → Fallback");
   return generateFallbackResponse();
 }
+
+// ===================
+// Variation einbauen
+// ===================
+function addVariation(text) {
+  let newText = text;
+
+  // zufällige Emoji-Ergänzung
+  const emojis = ['😊','😄','😉','🙂','😎'];
+  if (Math.random() < 0.3) newText += ` ${emojis[Math.floor(Math.random()*emojis.length)]}`;
+
+  // kleine Synonym-Ersetzungen (optional erweitern)
+  newText = newText.replace(/\b(hallo|hi|hey)\b/gi, 'Hey');
+
+  // Kürze lange Sätze leicht ab oder baue Frage ein
+  if (newText.length > 80 && Math.random() < 0.5) {
+    newText = newText.split(/[,.]/)[0] + '?';
+  }
+
+  return newText;
+}
+
 function similarity(text1, text2) {
   const t1 = text1.toLowerCase().trim();
   const t2 = text2.toLowerCase().trim();
