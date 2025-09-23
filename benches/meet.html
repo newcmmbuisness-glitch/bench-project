@@ -4598,28 +4598,72 @@
 			cardStack.innerHTML = `
 				<div style="text-align: center; color: white;">
 					<div class="infinity-loader">
-						<svg width="120" height="60" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
-							<!-- Infinity symbol path -->
-							<path d="M20,30 C20,13.431 33.431,0 50,0 C66.569,0 80,13.431 80,30 C80,46.569 66.569,60 50,60 C33.431,60 20,46.569 20,30 Z M70,30 C70,13.431 83.431,0 100,0 C116.569,0 130,13.431 130,30 C130,46.569 116.569,60 100,60 C83.431,60 70,46.569 70,30 Z" 
+						<svg width="140" height="80" viewBox="0 0 140 80" xmlns="http://www.w3.org/2000/svg">
+							<!-- Main infinity path -->
+							<path id="infinityPath" 
+								  d="M 20,40 C 20,20 35,10 50,10 C 65,10 70,25 70,40 C 70,55 65,70 50,70 C 35,70 20,60 20,40 Z M 70,40 C 70,25 75,10 90,10 C 105,10 120,20 120,40 C 120,60 105,70 90,70 C 75,70 70,55 70,40 Z" 
 								  fill="none" 
-								  stroke="url(#gradient)" 
-								  stroke-width="3" 
-								  stroke-linecap="round"/>
+								  stroke="url(#infinityGradient)" 
+								  stroke-width="4" 
+								  stroke-linecap="round"
+								  stroke-dasharray="300"
+								  stroke-dashoffset="300">
+								<animate attributeName="stroke-dashoffset" 
+										 values="300;0;300" 
+										 dur="6s" 
+										 repeatCount="indefinite"/>
+							</path>
 							
-							<!-- Animated dot traveling along the path -->
-							<circle r="4" fill="#00ff88">
-								<animateMotion dur="3s" repeatCount="indefinite">
-									<path d="M20,30 C20,13.431 33.431,0 50,0 C66.569,0 80,13.431 80,30 C80,46.569 66.569,60 50,60 C33.431,60 20,46.569 20,30 Z M70,30 C70,13.431 83.431,0 100,0 C116.569,0 130,13.431 130,30 C130,46.569 116.569,60 100,60 C83.431,60 70,46.569 70,30 Z"/>
+							<!-- Moving particles -->
+							<circle r="5" fill="url(#particleGradient)" opacity="0.9">
+								<animateMotion dur="5s" repeatCount="indefinite">
+									<path d="M 20,40 C 20,20 35,10 50,10 C 65,10 70,25 70,40 C 70,55 65,70 50,70 C 35,70 20,60 20,40 Z M 70,40 C 70,25 75,10 90,10 C 105,10 120,20 120,40 C 120,60 105,70 90,70 C 75,70 70,55 70,40 Z"/>
+								</animateMotion>
+								<animate attributeName="opacity" values="0.9;0.4;0.9" dur="2s" repeatCount="indefinite"/>
+							</circle>
+							
+							<!-- Second particle (delayed) -->
+							<circle r="3" fill="#00ccff" opacity="0.7">
+								<animateMotion dur="5s" repeatCount="indefinite" begin="1.5s">
+									<path d="M 20,40 C 20,20 35,10 50,10 C 65,10 70,25 70,40 C 70,55 65,70 50,70 C 35,70 20,60 20,40 Z M 70,40 C 70,25 75,10 90,10 C 105,10 120,20 120,40 C 120,60 105,70 90,70 C 75,70 70,55 70,40 Z"/>
+								</animateMotion>
+								<animate attributeName="opacity" values="0.7;0.2;0.7" dur="3s" repeatCount="indefinite"/>
+							</circle>
+							
+							<!-- Third particle (more delayed) -->
+							<circle r="2" fill="#66ff66" opacity="0.6">
+								<animateMotion dur="5s" repeatCount="indefinite" begin="3s">
+									<path d="M 20,40 C 20,20 35,10 50,10 C 65,10 70,25 70,40 C 70,55 65,70 50,70 C 35,70 20,60 20,40 Z M 70,40 C 70,25 75,10 90,10 C 105,10 120,20 120,40 C 120,60 105,70 90,70 C 75,70 70,55 70,40 Z"/>
 								</animateMotion>
 							</circle>
 							
-							<!-- Gradient definition -->
+							<!-- Gradient definitions -->
 							<defs>
-								<linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-									<stop offset="0%" style="stop-color:#00ff88;stop-opacity:1" />
-									<stop offset="50%" style="stop-color:#0099ff;stop-opacity:1" />
-									<stop offset="100%" style="stop-color:#6666ff;stop-opacity:1" />
+								<linearGradient id="infinityGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+									<stop offset="0%" style="stop-color:#00ff88;stop-opacity:1">
+										<animate attributeName="stop-color" 
+												 values="#00ff88;#0099ff;#6666ff;#ff0099;#00ff88" 
+												 dur="8s" 
+												 repeatCount="indefinite"/>
+									</stop>
+									<stop offset="50%" style="stop-color:#0099ff;stop-opacity:1">
+										<animate attributeName="stop-color" 
+												 values="#0099ff;#6666ff;#ff0099;#00ff88;#0099ff" 
+												 dur="8s" 
+												 repeatCount="indefinite"/>
+									</stop>
+									<stop offset="100%" style="stop-color:#6666ff;stop-opacity:1">
+										<animate attributeName="stop-color" 
+												 values="#6666ff;#ff0099;#00ff88;#0099ff;#6666ff" 
+												 dur="8s" 
+												 repeatCount="indefinite"/>
+									</stop>
 								</linearGradient>
+								
+								<radialGradient id="particleGradient">
+									<stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
+									<stop offset="100%" style="stop-color:#00ff88;stop-opacity:0"/>
+								</radialGradient>
 							</defs>
 						</svg>
 					</div>
@@ -4627,37 +4671,53 @@
 				
 				<style>
 					.infinity-loader {
-						animation: pulse 2s ease-in-out infinite, float 4s ease-in-out infinite;
-						filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.5));
+						animation: float 6s ease-in-out infinite, breathe 4s ease-in-out infinite;
+						filter: drop-shadow(0 0 25px rgba(0, 255, 136, 0.6));
 					}
 					
-					@keyframes pulse {
+					@keyframes float {
 						0%, 100% { 
-							transform: scale(1); 
-							opacity: 0.8;
+							transform: translateY(0px) rotate(0deg); 
+						}
+						33% { 
+							transform: translateY(-8px) rotate(1deg); 
+						}
+						66% { 
+							transform: translateY(5px) rotate(-1deg); 
+						}
+					}
+					
+					@keyframes breathe {
+						0%, 100% { 
+							transform: scale(1);
+							opacity: 0.9;
 						}
 						50% { 
-							transform: scale(1.1); 
+							transform: scale(1.05);
 							opacity: 1;
 						}
 					}
 					
-					@keyframes float {
-						0%, 100% { transform: translateY(0px); }
-						50% { transform: translateY(-10px); }
-					}
-					
-					/* Glowing effect */
+					/* Dynamic glow effect */
 					.infinity-loader svg {
-						animation: glow 3s ease-in-out infinite alternate;
+						animation: dynamicGlow 7s ease-in-out infinite;
 					}
 					
-					@keyframes glow {
-						from {
-							filter: drop-shadow(0 0 15px rgba(0, 255, 136, 0.4));
+					@keyframes dynamicGlow {
+						0% {
+							filter: drop-shadow(0 0 15px rgba(0, 255, 136, 0.5));
 						}
-						to {
-							filter: drop-shadow(0 0 25px rgba(0, 255, 136, 0.8)) drop-shadow(0 0 35px rgba(0, 153, 255, 0.4));
+						25% {
+							filter: drop-shadow(0 0 30px rgba(0, 153, 255, 0.7)) drop-shadow(0 0 45px rgba(0, 255, 136, 0.3));
+						}
+						50% {
+							filter: drop-shadow(0 0 35px rgba(102, 102, 255, 0.8)) drop-shadow(0 0 50px rgba(0, 153, 255, 0.4));
+						}
+						75% {
+							filter: drop-shadow(0 0 25px rgba(255, 0, 153, 0.6)) drop-shadow(0 0 40px rgba(102, 102, 255, 0.5));
+						}
+						100% {
+							filter: drop-shadow(0 0 15px rgba(0, 255, 136, 0.5));
 						}
 					}
 				</style>
@@ -4691,8 +4751,7 @@
 					showNoMoreCards();
 				}, 1000);
 			}
-		}
-		
+		}		
 		// Match Animation
 		function showMatchAnimation(profile) {
 		    const overlay = document.createElement('div');
