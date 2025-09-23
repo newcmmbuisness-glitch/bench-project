@@ -4601,39 +4601,39 @@
 						<svg width="140" height="80" viewBox="0 0 140 80" xmlns="http://www.w3.org/2000/svg">
 							<!-- Main infinity path -->
 							<path id="infinityPath" 
-								  d="M 20,40 C 20,20 35,10 50,10 C 65,10 70,25 70,40 C 70,55 65,70 50,70 C 35,70 20,60 20,40 Z M 70,40 C 70,25 75,10 90,10 C 105,10 120,20 120,40 C 120,60 105,70 90,70 C 75,70 70,55 70,40 Z" 
+								  d="M 25,40 Q 25,15 45,15 Q 65,15 65,40 Q 65,65 45,65 Q 25,65 25,40 M 75,40 Q 75,15 95,15 Q 115,15 115,40 Q 115,65 95,65 Q 75,65 75,40" 
 								  fill="none" 
 								  stroke="url(#infinityGradient)" 
 								  stroke-width="4" 
 								  stroke-linecap="round"
-								  stroke-dasharray="300"
-								  stroke-dashoffset="300">
+								  stroke-dasharray="50 10"
+								  stroke-dashoffset="0">
 								<animate attributeName="stroke-dashoffset" 
-										 values="300;0;300" 
-										 dur="6s" 
+										 values="0;-60;0" 
+										 dur="2.5s" 
 										 repeatCount="indefinite"/>
 							</path>
 							
 							<!-- Moving particles -->
-							<circle r="5" fill="url(#particleGradient)" opacity="0.9">
-								<animateMotion dur="5s" repeatCount="indefinite">
-									<path d="M 20,40 C 20,20 35,10 50,10 C 65,10 70,25 70,40 C 70,55 65,70 50,70 C 35,70 20,60 20,40 Z M 70,40 C 70,25 75,10 90,10 C 105,10 120,20 120,40 C 120,60 105,70 90,70 C 75,70 70,55 70,40 Z"/>
+							<circle r="4" fill="url(#particleGradient)" opacity="0.8">
+								<animateMotion dur="4s" repeatCount="indefinite">
+									<path d="M 25,40 Q 25,15 45,15 Q 65,15 65,40 Q 65,65 45,65 Q 25,65 25,40 M 75,40 Q 75,15 95,15 Q 115,15 115,40 Q 115,65 95,65 Q 75,65 75,40"/>
 								</animateMotion>
-								<animate attributeName="opacity" values="0.9;0.4;0.9" dur="2s" repeatCount="indefinite"/>
+								<animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
 							</circle>
 							
 							<!-- Second particle (delayed) -->
-							<circle r="3" fill="#00ccff" opacity="0.7">
-								<animateMotion dur="5s" repeatCount="indefinite" begin="1.5s">
-									<path d="M 20,40 C 20,20 35,10 50,10 C 65,10 70,25 70,40 C 70,55 65,70 50,70 C 35,70 20,60 20,40 Z M 70,40 C 70,25 75,10 90,10 C 105,10 120,20 120,40 C 120,60 105,70 90,70 C 75,70 70,55 70,40 Z"/>
+							<circle r="2" fill="#00ccff" opacity="0.6">
+								<animateMotion dur="4s" repeatCount="indefinite" begin="1s">
+									<path d="M 25,40 Q 25,15 45,15 Q 65,15 65,40 Q 65,65 45,65 Q 25,65 25,40 M 75,40 Q 75,15 95,15 Q 115,15 115,40 Q 115,65 95,65 Q 75,65 75,40"/>
 								</animateMotion>
-								<animate attributeName="opacity" values="0.7;0.2;0.7" dur="3s" repeatCount="indefinite"/>
+								<animate attributeName="opacity" values="0.6;0.2;0.6" dur="2.5s" repeatCount="indefinite"/>
 							</circle>
 							
 							<!-- Third particle (more delayed) -->
-							<circle r="2" fill="#66ff66" opacity="0.6">
-								<animateMotion dur="5s" repeatCount="indefinite" begin="3s">
-									<path d="M 20,40 C 20,20 35,10 50,10 C 65,10 70,25 70,40 C 70,55 65,70 50,70 C 35,70 20,60 20,40 Z M 70,40 C 70,25 75,10 90,10 C 105,10 120,20 120,40 C 120,60 105,70 90,70 C 75,70 70,55 70,40 Z"/>
+							<circle r="2" fill="#66ff66" opacity="0.5">
+								<animateMotion dur="4s" repeatCount="indefinite" begin="2s">
+									<path d="M 25,40 Q 25,15 45,15 Q 65,15 65,40 Q 65,65 45,65 Q 25,65 25,40 M 75,40 Q 75,15 95,15 Q 115,15 115,40 Q 115,65 95,65 Q 75,65 75,40"/>
 								</animateMotion>
 							</circle>
 							
