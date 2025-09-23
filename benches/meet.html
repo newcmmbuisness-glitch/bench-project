@@ -4625,7 +4625,7 @@
 				  </path>
 				  
 				  <defs>
-					<!-- Chrome Grund-Stroke -->
+					<!-- Chrome Basis-Stroke -->
 					<linearGradient id="chromeStroke" x1="0%" y1="0%" x2="100%" y2="100%">
 					  <stop offset="0%" stop-color="#f8f9fa"/>
 					  <stop offset="25%" stop-color="#dee2e6"/>
@@ -4649,30 +4649,20 @@
 				  display: flex;
 				  justify-content: center;
 				  align-items: center;
-				  animation: rotateLuxury 12s cubic-bezier(0.65, 0, 0.35, 1) infinite,
-							 tiltLuxury 6s ease-in-out infinite;
-				  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4))
-						  drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-				  transform-style: preserve-3d;
+				  animation: rotateLuxury 12s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+				  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4)) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 				}
 
-				/* Luxuriöse langsame Rotation */
 				@keyframes rotateLuxury {
-				  0%   { transform: rotate(0deg); }
-				  50%  { transform: rotate(180deg); }
+				  0% { transform: rotate(0deg); }
+				  50% { transform: rotate(180deg); }
 				  100% { transform: rotate(360deg); }
-				}
-
-				/* Subtile 3D-Kippbewegung */
-				@keyframes tiltLuxury {
-				  0%, 100% { transform: rotateX(0deg) rotateY(0deg); }
-				  25% { transform: rotateX(6deg) rotateY(3deg); }
-				  50% { transform: rotateX(-4deg) rotateY(-2deg); }
-				  75% { transform: rotateX(5deg) rotateY(-3deg); }
 				}
 			  </style>
 			`;
 
+
+			
 			try {
 				currentIndex = 0;
 				currentProfiles = [];
