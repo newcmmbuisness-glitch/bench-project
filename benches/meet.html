@@ -2849,37 +2849,80 @@
 			// Set cardStack to use the same positioning as loadSwipeCards
 			cardStack.style.cssText = '';
 			cardStack.innerHTML = `
-			  <div class="flex flex-col items-center justify-center h-full text-center space-y-6">
+			  <div class="flex flex-col items-center justify-center h-full text-center space-y-4">
 				
-				<!-- Infinity Loader Icon als dezent graue Kontur -->
-				<svg width="140" height="90" viewBox="0 0 140 90" xmlns="http://www.w3.org/2000/svg" class="mb-6">
-				  <path d="M 70,45 C 70,25 55,15 40,15 C 25,15 20,30 20,45 C 20,60 25,75 40,75 C 55,75 70,65 70,45 C 70,25 85,15 100,15 C 115,15 120,30 120,45 C 120,60 115,75 100,75 C 85,75 70,65 70,45 Z"
-						fill="none"
-						stroke="url(#infinityStroke)"
-						stroke-width="3"
-						stroke-linecap="round"/>
-				  <defs>
-					<linearGradient id="infinityStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-					  <stop offset="0%" stop-color="#6c757d"/>
-					  <stop offset="50%" stop-color="#adb5bd"/>
-					  <stop offset="100%" stop-color="#6c757d"/>
-					</linearGradient>
-				  </defs>
-				</svg>
-
 				<!-- Headline -->
-				<h3 class="text-2xl font-semibold text-gray-800 tracking-tight">
+				<h3 class="text-xl font-semibold text-gray-800">
 				  Keine weiteren Profile gefunden
 				</h3>
-
-				<!-- Subline -->
-				<p class="text-gray-500 max-w-md">
-				  Versuche es später erneut oder passe deine Sucheinstellungen an.
+				<p class="text-gray-500 text-sm">
+				  Versuche es später erneut
 				</p>
 
-				<!-- Clean Reload Button -->
+				<!-- Infinity Symbol (dein Loader-Stil, aber ohne Rotation) -->
+				<div class="chrome-loader mt-6">
+				  <svg width="140" height="90" viewBox="0 0 140 90" xmlns="http://www.w3.org/2000/svg">
+					<!-- Main infinity path -->
+					<path d="M 70,45 C 70,25 55,15 40,15 C 25,15 20,30 20,45 C 20,60 25,75 40,75 C 55,75 70,65 70,45 C 70,25 85,15 100,15 C 115,15 120,30 120,45 C 120,60 115,75 100,75 C 85,75 70,65 70,45 Z" 
+						  fill="none"
+						  stroke="url(#chromeStroke)" 
+						  stroke-width="3"
+						  stroke-linecap="round"/>
+					
+					<!-- Animated dash stroke -->
+					<path d="M 70,45 C 70,25 55,15 40,15 C 25,15 20,30 20,45 C 20,60 25,75 40,75 C 55,75 70,65 70,45 C 70,25 85,15 100,15 C 115,15 120,30 120,45 C 120,60 115,75 100,75 C 85,75 70,65 70,45 Z" 
+						  fill="none" 
+						  stroke="url(#activeChromeStroke)" 
+						  stroke-width="3" 
+						  stroke-linecap="round"
+						  stroke-dasharray="30 20"
+						  stroke-dashoffset="0">
+					  <animate attributeName="stroke-dashoffset" values="0;-50;0" dur="3s" repeatCount="indefinite"/>
+					</path>
+					
+					<!-- Shine sweep -->
+					<path d="M 70,45 C 70,25 55,15 40,15 C 25,15 20,30 20,45 C 20,60 25,75 40,75 C 55,75 70,65 70,45 C 70,25 85,15 100,15 C 115,15 120,30 120,45 C 120,60 115,75 100,75 C 85,75 70,65 70,45 Z" 
+						  fill="none" 
+						  stroke="url(#shineStroke)" 
+						  stroke-width="8" 
+						  stroke-linecap="round"
+						  stroke-dasharray="40 200"
+						  stroke-dashoffset="0" 
+						  opacity="0">
+					  <animate attributeName="stroke-dashoffset" values="0;-240;0" dur="6s" repeatCount="indefinite"/>
+					  <animate attributeName="opacity" values="0;0.6;0" dur="6s" repeatCount="indefinite"/>
+					</path>
+
+					<defs>
+					  <!-- Chrome stroke -->
+					  <linearGradient id="chromeStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+						<stop offset="0%" stop-color="#adb5bd"/>
+						<stop offset="100%" stop-color="#495057"/>
+					  </linearGradient>
+					  
+					  <!-- Active chrome stroke -->
+					  <linearGradient id="activeChromeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+						<stop offset="0%" stop-color="#ffffff">
+						  <animate attributeName="stop-color" values="#ffffff;#e9ecef;#ffffff" dur="3s" repeatCount="indefinite"/>
+						</stop>
+						<stop offset="100%" stop-color="#495057">
+						  <animate attributeName="stop-color" values="#495057;#212529;#495057" dur="3s" repeatCount="indefinite"/>
+						</stop>
+					  </linearGradient>
+					  
+					  <!-- Shine stroke -->
+					  <linearGradient id="shineStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+						<stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+						<stop offset="50%" stop-color="#ffffff" stop-opacity="1"/>
+						<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+					  </linearGradient>
+					</defs>
+				  </svg>
+				</div>
+
+				<!-- Button -->
 				<button onclick="reloadProfiles()" 
-				  class="mt-6 bg-gradient-to-r from-gray-800 to-gray-600 text-white px-8 py-3 rounded-full shadow-lg hover:from-gray-900 hover:to-gray-700 transition">
+				  class="mt-8 bg-gradient-to-r from-gray-800 to-gray-600 text-white px-8 py-3 rounded-full shadow-lg hover:from-gray-900 hover:to-gray-700 transition">
 				  Erneut versuchen
 				</button>
 			  </div>
