@@ -2849,54 +2849,56 @@
 			// Set cardStack to use the same positioning as loadSwipeCards
 			cardStack.style.cssText = '';
 			cardStack.innerHTML = `
-			  <div class="flex flex-col items-center justify-center h-full text-center space-y-5">
+			  <div class="flex flex-col items-center justify-center h-full text-center space-y-4">
 
 				<!-- Headline -->
 				<h3 class="text-xl font-semibold text-gray-800">
 				  Keine weiteren Profile gefunden
 				</h3>
 
-				<!-- Infinity Symbol (wie im Loader, nur ohne Rotation) -->
-				<div class="chrome-loader">
-				  <svg width="140" height="90" viewBox="0 0 140 90" xmlns="http://www.w3.org/2000/svg">
+				<!-- Infinity Symbol (wie Loader, nur ohne rotation) -->
+				<div class="infinity-loader" style="animation: none;">
+				  <svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
 					<!-- Main infinity path -->
-					<path d="M 70,45 C 70,25 55,15 40,15 C 25,15 20,30 20,45 C 20,60 25,75 40,75 C 55,75 70,65 70,45 C 70,25 85,15 100,15 C 115,15 120,30 120,45 C 120,60 115,75 100,75 C 85,75 70,65 70,45 Z" 
+					<path d="M 50,50 C 50,20 100,20 100,50 C 100,80 150,80 150,50 C 150,20 100,20 100,50 C 100,80 50,80 50,50Z"
 						  fill="none"
-						  stroke="url(#chromeStroke)" 
-						  stroke-width="3"
+						  stroke="url(#chromeStroke)"
+						  stroke-width="6"
 						  stroke-linecap="round"/>
 					
 					<!-- Animated dash stroke -->
-					<path d="M 70,45 C 70,25 55,15 40,15 C 25,15 20,30 20,45 C 20,60 25,75 40,75 C 55,75 70,65 70,45 C 70,25 85,15 100,15 C 115,15 120,30 120,45 C 120,60 115,75 100,75 C 85,75 70,65 70,45 Z" 
-						  fill="none" 
-						  stroke="url(#activeChromeStroke)" 
-						  stroke-width="3" 
+					<path d="M 50,50 C 50,20 100,20 100,50 C 100,80 150,80 150,50 C 150,20 100,20 100,50 C 100,80 50,80 50,50Z"
+						  fill="none"
+						  stroke="url(#activeChromeStroke)"
+						  stroke-width="3"
 						  stroke-linecap="round"
 						  stroke-dasharray="30 20"
 						  stroke-dashoffset="0">
 					  <animate attributeName="stroke-dashoffset" values="0;-50;0" dur="3s" repeatCount="indefinite"/>
 					</path>
-					
+
 					<!-- Shine sweep -->
-					<path d="M 70,45 C 70,25 55,15 40,15 C 25,15 20,30 20,45 C 20,60 25,75 40,75 C 55,75 70,65 70,45 C 70,25 85,15 100,15 C 115,15 120,30 120,45 C 120,60 115,75 100,75 C 85,75 70,65 70,45 Z" 
-						  fill="none" 
-						  stroke="url(#shineStroke)" 
-						  stroke-width="8" 
+					<path d="M 50,50 C 50,20 100,20 100,50 C 100,80 150,80 150,50 C 150,20 100,20 100,50 C 100,80 50,80 50,50Z"
+						  fill="none"
+						  stroke="url(#shineStroke)"
+						  stroke-width="10"
 						  stroke-linecap="round"
-						  stroke-dasharray="40 200"
-						  stroke-dashoffset="0" 
-						  opacity="0">
-					  <animate attributeName="stroke-dashoffset" values="0;-240;0" dur="6s" repeatCount="indefinite"/>
-					  <animate attributeName="opacity" values="0;0.6;0" dur="6s" repeatCount="indefinite"/>
+						  stroke-dasharray="100 300"
+						  stroke-dashoffset="0"
+						  opacity="0.6">
+					  <animate attributeName="stroke-dashoffset" values="0;-400" dur="5s" repeatCount="indefinite"/>
 					</path>
 
 					<defs>
-					  <!-- Chrome stroke -->
+					  <!-- Chrome Basis-Stroke -->
 					  <linearGradient id="chromeStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-						<stop offset="0%" stop-color="#adb5bd"/>
-						<stop offset="100%" stop-color="#495057"/>
+						<stop offset="0%" stop-color="#f8f9fa"/>
+						<stop offset="25%" stop-color="#dee2e6"/>
+						<stop offset="50%" stop-color="#adb5bd"/>
+						<stop offset="75%" stop-color="#6c757d"/>
+						<stop offset="100%" stop-color="#212529"/>
 					  </linearGradient>
-					  
+
 					  <!-- Active chrome stroke -->
 					  <linearGradient id="activeChromeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
 						<stop offset="0%" stop-color="#ffffff">
@@ -2906,7 +2908,7 @@
 						  <animate attributeName="stop-color" values="#495057;#212529;#495057" dur="3s" repeatCount="indefinite"/>
 						</stop>
 					  </linearGradient>
-					  
+
 					  <!-- Shine stroke -->
 					  <linearGradient id="shineStroke" x1="0%" y1="0%" x2="100%" y2="0%">
 						<stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
@@ -2929,7 +2931,7 @@
 				</button>
 			  </div>
 			`;
-			
+						
 			// ✅ FIX: Make sure floating buttons are visible
 			updateFloatingButtons();
 		}
