@@ -4596,57 +4596,54 @@
 			
 			cardStack.innerHTML = `
 			  <div class="chrome-loader">
-				<svg width="160" height="100" viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
-				  <!-- Hintergrundschatten -->
-				  <ellipse cx="80" cy="88" rx="55" ry="9" fill="rgba(0,0,0,0.35)" opacity="0.6"/>
+				<svg width="180" height="100" viewBox="0 0 180 100" xmlns="http://www.w3.org/2000/svg">
+				  <!-- Schatten -->
+				  <ellipse cx="90" cy="90" rx="60" ry="10" fill="rgba(0,0,0,0.35)" opacity="0.6"/>
 				  
-				  <!-- Infinity-Grundform -->
-				  <path d="M20,50
-						   C20,30 40,20 60,50
-						   C80,80 100,80 120,50
-						   C140,20 160,30 140,50
-						   C120,70 100,70 80,50
-						   C60,30 40,30 20,50Z"
+				  <!-- Infinity-Pfad -->
+				  <path d="M30,50
+						   C30,20 80,20 90,50
+						   C100,80 150,80 150,50
+						   C150,20 100,20 90,50
+						   C80,80 30,80 30,50Z"
 						fill="url(#chromeGradient)" 
 						stroke="url(#chromeStroke)" 
-						stroke-width="2"/>
+						stroke-width="3"/>
 				  
-				  <!-- Animierter Strich -->
-				  <path d="M20,50
-						   C20,30 40,20 60,50
-						   C80,80 100,80 120,50
-						   C140,20 160,30 140,50
-						   C120,70 100,70 80,50
-						   C60,30 40,30 20,50Z"
+				  <!-- animierter Chrome-Umriss -->
+				  <path d="M30,50
+						   C30,20 80,20 90,50
+						   C100,80 150,80 150,50
+						   C150,20 100,20 90,50
+						   C80,80 30,80 30,50Z"
 						fill="none" 
 						stroke="url(#activeChromeStroke)" 
-						stroke-width="3" 
+						stroke-width="4"
 						stroke-linecap="round"
-						stroke-dasharray="40 30"
+						stroke-dasharray="60 40"
 						stroke-dashoffset="0">
-					<animate attributeName="stroke-dashoffset" values="0;-120;0" dur="3s" repeatCount="indefinite"/>
+					<animate attributeName="stroke-dashoffset" values="0;-200" dur="3s" repeatCount="indefinite"/>
 				  </path>
 				  
-				  <!-- Shine Sweep -->
-				  <path d="M20,50
-						   C20,30 40,20 60,50
-						   C80,80 100,80 120,50
-						   C140,20 160,30 140,50
-						   C120,70 100,70 80,50
-						   C60,30 40,30 20,50Z"
+				  <!-- Shine-Sweep -->
+				  <path d="M30,50
+						   C30,20 80,20 90,50
+						   C100,80 150,80 150,50
+						   C150,20 100,20 90,50
+						   C80,80 30,80 30,50Z"
 						fill="none" 
 						stroke="url(#shineStroke)" 
-						stroke-width="10" 
+						stroke-width="12" 
 						stroke-linecap="round"
-						stroke-dasharray="50 200"
+						stroke-dasharray="70 260"
 						stroke-dashoffset="0" 
 						opacity="0">
-					<animate attributeName="stroke-dashoffset" values="0;-300;0" dur="5s" repeatCount="indefinite"/>
-					<animate attributeName="opacity" values="0;0.8;0" dur="5s" repeatCount="indefinite"/>
+					<animate attributeName="stroke-dashoffset" values="0;-330" dur="5s" repeatCount="indefinite"/>
+					<animate attributeName="opacity" values="0;0.9;0" dur="5s" repeatCount="indefinite"/>
 				  </path>
 				  
-				  <!-- Specular highlight -->
-				  <ellipse cx="60" cy="40" rx="15" ry="8" fill="url(#specularHighlight)" opacity="0.7">
+				  <!-- Highlight -->
+				  <ellipse cx="70" cy="35" rx="20" ry="10" fill="url(#specularHighlight)" opacity="0.7">
 					<animateTransform attributeName="transform" type="translate" values="0,0; 50,20; 0,0" dur="6s" repeatCount="indefinite"/>
 				  </ellipse>
 				  
@@ -4714,6 +4711,7 @@
 				}
 			  </style>
 			`;
+
 
 			
 			try {
