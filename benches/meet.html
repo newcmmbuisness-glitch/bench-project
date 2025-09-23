@@ -4595,73 +4595,46 @@
 			`;
 			
 			cardStack.innerHTML = `
-			  <div class="chrome-loader">
+			  <div class="infinity-loader">
 				<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
-				  <!-- Infinity-Path mit organischem Flow -->
-				  <path d="M40,50
-						   C30,20 80,20 95,45
-						   C110,70 150,70 160,50
-						   C170,30 130,20 105,50
-						   C80,80 30,80 40,50Z"
-						fill="none" 
-						stroke="url(#chromeStroke)" 
-						stroke-width="6" 
+				  <!-- Infinity-Pfad -->
+				  <path d="M 50,50
+						   C 50,20 100,20 100,50
+						   C 100,80 150,80 150,50
+						   C 150,20 100,20 100,50
+						   C 100,80 50,80 50,50Z"
+						fill="none"
+						stroke="url(#chromeStroke)"
+						stroke-width="6"
 						stroke-linecap="round"/>
 				  
-				  <!-- animierter Dash -->
-				  <path d="M40,50
-						   C30,20 80,20 95,45
-						   C110,70 150,70 160,50
-						   C170,30 130,20 105,50
-						   C80,80 30,80 40,50Z"
-						fill="none" 
-						stroke="url(#activeChromeStroke)" 
-						stroke-width="6" 
-						stroke-linecap="round"
-						stroke-dasharray="70 50"
-						stroke-dashoffset="0">
-					<animate attributeName="stroke-dashoffset" values="0;-240" dur="3s" repeatCount="indefinite"/>
-				  </path>
-				  
 				  <!-- Shine Sweep -->
-				  <path d="M40,50
-						   C30,20 80,20 95,45
-						   C110,70 150,70 160,50
-						   C170,30 130,20 105,50
-						   C80,80 30,80 40,50Z"
-						fill="none" 
-						stroke="url(#shineStroke)" 
-						stroke-width="10" 
+				  <path d="M 50,50
+						   C 50,20 100,20 100,50
+						   C 100,80 150,80 150,50
+						   C 150,20 100,20 100,50
+						   C 100,80 50,80 50,50Z"
+						fill="none"
+						stroke="url(#shineStroke)"
+						stroke-width="10"
 						stroke-linecap="round"
-						stroke-dasharray="90 280"
-						stroke-dashoffset="0" 
-						opacity="0">
-					<animate attributeName="stroke-dashoffset" values="0;-360" dur="5s" repeatCount="indefinite"/>
-					<animate attributeName="opacity" values="0;0.9;0" dur="5s" repeatCount="indefinite"/>
+						stroke-dasharray="100 300"
+						stroke-dashoffset="0"
+						opacity="0.6">
+					<animate attributeName="stroke-dashoffset" values="0;-400" dur="5s" repeatCount="indefinite"/>
 				  </path>
 				  
 				  <defs>
-					<!-- Basis-Stroke -->
+					<!-- Chrome Basis-Stroke -->
 					<linearGradient id="chromeStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-					  <stop offset="0%" stop-color="#dee2e6"/>
+					  <stop offset="0%" stop-color="#f8f9fa"/>
+					  <stop offset="25%" stop-color="#dee2e6"/>
 					  <stop offset="50%" stop-color="#adb5bd"/>
-					  <stop offset="100%" stop-color="#495057"/>
+					  <stop offset="75%" stop-color="#6c757d"/>
+					  <stop offset="100%" stop-color="#212529"/>
 					</linearGradient>
 					
-					<!-- Aktiver Stroke -->
-					<linearGradient id="activeChromeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-					  <stop offset="0%" stop-color="#ffffff">
-						<animate attributeName="stop-color" values="#ffffff;#e9ecef;#ffffff" dur="3s" repeatCount="indefinite"/>
-					  </stop>
-					  <stop offset="50%" stop-color="#adb5bd">
-						<animate attributeName="stop-color" values="#adb5bd;#6c757d;#adb5bd" dur="3s" repeatCount="indefinite"/>
-					  </stop>
-					  <stop offset="100%" stop-color="#343a40">
-						<animate attributeName="stop-color" values="#343a40;#212529;#343a40" dur="3s" repeatCount="indefinite"/>
-					  </stop>
-					</linearGradient>
-					
-					<!-- Shine -->
+					<!-- Shine-Effekt -->
 					<linearGradient id="shineStroke" x1="0%" y1="0%" x2="100%" y2="0%">
 					  <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
 					  <stop offset="50%" stop-color="#ffffff" stop-opacity="1"/>
@@ -4672,19 +4645,16 @@
 			  </div>
 			  
 			  <style>
-				.chrome-loader {
-				  animation: float 4s ease-in-out infinite, tilt 8s ease-in-out infinite;
-				  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.4)) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+				.infinity-loader {
+				  display: flex;
+				  justify-content: center;
+				  align-items: center;
+				  animation: rotate 12s linear infinite;
+				  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4)) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 				}
-				@keyframes float {
-				  0%, 100% { transform: translateY(0px); }
-				  50% { transform: translateY(-6px); }
-				}
-				@keyframes tilt {
-				  0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
-				  25% { transform: rotateY(5deg) rotateX(2deg); }
-				  50% { transform: rotateY(0deg) rotateX(-2deg); }
-				  75% { transform: rotateY(-5deg) rotateX(1deg); }
+				@keyframes rotate {
+				  0% { transform: rotate(0deg); }
+				  100% { transform: rotate(360deg); }
 				}
 			  </style>
 			`;
