@@ -4597,13 +4597,68 @@
 			
 			cardStack.innerHTML = `
 				<div style="text-align: center; color: white;">
-					<div style="font-size: 4rem; margin-bottom: 1rem; animation: spin 2s linear infinite;">🔄</div>
-					<p style="font-size: 1.1rem;">Lade neue Profile...</p>
+					<div class="infinity-loader">
+						<svg width="120" height="60" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+							<!-- Infinity symbol path -->
+							<path d="M20,30 C20,13.431 33.431,0 50,0 C66.569,0 80,13.431 80,30 C80,46.569 66.569,60 50,60 C33.431,60 20,46.569 20,30 Z M70,30 C70,13.431 83.431,0 100,0 C116.569,0 130,13.431 130,30 C130,46.569 116.569,60 100,60 C83.431,60 70,46.569 70,30 Z" 
+								  fill="none" 
+								  stroke="url(#gradient)" 
+								  stroke-width="3" 
+								  stroke-linecap="round"/>
+							
+							<!-- Animated dot traveling along the path -->
+							<circle r="4" fill="#00ff88">
+								<animateMotion dur="3s" repeatCount="indefinite">
+									<path d="M20,30 C20,13.431 33.431,0 50,0 C66.569,0 80,13.431 80,30 C80,46.569 66.569,60 50,60 C33.431,60 20,46.569 20,30 Z M70,30 C70,13.431 83.431,0 100,0 C116.569,0 130,13.431 130,30 C130,46.569 116.569,60 100,60 C83.431,60 70,46.569 70,30 Z"/>
+								</animateMotion>
+							</circle>
+							
+							<!-- Gradient definition -->
+							<defs>
+								<linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+									<stop offset="0%" style="stop-color:#00ff88;stop-opacity:1" />
+									<stop offset="50%" style="stop-color:#0099ff;stop-opacity:1" />
+									<stop offset="100%" style="stop-color:#6666ff;stop-opacity:1" />
+								</linearGradient>
+							</defs>
+						</svg>
+					</div>
 				</div>
+				
 				<style>
-					@keyframes spin {
-						from { transform: rotate(0deg); }
-						to { transform: rotate(360deg); }
+					.infinity-loader {
+						animation: pulse 2s ease-in-out infinite, float 4s ease-in-out infinite;
+						filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.5));
+					}
+					
+					@keyframes pulse {
+						0%, 100% { 
+							transform: scale(1); 
+							opacity: 0.8;
+						}
+						50% { 
+							transform: scale(1.1); 
+							opacity: 1;
+						}
+					}
+					
+					@keyframes float {
+						0%, 100% { transform: translateY(0px); }
+						50% { transform: translateY(-10px); }
+					}
+					
+					/* Glowing effect */
+					.infinity-loader svg {
+						animation: glow 3s ease-in-out infinite alternate;
+					}
+					
+					@keyframes glow {
+						from {
+							filter: drop-shadow(0 0 15px rgba(0, 255, 136, 0.4));
+						}
+						to {
+							filter: drop-shadow(0 0 25px rgba(0, 255, 136, 0.8)) drop-shadow(0 0 35px rgba(0, 153, 255, 0.4));
+						}
 					}
 				</style>
 			`;
@@ -4636,7 +4691,7 @@
 					showNoMoreCards();
 				}, 1000);
 			}
-		}	
+		}
 		
 		// Match Animation
 		function showMatchAnimation(profile) {
