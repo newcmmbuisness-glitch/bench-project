@@ -237,7 +237,11 @@ async function generateAIResponse(pool, aiId, userMessage) {
   let highestScore = 0;
   for (const item of trainingData) {
     const score = similarity(userMessage, item.input);
-    if (score > highestScore && score > 0.2) {
+
+    // Dynamische Schwelle: kurze Texte = niedrigere Grenze
+    const minScore = userMessage.length <= 3 ? 0.1 : 0.3;
+
+    if (score > highestScore && score > minScore) {
       highestScore = score;
       bestMatch = item;
     }
