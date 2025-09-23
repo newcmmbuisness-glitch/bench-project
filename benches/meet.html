@@ -4649,15 +4649,18 @@
 				  display: flex;
 				  justify-content: center;
 				  align-items: center;
-				  animation: rotate 12s linear infinite;
+				  animation: rotateLuxury 12s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 				  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4)) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 				}
-				@keyframes rotate {
+
+				@keyframes rotateLuxury {
 				  0% { transform: rotate(0deg); }
+				  50% { transform: rotate(180deg); }
 				  100% { transform: rotate(360deg); }
 				}
 			  </style>
 			`;
+
 
 			
 			try {
