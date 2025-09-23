@@ -4596,70 +4596,54 @@
 			
 			cardStack.innerHTML = `
 			  <div class="chrome-loader">
-				<svg width="180" height="100" viewBox="0 0 180 100" xmlns="http://www.w3.org/2000/svg">
-				  <!-- Schatten -->
-				  <ellipse cx="90" cy="90" rx="60" ry="10" fill="rgba(0,0,0,0.35)" opacity="0.6"/>
-				  
-				  <!-- Infinity-Pfad -->
-				  <path d="M30,50
-						   C30,20 80,20 90,50
-						   C100,80 150,80 150,50
-						   C150,20 100,20 90,50
-						   C80,80 30,80 30,50Z"
-						fill="url(#chromeGradient)" 
+				<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+				  <!-- Infinity-Path mit organischem Flow -->
+				  <path d="M40,50
+						   C30,20 80,20 95,45
+						   C110,70 150,70 160,50
+						   C170,30 130,20 105,50
+						   C80,80 30,80 40,50Z"
+						fill="none" 
 						stroke="url(#chromeStroke)" 
-						stroke-width="3"/>
+						stroke-width="6" 
+						stroke-linecap="round"/>
 				  
-				  <!-- animierter Chrome-Umriss -->
-				  <path d="M30,50
-						   C30,20 80,20 90,50
-						   C100,80 150,80 150,50
-						   C150,20 100,20 90,50
-						   C80,80 30,80 30,50Z"
+				  <!-- animierter Dash -->
+				  <path d="M40,50
+						   C30,20 80,20 95,45
+						   C110,70 150,70 160,50
+						   C170,30 130,20 105,50
+						   C80,80 30,80 40,50Z"
 						fill="none" 
 						stroke="url(#activeChromeStroke)" 
-						stroke-width="4"
+						stroke-width="6" 
 						stroke-linecap="round"
-						stroke-dasharray="60 40"
+						stroke-dasharray="70 50"
 						stroke-dashoffset="0">
-					<animate attributeName="stroke-dashoffset" values="0;-200" dur="3s" repeatCount="indefinite"/>
+					<animate attributeName="stroke-dashoffset" values="0;-240" dur="3s" repeatCount="indefinite"/>
 				  </path>
 				  
-				  <!-- Shine-Sweep -->
-				  <path d="M30,50
-						   C30,20 80,20 90,50
-						   C100,80 150,80 150,50
-						   C150,20 100,20 90,50
-						   C80,80 30,80 30,50Z"
+				  <!-- Shine Sweep -->
+				  <path d="M40,50
+						   C30,20 80,20 95,45
+						   C110,70 150,70 160,50
+						   C170,30 130,20 105,50
+						   C80,80 30,80 40,50Z"
 						fill="none" 
 						stroke="url(#shineStroke)" 
-						stroke-width="12" 
+						stroke-width="10" 
 						stroke-linecap="round"
-						stroke-dasharray="70 260"
+						stroke-dasharray="90 280"
 						stroke-dashoffset="0" 
 						opacity="0">
-					<animate attributeName="stroke-dashoffset" values="0;-330" dur="5s" repeatCount="indefinite"/>
+					<animate attributeName="stroke-dashoffset" values="0;-360" dur="5s" repeatCount="indefinite"/>
 					<animate attributeName="opacity" values="0;0.9;0" dur="5s" repeatCount="indefinite"/>
 				  </path>
 				  
-				  <!-- Highlight -->
-				  <ellipse cx="70" cy="35" rx="20" ry="10" fill="url(#specularHighlight)" opacity="0.7">
-					<animateTransform attributeName="transform" type="translate" values="0,0; 50,20; 0,0" dur="6s" repeatCount="indefinite"/>
-				  </ellipse>
-				  
 				  <defs>
-					<!-- Chrome Gradient -->
-					<linearGradient id="chromeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-					  <stop offset="0%" stop-color="#f8f9fa"/>
-					  <stop offset="25%" stop-color="#dee2e6"/>
-					  <stop offset="50%" stop-color="#adb5bd"/>
-					  <stop offset="75%" stop-color="#6c757d"/>
-					  <stop offset="100%" stop-color="#343a40"/>
-					</linearGradient>
-					
-					<!-- Chrome Stroke -->
+					<!-- Basis-Stroke -->
 					<linearGradient id="chromeStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-					  <stop offset="0%" stop-color="#ffffff"/>
+					  <stop offset="0%" stop-color="#dee2e6"/>
 					  <stop offset="50%" stop-color="#adb5bd"/>
 					  <stop offset="100%" stop-color="#495057"/>
 					</linearGradient>
@@ -4667,29 +4651,22 @@
 					<!-- Aktiver Stroke -->
 					<linearGradient id="activeChromeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
 					  <stop offset="0%" stop-color="#ffffff">
-						<animate attributeName="stop-color" values="#ffffff;#dee2e6;#ffffff" dur="3s" repeatCount="indefinite"/>
+						<animate attributeName="stop-color" values="#ffffff;#e9ecef;#ffffff" dur="3s" repeatCount="indefinite"/>
 					  </stop>
 					  <stop offset="50%" stop-color="#adb5bd">
 						<animate attributeName="stop-color" values="#adb5bd;#6c757d;#adb5bd" dur="3s" repeatCount="indefinite"/>
 					  </stop>
-					  <stop offset="100%" stop-color="#495057">
-						<animate attributeName="stop-color" values="#495057;#212529;#495057" dur="3s" repeatCount="indefinite"/>
+					  <stop offset="100%" stop-color="#343a40">
+						<animate attributeName="stop-color" values="#343a40;#212529;#343a40" dur="3s" repeatCount="indefinite"/>
 					  </stop>
 					</linearGradient>
 					
-					<!-- Shine Stroke -->
+					<!-- Shine -->
 					<linearGradient id="shineStroke" x1="0%" y1="0%" x2="100%" y2="0%">
 					  <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
 					  <stop offset="50%" stop-color="#ffffff" stop-opacity="1"/>
 					  <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
 					</linearGradient>
-					
-					<!-- Specular Highlight -->
-					<radialGradient id="specularHighlight">
-					  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
-					  <stop offset="70%" stop-color="#ffffff" stop-opacity="0.3"/>
-					  <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-					</radialGradient>
 				  </defs>
 				</svg>
 			  </div>
@@ -4697,7 +4674,7 @@
 			  <style>
 				.chrome-loader {
 				  animation: float 4s ease-in-out infinite, tilt 8s ease-in-out infinite;
-				  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4)) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+				  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.4)) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 				}
 				@keyframes float {
 				  0%, 100% { transform: translateY(0px); }
@@ -4711,7 +4688,6 @@
 				}
 			  </style>
 			`;
-
 
 			
 			try {
