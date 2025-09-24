@@ -1,8 +1,7 @@
 let sidebarOpen = false;
 
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('sidebarOverlay');
-const mainLogo = document.getElementById('mainLogo');
+let sidebar, overlay, mainLogo;
+
 
 function toggleSidebar() {
     sidebarOpen ? closeSidebar() : openSidebar();
@@ -97,3 +96,15 @@ window.closeSidebar = closeSidebar;
 window.updateAuthButtons = updateAuthButtons;
 window.addUserPlusToSidebar = addUserPlusToSidebar;
 window.showAbout = showAbout;
+
+// **NEU: DOM-spezifische Initialisierung nach dem Laden des Dokuments**
+document.addEventListener('DOMContentLoaded', () => {
+    // Weisen Sie die Variablen jetzt zu, da die Elemente im DOM existieren
+    sidebar = document.getElementById('sidebar');
+    overlay = document.getElementById('sidebarOverlay');
+    mainLogo = document.getElementById('mainLogo');
+
+    // Event-Listener hinzufügen, sobald die Elemente verfügbar sind
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+    if (mainLogo) mainLogo.addEventListener('click', toggleSidebar);
+});
