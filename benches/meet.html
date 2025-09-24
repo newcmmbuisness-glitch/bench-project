@@ -2117,7 +2117,7 @@
 					localStorage.setItem('currentUser', JSON.stringify(currentUser));
 					
 					closeLogin();
-					updateAuthButtons();
+					updateAuthButtons(currentUser);
 					showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
 					
 					document.getElementById('loginEmail').value = '';
