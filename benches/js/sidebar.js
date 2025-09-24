@@ -117,13 +117,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginBtn) {
         loginBtn.addEventListener('click', () => {
             closeSidebar(); // Sidebar schließen
-            showLoginPopup(); // Pop-up-Funktion für die Anmeldung aufrufen
+            // KORREKTUR: Ruft die globale Funktion auf
+            if (window.login) window.login();
         });
     }
 
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            handleSignOut(); // Die Funktion für die Abmeldung aufrufen
+            // KORREKTUR: Ruft die globale Funktion auf
+            if (window.logout) window.logout();
             closeSidebar(); // Sidebar schließen
         });
     }
