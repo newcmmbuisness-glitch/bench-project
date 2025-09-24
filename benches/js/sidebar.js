@@ -4,7 +4,6 @@ let sidebarOpen = false;
 let sidebar, overlay, mainLogo;
 
 function toggleSidebar() {
-    // Prüfen, ob die Sidebar die Klasse "open" hat
     if (sidebar.classList.contains('open')) {
         closeSidebar();
     } else {
@@ -15,8 +14,8 @@ function toggleSidebar() {
 function openSidebar() {
     sidebarOpen = true;
     if (sidebar) sidebar.classList.add('open');
-    if (overlay) overlay.classList.add('active'); // CSS verwendet hier 'active'
-    if (mainLogo) mainLogo.classList.add('sidebar-open'); // CSS verwendet hier 'sidebar-open'
+    if (overlay) overlay.classList.add('active');
+    if (mainLogo) mainLogo.classList.add('sidebar-open');
 }
 
 function closeSidebar() {
@@ -90,7 +89,7 @@ function showAbout() {
     closeSidebar();
 }
 
-// Globale Verfügbarkeit für meet.html
+// Globale Verfügbarkeit
 window.toggleSidebar = toggleSidebar;
 window.openSidebar = openSidebar;
 window.closeSidebar = closeSidebar;
@@ -101,32 +100,36 @@ window.showAbout = showAbout;
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded and parsed. Initializing event listeners.");
 
-    // Jetzt die Variablen initialisieren, da die Elemente existieren
+    // Elemente initialisieren
     sidebar = document.getElementById('sidebar');
     overlay = document.getElementById('sidebarOverlay');
     mainLogo = document.getElementById('mainLogo');
 
-    // Jetzt die Event-Listener hinzufügen
+    // Event-Listener
     if (overlay) overlay.addEventListener('click', closeSidebar);
     if (mainLogo) mainLogo.addEventListener('click', toggleSidebar);
 
-    // **NEU: Event-Listener für die Anmelde- und Abmelde-Buttons**
     const loginBtn = document.getElementById('loginSidebarBtn');
     const logoutBtn = document.getElementById('logoutSidebarBtn');
 
     if (loginBtn) {
-        loginBtn.addEventListener('click', () => {
-            closeSidebar(); // Sidebar schließen
-            // KORREKTUR: Ruft die globale Funktion auf
-            if (window.login) window.login();
+        loginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeSidebar();
+            // Login-Modal öffnen
+            if (window.showLogin) {
+                window.showLogin();
+            } else {
+                const modal = document.getElementById('loginModal');
+                if (modal) modal.style.display = 'block';
+            }
         });
     }
 
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            // KORREKTUR: Ruft die globale Funktion auf
             if (window.logout) window.logout();
-            closeSidebar(); // Sidebar schließen
+            closeSidebar();
         });
     }
 });
