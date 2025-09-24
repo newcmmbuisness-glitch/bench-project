@@ -1,4 +1,10 @@
+// sidebar.js
 let sidebarOpen = false;
+
+// Elemente
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('sidebarOverlay');
+const mainLogo = document.getElementById('mainLogo');
 
 // Sidebar öffnen / schließen
 function toggleSidebar() {
@@ -6,28 +12,24 @@ function toggleSidebar() {
 }
 
 function openSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const mainLogo = document.getElementById('mainLogo');
-
     sidebarOpen = true;
-    sidebar.classList.add('open');
-    overlay.classList.add('active');
+    sidebar.classList.add('active'); // CSS: .sidebar.active
+    overlay.classList.add('active'); // CSS: .sidebar-overlay.active
     mainLogo.classList.add('sidebar-open');
 }
 
 function closeSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const mainLogo = document.getElementById('mainLogo');
-
     sidebarOpen = false;
-    sidebar.classList.remove('open');
+    sidebar.classList.remove('active');
     overlay.classList.remove('active');
     mainLogo.classList.remove('sidebar-open');
 }
 
-// Update der Login/Logout Buttons in Sidebar
+// EventListener für Overlay und Logo
+overlay.addEventListener('click', closeSidebar);
+mainLogo.addEventListener('click', toggleSidebar);
+
+// Login / Logout Buttons aktualisieren
 function updateAuthButtons(currentUser) {
     const userEmailDisplay = document.getElementById('user-email-display');
     const loginBtn = document.getElementById('loginSidebarBtn');
@@ -52,9 +54,8 @@ function updateAuthButtons(currentUser) {
     }
 }
 
-// UserPlus / Info-Links in Sidebar
+// UserPlus / Info-Link in Sidebar hinzufügen
 function addUserPlusToSidebar(isUserPlus, isAdmin) {
-    const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
 
     const userPlusItem = document.createElement('a');
@@ -95,7 +96,5 @@ function showAbout() {
     closeSidebar();
 }
 
-// EventListener für Overlay
-document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
-
+// Export für Nutzung in meet.js oder anderen Modulen
 export { toggleSidebar, openSidebar, closeSidebar, updateAuthButtons, addUserPlusToSidebar, showAbout };
