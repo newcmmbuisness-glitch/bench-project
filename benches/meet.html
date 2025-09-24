@@ -5552,7 +5552,7 @@
 		    currentProfile = JSON.parse(localStorage.getItem('currentProfile') || 'null');
 		    
 		    // UI-Aktualisierungen
-		    updateAuthButtons();
+		    updateAuthButtons(currentUser);
 		    generateSampleProfiles();
 		    renderPreferences();
 		    checkAndRenderUI(); // Diese Funktion sollte alle weiteren Schritte auslösen
