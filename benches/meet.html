@@ -2082,9 +2082,8 @@
 		}
 
 		async function login(event) {
-		    if (event) {
-		        event.preventDefault();
-		    }
+			event.preventDefault();
+
 			const email = document.getElementById('loginEmail').value;
 			const password = document.getElementById('loginPassword').value;
             const captchaAnswer = parseInt(document.getElementById('loginCaptchaAnswer').value);
