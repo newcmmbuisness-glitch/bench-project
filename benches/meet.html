@@ -2135,31 +2135,7 @@
 				console.error('Login error:', error);
 				showNotification('❌ Verbindungsfehler beim Anmelden', 'error');
 			}
-		}
-		function updateAuthButtons(currentUser) {
-			const userEmailDisplay = document.getElementById('user-email-display');
-			const loginBtn = document.getElementById('loginSidebarBtn');
-			const logoutBtn = document.getElementById('logoutSidebarBtn');
-
-			if (!loginBtn || !logoutBtn) return;
-
-			if (currentUser) {
-				loginBtn.style.display = 'none';
-				logoutBtn.style.display = 'flex';
-				if (userEmailDisplay) {
-					userEmailDisplay.innerHTML = `
-						<span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
-							👤 ${currentUser.email}
-						</span>
-					`;
-				}
-			} else {
-				loginBtn.style.display = 'flex';
-				logoutBtn.style.display = 'none';
-				if (userEmailDisplay) userEmailDisplay.innerHTML = '';
-			}
-		}
-				
+		}		
         function logout() {
             currentUser = null;
             localStorage.removeItem('currentUser');
