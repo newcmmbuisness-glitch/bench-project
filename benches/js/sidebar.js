@@ -97,14 +97,15 @@ window.updateAuthButtons = updateAuthButtons;
 window.addUserPlusToSidebar = addUserPlusToSidebar;
 window.showAbout = showAbout;
 
-// **NEU: DOM-spezifische Initialisierung nach dem Laden des Dokuments**
 document.addEventListener('DOMContentLoaded', () => {
-    // Weisen Sie die Variablen jetzt zu, da die Elemente im DOM existieren
+    console.log("DOM fully loaded and parsed. Initializing event listeners.");
+
+    // Jetzt die Variablen initialisieren, da die Elemente existieren
     sidebar = document.getElementById('sidebar');
     overlay = document.getElementById('sidebarOverlay');
     mainLogo = document.getElementById('mainLogo');
 
-    // Event-Listener hinzufügen, sobald die Elemente verfügbar sind
+    // Jetzt die Event-Listener hinzufügen
     if (overlay) overlay.addEventListener('click', closeSidebar);
     if (mainLogo) mainLogo.addEventListener('click', toggleSidebar);
 });
