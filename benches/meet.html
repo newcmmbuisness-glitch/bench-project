@@ -4986,7 +4986,7 @@
 		// Initialize UserPlus features when user logs in
 		async function initializeUserPlusFeatures() {
 			await checkUserPlusStatus();
-			addUserPlusToSidebar(currentUser.isUserPlus, currentUser.isAdmin);
+			addUserPlusToSidebar(isUserPlus, isAdmin);
 			updateFloatingButtons();
 			updateSwipeActionButtons();
 		}				
