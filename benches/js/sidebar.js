@@ -1,10 +1,11 @@
 let sidebarOpen = false;
 
+// Variablen deklarieren, aber erst später initialisieren
 let sidebar, overlay, mainLogo;
 
-
 function toggleSidebar() {
-    if (sidebarOpen) {
+    // Prüfen, ob die Sidebar die Klasse "open" hat
+    if (sidebar.classList.contains('open')) {
         closeSidebar();
     } else {
         openSidebar();
@@ -13,16 +14,16 @@ function toggleSidebar() {
 
 function openSidebar() {
     sidebarOpen = true;
-    sidebar.classList.add('active');
-    overlay.classList.add('active');
-    mainLogo.classList.add('sidebar-open');
+    if (sidebar) sidebar.classList.add('open');
+    if (overlay) overlay.classList.add('active'); // CSS verwendet hier 'active'
+    if (mainLogo) mainLogo.classList.add('sidebar-open'); // CSS verwendet hier 'sidebar-open'
 }
 
 function closeSidebar() {
     sidebarOpen = false;
-    sidebar.classList.remove('active');
-    overlay.classList.remove('active');
-    mainLogo.classList.remove('sidebar-open');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    if (mainLogo) mainLogo.classList.remove('sidebar-open');
 }
 
 function updateAuthButtons(currentUser) {
@@ -89,7 +90,6 @@ function showAbout() {
     closeSidebar();
 }
 
-
 // Globale Verfügbarkeit für meet.html
 window.toggleSidebar = toggleSidebar;
 window.openSidebar = openSidebar;
@@ -98,9 +98,8 @@ window.updateAuthButtons = updateAuthButtons;
 window.addUserPlusToSidebar = addUserPlusToSidebar;
 window.showAbout = showAbout;
 
+// DOM-Initialisierung nach dem Laden des Dokuments
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM fully loaded and parsed. Initializing event listeners.");
-
     // Jetzt die Variablen initialisieren, da die Elemente existieren
     sidebar = document.getElementById('sidebar');
     overlay = document.getElementById('sidebarOverlay');
