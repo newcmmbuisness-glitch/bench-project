@@ -2162,11 +2162,13 @@
         function logout() {
             currentUser = null;
             localStorage.removeItem('currentUser');
-            updateAuthButtons();
+            updateAuthButtons(currentUser);
             showNotification('👋 Erfolgreich abgemeldet!', 'success');
             showWelcome();
 			window.location.reload(); 
         }
+		window.login = login;
+		window.logout = logout;
 
         // Navigation Functions
         function showWelcome() {
@@ -2200,7 +2202,6 @@
 				checkAndRenderUI();
 			}
 		}
-
 			
 		async function showMatches() {
 			if (!currentUser) {
