@@ -85,9 +85,6 @@ function showAbout() {
     closeSidebar();
 }
 
-// EventListener
-overlay.addEventListener('click', closeSidebar);
-mainLogo.addEventListener('click', toggleSidebar);
 
 // Globale Verfügbarkeit für meet.html
 window.toggleSidebar = toggleSidebar;
