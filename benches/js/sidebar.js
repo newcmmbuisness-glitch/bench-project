@@ -1,20 +1,17 @@
-// sidebar.js
 let sidebarOpen = false;
 
-// Elemente
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('sidebarOverlay');
 const mainLogo = document.getElementById('mainLogo');
 
-// Sidebar öffnen / schließen
 function toggleSidebar() {
     sidebarOpen ? closeSidebar() : openSidebar();
 }
 
 function openSidebar() {
     sidebarOpen = true;
-    sidebar.classList.add('active'); // CSS: .sidebar.active
-    overlay.classList.add('active'); // CSS: .sidebar-overlay.active
+    sidebar.classList.add('active');
+    overlay.classList.add('active');
     mainLogo.classList.add('sidebar-open');
 }
 
@@ -25,11 +22,6 @@ function closeSidebar() {
     mainLogo.classList.remove('sidebar-open');
 }
 
-// EventListener für Overlay und Logo
-overlay.addEventListener('click', closeSidebar);
-mainLogo.addEventListener('click', toggleSidebar);
-
-// Login / Logout Buttons aktualisieren
 function updateAuthButtons(currentUser) {
     const userEmailDisplay = document.getElementById('user-email-display');
     const loginBtn = document.getElementById('loginSidebarBtn');
@@ -54,7 +46,6 @@ function updateAuthButtons(currentUser) {
     }
 }
 
-// UserPlus / Info-Link in Sidebar hinzufügen
 function addUserPlusToSidebar(isUserPlus, isAdmin) {
     if (!sidebar) return;
 
@@ -90,11 +81,20 @@ function addUserPlusToSidebar(isUserPlus, isAdmin) {
     }
 }
 
-// Info / About-Link
 function showAbout() {
     showNotification('ℹ️ One-T-Meet: Finde die Liebe auf den schönsten Bänken der Welt! 💕🪑', 'success');
     closeSidebar();
 }
 
-// Export für Nutzung in meet.js oder anderen Modulen
-export { toggleSidebar, openSidebar, closeSidebar, updateAuthButtons, addUserPlusToSidebar, showAbout };
+// EventListener
+overlay.addEventListener('click', closeSidebar);
+mainLogo.addEventListener('click', toggleSidebar);
+
+// **Globale Verfügbarkeit für meet.html**
+window.toggleSidebar = toggleSidebar;
+window.openSidebar = openSidebar;
+window.closeSidebar = closeSidebar;
+window.updateAuthButtons = updateAuthButtons;
+window.addUserPlusToSidebar = addUserPlusToSidebar;
+window.showAbout = showAbout;
+
