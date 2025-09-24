@@ -98,8 +98,9 @@ window.updateAuthButtons = updateAuthButtons;
 window.addUserPlusToSidebar = addUserPlusToSidebar;
 window.showAbout = showAbout;
 
-// DOM-Initialisierung nach dem Laden des Dokuments
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM fully loaded and parsed. Initializing event listeners.");
+
     // Jetzt die Variablen initialisieren, da die Elemente existieren
     sidebar = document.getElementById('sidebar');
     overlay = document.getElementById('sidebarOverlay');
@@ -108,4 +109,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Jetzt die Event-Listener hinzufügen
     if (overlay) overlay.addEventListener('click', closeSidebar);
     if (mainLogo) mainLogo.addEventListener('click', toggleSidebar);
+
+    // **NEU: Event-Listener für die Anmelde- und Abmelde-Buttons**
+    const loginBtn = document.getElementById('loginSidebarBtn');
+    const logoutBtn = document.getElementById('logoutSidebarBtn');
+
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            closeSidebar(); // Sidebar schließen
+            showLoginPopup(); // Pop-up-Funktion für die Anmeldung aufrufen
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            handleSignOut(); // Die Funktion für die Abmeldung aufrufen
+            closeSidebar(); // Sidebar schließen
+        });
+    }
 });
