@@ -4,7 +4,11 @@ let sidebar, overlay, mainLogo;
 
 
 function toggleSidebar() {
-    sidebarOpen ? closeSidebar() : openSidebar();
+    if (sidebarOpen) {
+        closeSidebar();
+    } else {
+        openSidebar();
+    }
 }
 
 function openSidebar() {
