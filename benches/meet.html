@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 	<script src="https://www.paypal.com/sdk/js?client-id=Adk-v-jGvp2KRbnoJkSvcKNsPqhdlj4tC_pEWtpBMhZrgbOw7h_MeV94UbYvwspxFidq2mpcAYxbedT5&currency=EUR"></script>
+	<script type="module" src="sidebar.js"></script>
     <style>
 		body { 
 			margin: 0; 
@@ -1524,37 +1525,39 @@
 <body>
     <div id="modalOverlay" class="fixed inset-0 bg-black opacity-50 z-10 hidden"></div>
 	
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-    <div class="main-logo" id="mainLogo" onclick="toggleSidebar()">
-        <img src="OB.png" alt="OB Logo">
-    </div>
-    <div id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo" onclick="closeSidebar()">
-                <img src="OB.png" alt="OB Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: contain;">
-            </div>
-            <div class="sidebar-title">One-T-Meet</div>
-        </div>
-        <div class="sidebar-content">
-			<a href="#" class="sidebar-item" id="loginSidebarBtn" onclick="showLogin()">
+	<div class="main-logo" id="mainLogo">
+		<img src="OB.png" alt="OB Logo">
+	</div>
+
+	<div id="sidebar" class="sidebar">
+		<div class="sidebar-header">
+			<div class="sidebar-logo">
+				<img src="OB.png" alt="OB Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: contain;">
+			</div>
+			<div class="sidebar-title">One-T-Meet</div>
+		</div>
+		<div class="sidebar-content">
+			<a href="#" class="sidebar-item" id="loginSidebarBtn">
 				<span class="sidebar-icon">🔐</span>
 				<span>Anmelden</span>
 			</a>
-			<a href="#" class="sidebar-item" id="logoutSidebarBtn" style="display: none;" onclick="logout()">
+			<a href="#" class="sidebar-item" id="logoutSidebarBtn" style="display: none;">
 				<span class="sidebar-icon">🚪</span>
 				<span>Abmelden</span>
 			</a>
-            <a href="index.html" class="sidebar-item">
-                <span class="sidebar-icon">🗺️</span>
-                <span>Zur Bench-Karte</span>
-            </a>
-            <a href="contact.html" class="sidebar-item">
-                <span class="sidebar-icon">📧</span>
-                <span>Kontakt</span>
-            </a>
-        </div>
-        <div class="sidebar-footer" id="user-email-display"></div>
-    </div>
+			<a href="index.html" class="sidebar-item">
+				<span class="sidebar-icon">🗺️</span>
+				<span>Zur Bench-Karte</span>
+			</a>
+			<a href="contact.html" class="sidebar-item">
+				<span class="sidebar-icon">📧</span>
+				<span>Kontakt</span>
+			</a>
+		</div>
+		<div class="sidebar-footer" id="user-email-display"></div>
+	</div>
+
+	<div class="sidebar-overlay" id="sidebarOverlay"></div>
 	
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -1979,38 +1982,6 @@
 		});
 		
 
-
-        // Sidebar Functions
-        function toggleSidebar() {
-            if (sidebarOpen) {
-                closeSidebar();
-            } else {
-                openSidebar();
-            }
-        }
-        
-        function openSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            const mainLogo = document.getElementById('mainLogo');
-            
-            sidebarOpen = true;
-            sidebar.classList.add('open');
-            overlay.classList.add('active');
-            mainLogo.classList.add('sidebar-open');
-        }
-        
-        function closeSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            const mainLogo = document.getElementById('mainLogo');
-            
-            sidebarOpen = false;
-            sidebar.classList.remove('open');
-            overlay.classList.remove('active');
-            mainLogo.classList.remove('sidebar-open');
-        }
-
         // Auth Functions
         function showLogin() {
             document.getElementById('loginModal').style.display = 'block';
@@ -2174,52 +2145,6 @@
 			window.location.reload(); 
         }
 
-		function updateAuthButtons() {
-			const userEmailDisplay = document.getElementById('user-email-display');
-			const loginBtn = document.getElementById('loginSidebarBtn');
-			const logoutBtn = document.getElementById('logoutSidebarBtn');
-			
-			// Prüfen, ob die Sidebar-Buttons existieren
-			if (!loginBtn || !logoutBtn) {
-				console.error('Login- oder Logout-Button in der Sidebar wurde nicht gefunden!');
-				return;
-			}
-
-			if (currentUser) {
-				// Angemeldet: Logout-Button anzeigen, Login-Button ausblenden
-				loginBtn.style.display = 'none';
-				logoutBtn.style.display = 'flex'; // Wichtig: flex, um das icon und den Text nebeneinander zu halten
-				
-				if (userEmailDisplay) {
-					userEmailDisplay.innerHTML = `
-						<span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
-							👤 ${currentUser.email}
-						</span>
-					`;
-				}
-				
-				// Nach Anmeldung prüfen ob Profil existiert
-				checkAndRenderUI();
-				setTimeout(initializeNotificationSystem, 1000);
-
-			} else {
-				// Nicht angemeldet: Anmelden-Button anzeigen, Logout-Button ausblenden
-				loginBtn.style.display = 'flex'; // Wieder flex
-				logoutBtn.style.display = 'none';
-				
-				if (userEmailDisplay) {
-					userEmailDisplay.innerHTML = '';
-				}
-				
-				unreadMessageCount = 0;
-				lastCheckedMessages = {};
-				updateChatButtonBadge();              
-				
-				// Floating buttons verstecken wenn nicht angemeldet
-				document.getElementById('profileButton').classList.add('hidden');
-				document.getElementById('chatButton').classList.add('hidden');
-			}
-		}
         // Navigation Functions
         function showWelcome() {
             hideAllScreens();
@@ -5034,52 +4959,6 @@
 			}
 		}
 		
-		// Add UserPlus option to sidebar
-		function addUserPlusToSidebar() {
-			const sidebar = document.getElementById('sidebar');
-			if (!sidebar) return;
-			
-			const userPlusItem = document.createElement('a');
-			userPlusItem.href = '#';
-			userPlusItem.onclick = () => {
-				if (isUserPlus || isAdmin) {
-					showNotification('Du hast bereits UserPlus! 🎉', 'success');
-				} else {
-					showUserPlusPurchase();
-				}
-				closeSidebar();
-			};
-			
-			userPlusItem.innerHTML = `
-				<div class="flex items-center space-x-3 p-3 hover:bg-gray-100 rounded-lg transition-colors">
-					<div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-						<span class="text-white text-lg">⭐</span>
-					</div>
-					<div class="flex-1">
-						<div class="font-semibold text-gray-800">${isUserPlus || isAdmin ? 'UserPlus Aktiv' : 'UserPlus kaufen'}</div>
-						<div class="text-xs text-gray-500">${isUserPlus || isAdmin ? 'Premium Features aktiv' : '€4,99 - Swipe Back & InstaMatch'}</div>
-					</div>
-					${isUserPlus || isAdmin ? '<span class="text-green-500">✓</span>' : '<span class="text-purple-500">€4,99</span>'}
-				</div>
-			`;
-			
-			// Insert after profile option (assuming it exists)
-			const profileLink = sidebar.querySelector('a[onclick*="showProfilePopup"]');
-			if (profileLink && profileLink.parentNode) {
-				profileLink.parentNode.insertBefore(userPlusItem, profileLink.nextSibling);
-			} else {
-				sidebar.appendChild(userPlusItem);
-			}
-		}
-
-		// Initialize UserPlus features when user logs in
-		async function initializeUserPlusFeatures() {
-			await checkUserPlusStatus();
-			addUserPlusToSidebar();
-			updateFloatingButtons();
-			updateSwipeActionButtons();
-		}		
-
 		// Show UserPlus purchase modal
 		function showUserPlusPurchase() {
 			const modalHtml = `
@@ -5546,11 +5425,6 @@
             setTimeout(() => {
                 notification.style.display = 'none';
             }, 5000);
-        }
-
-        function showAbout() {
-            showNotification('ℹ️ One-T-Meet: Finde die Liebe auf den schönsten Bänken der Welt! 💕🪑', 'success');
-            closeSidebar();
         }
 
         // Keyboard shortcuts
