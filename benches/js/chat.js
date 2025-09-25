@@ -267,7 +267,7 @@ async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
     const imgEl = document.getElementById('chatUserImage');
     imgEl.src = matchImage || '/default-avatar.png';
     imgEl.alt = matchName;
-    document.getElementById('aiBadge').style.display = isAIChat ? 'block' : 'none';
+	document.getElementById('aiBadge').style.display = 'block';
 
     document.getElementById('reportChatBtn').onclick = () => reportChat();
     document.getElementById('closeChatBtn').onclick = () => closeChat();
