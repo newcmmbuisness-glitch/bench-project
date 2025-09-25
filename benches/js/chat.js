@@ -255,7 +255,7 @@ async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
         aiSuggestionsLoaded: false,
         lastLoadedMessageCount: 0,
         messageInterval: null,
-        isAI: isAIChat
+        isAI: isAIChat,
 		currentMatch: {        // <- HIER hinzufügen
 			match_id: numericMatchId,
 			user_id: matchUserId,
