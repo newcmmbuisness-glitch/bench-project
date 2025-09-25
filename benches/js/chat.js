@@ -223,16 +223,19 @@ async function sendMessage() {
 function setupMessageInput() {
     const messageInput = document.getElementById('messageInput');
     if (!messageInput) return;
-    messageInput.replaceWith(messageInput.cloneNode(true));
-    const newInput = document.getElementById('messageInput');
-    newInput.addEventListener('keydown', (e) => {
+
+    messageInput.removeEventListener('keydown', handleInputKeyDown);
+    messageInput.addEventListener('keydown', handleInputKeyDown);
+
+    function handleInputKeyDown(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             sendMessage();
         }
-    });
-    newInput.focus();
+    }
+    messageInput.focus();
 }
+
 
 async function reportChat(match) {
 	// Wenn kein Match übergeben wird, automatisch das aktuelle Profil nehmen
