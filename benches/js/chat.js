@@ -262,7 +262,7 @@ async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
 			name: matchName,
 			image: matchImage,
 			isAI: isAIChat
-			}
+		}
     };
 
     const chatContainer = document.getElementById('chatContainer');
