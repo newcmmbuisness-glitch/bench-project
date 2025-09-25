@@ -163,8 +163,6 @@ window.currentUser = null;
             showWelcome();
 			window.location.reload(); 
         }
-		window.login = login;
-		window.logout = logout;
 
 window.showLogin = showLogin;
 window.closeLogin = closeLogin;
