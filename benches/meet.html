@@ -2994,10 +2994,9 @@
         document.addEventListener('keydown', e => { 
             if (e.key === 'Escape') { 
                 closeLogin();
-                if (sidebarOpen) closeSidebar();
-				
 				closeChat();
-
+                if (sidebarOpen) closeSidebar();
+			
             }
             
             // Swipe shortcuts
