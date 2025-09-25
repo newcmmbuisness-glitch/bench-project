@@ -189,6 +189,49 @@ function setupMessageInput() {
     newInput.focus();
 }
 
+async function reportChat(match) {
+	// Wenn kein Match übergeben wird, automatisch das aktuelle Profil nehmen
+	// Für AI-Matches z.B. das gerade angezeigte Profil im Swipe
+	match = match || currentProfiles?.[currentIndex] || chatState.currentMatch;
+
+	// AI-Match: nur Illusion, kein Zugriff auf IDs nötig
+	if (match?.isAI) {
+		if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
+		alert('Chat mit AI gemeldet. Vielen Dank für Ihr Feedback.');
+		closeChat();
+		return;
+	}
+
+	// Echte Matches prüfen
+	if (!match?.match_id || !currentUser?.uid) {
+		alert('Fehler: Chat oder Benutzer nicht identifiziert.');
+		return;
+	}
+
+	if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
+
+	try {
+		const response = await fetch('/.netlify/functions/report_chat', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				match_id: parseInt(match.match_id),
+				reporter_id: currentUser.uid
+			}),
+		});
+
+		const result = await response.json();
+		if (response.ok && result.success) {
+			alert('Chat erfolgreich gemeldet. Vielen Dank für Ihr Feedback.');
+			closeChat();
+		} else {
+			alert('Fehler beim Melden des Chats: ' + (result.error || 'Unbekannter Fehler.'));
+		}
+	} catch (error) {
+		console.error('❌ Error reporting chat:', error);
+		alert('Ein Netzwerkfehler ist aufgetreten.');
+	}
+}
 // ---------- OPEN MATCH CHAT ----------
 async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
     console.log('🔥 Opening chat - Match ID:', matchId, 'User ID:', matchUserId);
