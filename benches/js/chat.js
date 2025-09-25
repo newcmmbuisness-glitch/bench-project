@@ -223,19 +223,16 @@ async function sendMessage() {
 function setupMessageInput() {
     const messageInput = document.getElementById('messageInput');
     if (!messageInput) return;
-
-    messageInput.removeEventListener('keydown', handleInputKeyDown);
-    messageInput.addEventListener('keydown', handleInputKeyDown);
-
-    function handleInputKeyDown(e) {
+    messageInput.replaceWith(messageInput.cloneNode(true));
+    const newInput = document.getElementById('messageInput');
+    newInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             sendMessage();
         }
-    }
-    messageInput.focus();
+    });
+    newInput.focus();
 }
-
 
 async function reportChat(match) {
 	// Wenn kein Match übergeben wird, automatisch das aktuelle Profil nehmen
@@ -583,28 +580,6 @@ function closeChat() {
     if (container && container.offsetParent !== null) loadUserMatches(true);
 }
 
-
-// ---------- DOM EVENT BINDINGS ----------
-document.addEventListener("DOMContentLoaded", () => {
-    const sendBtn = document.getElementById('sendMessageBtn');
-    if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-
-    const closeBtn = document.getElementById('closeChatBtn');
-    if (closeBtn) closeBtn.addEventListener('click', closeChat);
-
-    const reportBtn = document.getElementById('reportChatBtn');
-    if (reportBtn) reportBtn.addEventListener('click', () => window.reportChat());
-
-    const messageInput = document.getElementById('messageInput');
-    if (messageInput) {
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
-
 	// ---------- WINDOW BINDINGS ----------
 window.showChats = showChats;
 window.loadMessages = loadMessages;
@@ -621,6 +596,18 @@ window.initializeNotificationSystem = initializeNotificationSystem;
 window.updateSuggestions = updateSuggestions;
 window.logSuggestionClick = logSuggestionClick;
 window.closeChat = closeChat;
+
+// ---------- DOM EVENT BINDINGS ----------
+document.addEventListener("DOMContentLoaded", () => {
+    const sendBtn = document.getElementById('sendMessageBtn');
+    if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+
+    const closeBtn = document.getElementById('closeChatBtn');
+    if (closeBtn) closeBtn.addEventListener('click', closeChat);
+
+    const reportBtn = document.getElementById('reportChatBtn');
+    if (reportBtn) reportBtn.addEventListener('click', () => window.reportChat());
+
     // Optional: load user from localStorage
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
