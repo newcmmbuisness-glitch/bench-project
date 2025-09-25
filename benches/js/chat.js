@@ -530,22 +530,6 @@ function closeChat() {
     if (container && container.offsetParent !== null) loadUserMatches(true);
 }
 
-// ---------- WINDOW BINDINGS ----------
-window.showChats = showChats;
-window.loadMessages = loadMessages;
-window.sendMessage = sendMessage;
-window.setupMessageInput = setupMessageInput;
-window.openMatchChat = openMatchChat;
-window.loadAIMessages = loadAIMessages;
-window.saveAIMessage = saveAIMessage;
-window.sendAIMessage = sendAIMessage;
-window.triggerAiReply = triggerAiReply;
-window.reportChat = reportChat;
-window.markMessagesAsRead = markMessagesAsRead;
-window.initializeNotificationSystem = initializeNotificationSystem;
-window.updateSuggestions = updateSuggestions;
-window.logSuggestionClick = logSuggestionClick;
-window.closeChat = closeChat;
 
 // ---------- DOM EVENT BINDINGS ----------
 document.addEventListener("DOMContentLoaded", () => {
@@ -568,6 +552,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+	// ---------- WINDOW BINDINGS ----------
+window.showChats = showChats;
+window.loadMessages = loadMessages;
+window.sendMessage = sendMessage;
+window.setupMessageInput = setupMessageInput;
+window.openMatchChat = openMatchChat;
+window.loadAIMessages = loadAIMessages;
+window.saveAIMessage = saveAIMessage;
+window.sendAIMessage = sendAIMessage;
+window.triggerAiReply = triggerAiReply;
+window.reportChat = reportChat;
+window.markMessagesAsRead = markMessagesAsRead;
+window.initializeNotificationSystem = initializeNotificationSystem;
+window.updateSuggestions = updateSuggestions;
+window.logSuggestionClick = logSuggestionClick;
+window.closeChat = closeChat;
     // Optional: load user from localStorage
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
