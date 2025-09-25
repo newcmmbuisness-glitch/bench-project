@@ -3006,36 +3006,46 @@
 		document.addEventListener('keydown', e => { 
 		    if (e.key === 'Escape') {
 		
-		        const chatOpen = document.getElementById('chatContainer')?.style.display !== 'none';
-		        const matchesOpen = document.getElementById('matchesContainer')?.style.display !== 'none';
+		        const chat = document.getElementById('chatContainer');
+		        const matches = document.getElementById('matchesContainer');
+		        const login = document.getElementById('loginContainer');
 		
-		        // 1️⃣ Wenn Chat offen ist, nur Chat schließen
-		        if (chatOpen) {
+		        const chatOpen = chat && chat.style.display !== 'none';
+		        const matchesOpen = matches && matches.style.display !== 'none';
+		        const loginOpen = login && login.style.display !== 'none';
+		
+			   // 1️⃣ Chat hat höchste Priorität
+		    	 if (chatOpen) {
 		            closeChat();
-		            return; // beende hier, damit MatchesContainer nicht geschlossen wird
+		            return;
 		        }
 		
-		        // 2️⃣ Wenn Sidebar offen
+		        // 2️⃣ Sidebar
 		        if (sidebarOpen) {
 		            closeSidebar();
 		            return;
 		        }
 		
-		        // 3️⃣ Wenn Login offen
-		        closeLogin();
+		        // 3️⃣ Login
+		        if (loginOpen) {
+		            closeLogin();
+		            return;
+		        }
 		
-		        // 4️⃣ Matches Container schließen, wenn er offen ist
+		        // 4️⃣ Matches Container zuletzt
 		        if (matchesOpen) {
-		            document.getElementById('matchesContainer').style.display = 'none';
+		            matches.style.display = 'none';
 		        }
 		    }
-            
-            // Swipe shortcuts
-            if (document.getElementById('swipeContainer').style.display === 'block') {
-                if (e.key === 'ArrowLeft') swipeCard('left');
-                if (e.key === 'ArrowRight') swipeCard('right');
-            }
-        });
+		
+		    // Swipe shortcuts
+		    const swipe = document.getElementById('swipeContainer');
+		    if (swipe && swipe.style.display === 'block') {
+		        if (e.key === 'ArrowLeft') swipeCard('left');
+		        if (e.key === 'ArrowRight') swipeCard('right');
+		    }
+		});
+
 
         // Enter key for message input
         document.addEventListener('keydown', e => {
