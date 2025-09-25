@@ -3007,17 +3007,13 @@
 		    if (e.key === 'Escape') {
 		
 		        const chat = document.getElementById('chatContainer');
-		        const matches = document.getElementById('matchesContainer');
 		        const login = document.getElementById('loginContainer');
+		        const matches = document.getElementById('matchesContainer');
 		
-		        const chatOpen = chat && chat.style.display !== 'none';
-		        const matchesOpen = matches && matches.style.display !== 'none';
-		        const loginOpen = login && login.style.display !== 'none';
-		
-			   // 1️⃣ Chat hat höchste Priorität
-		    	 if (chatOpen) {
+		        // 1️⃣ Chat hat höchste Priorität
+		        if (chat && chat.style.display !== 'none') {
 		            closeChat();
-		            return;
+		            return; // nur Chat schließen
 		        }
 		
 		        // 2️⃣ Sidebar
@@ -3027,13 +3023,13 @@
 		        }
 		
 		        // 3️⃣ Login
-		        if (loginOpen) {
+		        if (login && login.style.display !== 'none') {
 		            closeLogin();
 		            return;
 		        }
 		
-		        // 4️⃣ Matches Container zuletzt
-		        if (matchesOpen) {
+		        // 4️⃣ Matches Container zuletzt prüfen und schließen
+		        if (matches && matches.style.display !== 'none') {
 		            matches.style.display = 'none';
 		        }
 		    }
@@ -3045,8 +3041,6 @@
 		        if (e.key === 'ArrowRight') swipeCard('right');
 		    }
 		});
-
-
         // Enter key for message input
         document.addEventListener('keydown', e => {
             if (e.key === 'Enter' && document.activeElement.id === 'messageInput') {
