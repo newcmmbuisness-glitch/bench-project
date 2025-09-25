@@ -103,7 +103,6 @@ window.currentUser = null;
 				
 				  updateFloatingButtons();
 				  checkAndRenderUI();
-				}
 					
 				} else {
 					showNotification('❌ ' + result.error, 'error');
