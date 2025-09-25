@@ -283,7 +283,102 @@ async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
         chatState.messageInterval = setInterval(loadMessages, 3000);
     }
 }
+async function updateSuggestions() {
+	if (!chatState.currentMatchId || !currentUser) {
+		document.getElementById('aiSuggestionsContainer').classList.add('hidden');
+		return;
+	}
 
+	const mainContainer = document.getElementById('aiSuggestionsContainer');
+	const thinkingBubble = document.getElementById('aiThinkingBubble');
+	const typingTextElement = document.getElementById('typingText');
+
+	// Check if this is an AI chat - if so, don't show suggestions
+	const isAIChat = typeof chatState.currentMatchId === 'string' && chatState.currentMatchId.toString().includes('ai_match_');
+	if (isAIChat) {
+		mainContainer.classList.add('hidden');
+		return;
+	}
+
+	// Only show suggestions for real user chats
+	mainContainer.classList.remove('hidden');
+	thinkingBubble.classList.remove('hidden');
+	typingTextElement.textContent = 'One-KI denkt nach...';
+	
+	// Remove old suggestion buttons
+	const oldButtons = mainContainer.querySelectorAll('button');
+	oldButtons.forEach(button => button.remove());
+
+	try {
+		// Make sure matchId is a number for real chats
+		const matchId = parseInt(chatState.currentMatchId);
+		if (isNaN(matchId)) {
+			console.error('❌ Invalid match ID for suggestions:', chatState.currentMatchId);
+			mainContainer.classList.add('hidden');
+			return;
+		}
+
+		const response = await fetch('/.netlify/functions/get_chat_suggestions', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ 
+				matchId: matchId,  // Send as number
+				currentUserId: currentUser.uid 
+			}),
+		});
+
+		const result = await response.json();
+		
+		// Animation timeout
+		setTimeout(() => {
+			thinkingBubble.classList.add('hidden');
+
+			if (result.success && result.suggestions.length > 0) {
+				result.suggestions.forEach(suggestion => {
+					const button = document.createElement('button');
+					button.onclick = () => {
+						document.getElementById('messageInput').value = suggestion;
+						logSuggestionClick(suggestion);
+					};
+
+					const innerDiv = document.createElement('div');
+					innerDiv.className = 'ki-beta-container';
+					
+					const innerSpan = document.createElement('span');
+					innerSpan.className = 'ki-beta-branding';
+					innerSpan.textContent = suggestion;
+
+					innerDiv.appendChild(innerSpan);
+					button.appendChild(innerDiv);
+					mainContainer.appendChild(button);
+				});
+			} else {
+				mainContainer.classList.add('hidden');
+			}
+		}, 2500);
+
+	} catch (error) {
+		console.error('❌ Error loading AI suggestions:', error);
+		thinkingBubble.classList.add('hidden');
+		mainContainer.classList.add('hidden');
+	}
+}
+
+
+async function logSuggestionClick(suggestionText) {
+	try {
+		await fetch('/.netlify/functions/log_suggestion_click', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				userId: currentUser.uid,
+				clickedSuggestion: suggestionText
+			}),
+		});
+	} catch (error) {
+		console.error('❌ Error logging suggestion click:', error);
+	}
+}
 // ---------- AI MESSAGE HANDLING ----------
 function loadAIMessages() {
     const container = document.getElementById('chatMessages');
@@ -416,7 +511,17 @@ function initializeNotificationSystem() {
 	}
 }		
 
+// Close Chat
+function closeChat() {
+    const chatModal = document.querySelector('[data-chat-modal]');
+    if (chatModal) chatModal.remove();
+    if (chatState.messageInterval) clearInterval(chatState.messageInterval);
 
+    chatState = { currentMatchId: null, currentConversationId: null, aiSuggestionsLoaded: false, lastLoadedMessageCount: 0, messageInterval: null };
+
+    const container = document.getElementById('matchesContainer');
+    if (container && container.offsetParent !== null) loadUserMatches(true);
+}
 // ---------- WINDOW BINDINGS ----------
 window.showChats = showChats;
 window.loadMessages = loadMessages;
@@ -432,6 +537,7 @@ window.markMessagesAsRead = markMessagesAsRead;
 window.initializeNotificationSystem = initializeNotificationSystem;
 window.updateSuggestions = updateSuggestions;
 window.logSuggestionClick = logSuggestionClick;
+window.closeChat = closeChat;
 
 // ---------- DOM EVENT BINDINGS ----------
 document.addEventListener("DOMContentLoaded", () => {
