@@ -954,7 +954,10 @@
 		// ✅ NEW: Unified function to show "no more profiles" message
 		function showNoMoreProfilesInCardStack() {
 			const cardStack = document.getElementById('cardStack');
+			
 			const swipeActions = document.querySelector('.swipe-actions');
+			if (swipeActions) swipeActions.style.display = 'none';
+
 			const backButtonContainer = document.querySelector('div[style*="text-align: center; margin-top: 20px;"]');
 			
 			// Hide swipe actions and back button
@@ -1131,6 +1134,7 @@
 					console.log(`🎯 ${currentProfiles.length} Profile geladen (${realProfiles.length} echt, ${currentProfiles.length - realProfiles.length} KI)`);
 					currentIndex = 0;
 					renderSwipeCards();
+					updateSwipeActionButtons();
 				} else {
 					showNoMoreProfilesInCardStack();
 				}
