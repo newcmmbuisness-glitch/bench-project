@@ -139,20 +139,6 @@ function stopMatchesAutoRefresh() {
     }
 }
 
-// API Call Safe Wrapper
-async function safeApiCall(url, options, fallbackMessage) {
-    try {
-        const response = await fetch(url, options);
-        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        const result = await response.json();
-        return { success: true, data: result };
-    } catch (error) {
-        console.error('API Call failed:', error);
-        showNotification(fallbackMessage || 'Ein Fehler ist aufgetreten', 'error');
-        return { success: false, error: error.message };
-    }
-}
-
 // Chat schließen
 function closeChat() {
     const chatModal = document.querySelector('[data-chat-modal]');
@@ -179,5 +165,4 @@ window.showMatches = showMatches;
 window.loadUserMatches = loadUserMatches;
 window.startMatchesAutoRefresh = startMatchesAutoRefresh;
 window.stopMatchesAutoRefresh = stopMatchesAutoRefresh;
-window.safeApiCall = safeApiCall;
 window.closeChat = closeChat;
