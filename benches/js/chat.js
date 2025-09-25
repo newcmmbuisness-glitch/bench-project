@@ -513,8 +513,8 @@ function initializeNotificationSystem() {
 
 // Close Chat
 function closeChat() {
-    const chatModal = document.querySelector('[data-chat-modal]');
-    if (chatModal) chatModal.remove();
+    const chatModal = document.getElementById('chatModal');
+    if (chatModal) chatModal.classList.add('hidden'); // nur verstecken, nicht löschen!
     if (chatState.messageInterval) clearInterval(chatState.messageInterval);
 
     chatState = { currentMatchId: null, currentConversationId: null, aiSuggestionsLoaded: false, lastLoadedMessageCount: 0, messageInterval: null };
@@ -522,6 +522,7 @@ function closeChat() {
     const container = document.getElementById('matchesContainer');
     if (container && container.offsetParent !== null) loadUserMatches(true);
 }
+
 // ---------- WINDOW BINDINGS ----------
 window.showChats = showChats;
 window.loadMessages = loadMessages;
