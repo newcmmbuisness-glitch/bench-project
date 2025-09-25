@@ -11,7 +11,45 @@ let chatState = {
 	isAI: false,        // Flag, ob Chat mit AI ist
 	aiProfileId: null   // die AI-Profil-ID für diesen Chat
 };
+// ---------------------------
+// AI Timer / Scheduler global + persistent via localStorage
+// ---------------------------
+window.aiReplyTimers = window.aiReplyTimers || {};
 
+function persistTimerToStorage(convId, meta) {
+  try {
+	localStorage.setItem(`ai_timer_${convId}`, JSON.stringify(meta));
+  } catch (e) {}
+}
+function removeTimerFromStorage(convId) {
+  try { localStorage.removeItem(`ai_timer_${convId}`); } catch (e) {}
+}
+
+function restoreAiTimers() {
+  try {
+	Object.keys(localStorage).forEach(k => {
+	  if (!k.startsWith('ai_timer_')) return;
+	  const convId = k.replace('ai_timer_', '');
+	  const meta = JSON.parse(localStorage.getItem(k) || '{}');
+	  if (!meta || !meta.dueAt) {
+		removeTimerFromStorage(convId);
+		return;
+	  }
+	  const remaining = Math.max(meta.dueAt - Date.now(), 0);
+	  if (window.aiReplyTimers[convId] && window.aiReplyTimers[convId].id) return;
+
+	  window.aiReplyTimers[convId] = {
+		pendingUserMessages: meta.pendingUserMessages || [],
+		dueAt: meta.dueAt,
+		id: setTimeout(() => triggerAiReply(convId), remaining)
+	  };
+	});
+  } catch (e) { console.error('restoreAiTimers error', e); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  restoreAiTimers();
+});
 // ---------- SHOW CHATS ----------
 function showChats() {
     if (!currentUser) {
