@@ -3041,12 +3041,6 @@
 		        if (e.key === 'ArrowRight') swipeCard('right');
 		    }
 		});
-        // Enter key for message input
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && document.activeElement.id === 'messageInput') {
-                sendMessage();
-            }
-        });
         document.getElementById('profileImage').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const button = document.querySelector('.file-upload-btn');
