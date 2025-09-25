@@ -3003,19 +3003,32 @@
         }
 
         // Keyboard shortcuts
-        document.addEventListener('keydown', e => { 
-            if (e.key === 'Escape') { 
-                closeLogin();
-				closeChat();
-				
-                if (sidebarOpen) closeSidebar();
-				
-				const matchesContainer = document.getElementById('matchesContainer');
-				if (matchesContainer) {
-					matchesContainer.style.display = 'none';
-				}				
-			
-            }
+		document.addEventListener('keydown', e => { 
+		    if (e.key === 'Escape') {
+		
+		        const chatOpen = document.getElementById('chatContainer')?.style.display !== 'none';
+		        const matchesOpen = document.getElementById('matchesContainer')?.style.display !== 'none';
+		
+		        // 1️⃣ Wenn Chat offen ist, nur Chat schließen
+		        if (chatOpen) {
+		            closeChat();
+		            return; // beende hier, damit MatchesContainer nicht geschlossen wird
+		        }
+		
+		        // 2️⃣ Wenn Sidebar offen
+		        if (sidebarOpen) {
+		            closeSidebar();
+		            return;
+		        }
+		
+		        // 3️⃣ Wenn Login offen
+		        closeLogin();
+		
+		        // 4️⃣ Matches Container schließen, wenn er offen ist
+		        if (matchesOpen) {
+		            document.getElementById('matchesContainer').style.display = 'none';
+		        }
+		    }
             
             // Swipe shortcuts
             if (document.getElementById('swipeContainer').style.display === 'block') {
