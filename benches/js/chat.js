@@ -223,8 +223,10 @@ async function sendMessage() {
 function setupMessageInput() {
     const messageInput = document.getElementById('messageInput');
     if (!messageInput) return;
-    messageInput.replaceWith(messageInput.cloneNode(true));
-    const newInput = document.getElementById('messageInput');
+
+    const newInput = messageInput.cloneNode(true);
+    messageInput.parentNode.replaceChild(newInput, messageInput);
+
     newInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -233,6 +235,7 @@ function setupMessageInput() {
     });
     newInput.focus();
 }
+
 
 async function reportChat(match) {
 	// Wenn kein Match übergeben wird, automatisch das aktuelle Profil nehmen
@@ -490,23 +493,36 @@ async function saveAIMessage(sender, text) {
 
 async function sendAIMessage(messageText) {
     if (!chatState.currentMatchId || !messageText) return;
+
+    // 1️⃣ Speichere die User-Nachricht lokal & in DB
     await saveAIMessage('user', messageText);
     loadAIMessages();
 
-	console.log("🤖 sendAIMessage called", {
-	messageText,
-	convId: chatState.currentMatchId
-	});
+    console.log("🤖 sendAIMessage called", {
+        messageText,
+        convId: chatState.currentMatchId
+    });
 
     const convId = chatState.currentMatchId;
-    if (!window.aiReplyTimers) window.aiReplyTimers = {};
-    if (!window.aiReplyTimers[convId]) window.aiReplyTimers[convId] = { pendingUserMessages: [] };
-    window.aiReplyTimers[convId].pendingUserMessages.push({ text: messageText, ts: Date.now() });
 
-    const delay = Math.floor(Math.random() * (60_000 - 8_000)) + 8_000;
-    window.aiReplyTimers[convId].dueAt = Date.now() + delay;
-    window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
+    // 2️⃣ Timer prüfen: nur wenn noch keiner läuft
+    if (!window.aiReplyTimers) window.aiReplyTimers = {};
+
+    if (!window.aiReplyTimers[convId]) {
+        window.aiReplyTimers[convId] = {
+            pendingUserMessages: [{ text: messageText, ts: Date.now() }]
+        };
+
+        const delay = Math.floor(Math.random() * (60_000 - 8_000)) + 8_000;
+        window.aiReplyTimers[convId].dueAt = Date.now() + delay;
+        window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
+    } else {
+        // Timer läuft schon, Nachricht nur anhängen
+        window.aiReplyTimers[convId].pendingUserMessages.push({ text: messageText, ts: Date.now() });
+    }
 }
+
+console.log("⏱️ aiReplyTimers after sendAIMessage", window.aiReplyTimers);
 
 async function triggerAiReply(convId) {
     const t = window.aiReplyTimers[convId];
