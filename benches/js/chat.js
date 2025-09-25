@@ -246,7 +246,7 @@ async function reportChat(match) {
 	// AI-Match: nur Illusion, kein Zugriff auf IDs nötig
 	if (match?.isAI) {
 		if (!confirm('Sind Sie sicher, dass Sie diesen Chat melden möchten?')) return;
-		alert('Chat mit AI gemeldet. Vielen Dank für Ihr Feedback.');
+		alert('Chat erfolgreich gemeldet. Vielen Dank für Ihr Feedback.');
 		closeChat();
 		return;
 	}
