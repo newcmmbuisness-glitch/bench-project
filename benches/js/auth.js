@@ -89,8 +89,22 @@ window.currentUser = null;
 				const result = await response.json();
 
 				if (result.success) {
-					showNotification('✅ ' + result.message, 'success');
-					showTab('login');
+				  currentUser = { 
+				    uid: result.userId,
+				    email: result.email,
+				    isAdmin: result.isAdmin || false 
+				  };
+				
+				  localStorage.setItem('currentUser', JSON.stringify(currentUser));
+				
+				  closeLogin();
+				  updateAuthButtons(currentUser);
+				  showNotification(`🎉 Willkommen ${currentUser.email}!`, 'success');
+				
+				  updateFloatingButtons();
+				  checkAndRenderUI();
+				}
+					
 				} else {
 					showNotification('❌ ' + result.error, 'error');
 				}
@@ -145,7 +159,7 @@ window.currentUser = null;
                     document.getElementById('loginCaptchaAnswer').value = '';					
 					updateFloatingButtons(); // <-- Diese Zeile hinzufügen
 					
-
+				  	checkAndRenderUI();
 					
 				} else {
 					showNotification('❌ ' + result.error, 'error');
