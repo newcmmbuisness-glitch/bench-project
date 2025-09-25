@@ -3007,7 +3007,13 @@
             if (e.key === 'Escape') { 
                 closeLogin();
 				closeChat();
+				
                 if (sidebarOpen) closeSidebar();
+				
+				const matchesContainer = document.getElementById('matchesContainer');
+				if (matchesContainer) {
+					matchesContainer.style.display = 'none';
+				}				
 			
             }
             
