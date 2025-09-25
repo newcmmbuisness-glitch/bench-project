@@ -518,7 +518,7 @@ async function sendAIMessage(messageText) {
         window.aiReplyTimers[convId].dueAt = Date.now() + delay;
         window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
 		
-		console.log("⏱️ aiReplyTimers after sendAIMessage", window.aiReplyTimers);
+		console.log(`⏱️ [${convId}] AI antwortet in ${Math.round(delay / 1000)}s`);
     } else {
         // Timer läuft schon, Nachricht nur anhängen
         window.aiReplyTimers[convId].pendingUserMessages.push({ text: messageText, ts: Date.now() });
