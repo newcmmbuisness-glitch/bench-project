@@ -163,6 +163,44 @@ window.currentUser = null;
             showWelcome();
 			window.location.reload(); 
         }
+		function showPasswordResetForm() {
+		  document.getElementById("loginTab").style.display = "none";
+		  document.getElementById("registerTab").style.display = "none";
+		  document.getElementById("passwordResetDiv").style.display = "block";
+		}
+		
+		function hidePasswordResetForm() {
+		  document.getElementById("passwordResetDiv").style.display = "none";
+		  document.getElementById("loginTab").style.display = "block"; // zurück zu Login
+		}
+		
+		async function requestPasswordReset() {
+		  const email = document.getElementById("resetEmail").value;
+		  if (!email) {
+		    showNotification("❌ Bitte E-Mail eingeben.", "error");
+		    return;
+		  }
+		
+		  try {
+		    const response = await fetch("/.netlify/functions/auth", {
+		      method: "POST",
+		      headers: { "Content-Type": "application/json" },
+		      body: JSON.stringify({ action: "resetPassword", email })
+		    });
+		
+		    const result = await response.json();
+		    if (result.success) {
+		      showNotification("📧 " + result.message, "success");
+		      hidePasswordResetForm();
+		    } else {
+		      showNotification("❌ " + result.error, "error");
+		    }
+		  } catch (error) {
+		    console.error("Reset error:", error);
+		    showNotification("❌ Verbindungsfehler beim Zurücksetzen", "error");
+		  }
+		}
+
 
 window.showLogin = showLogin;
 window.closeLogin = closeLogin;
@@ -170,6 +208,10 @@ window.login = login;
 window.logout = logout;
 window.register = register;
 window.showTab = showTab;
+window.showPasswordResetForm = showPasswordResetForm;
+window.hidePasswordResetForm = hidePasswordResetForm;
+window.requestPasswordReset = requestPasswordReset;
+
 
 
 document.addEventListener("DOMContentLoaded", () => {
