@@ -256,6 +256,13 @@ async function openMatchChat(matchId, matchUserId, matchName, matchImage) {
         lastLoadedMessageCount: 0,
         messageInterval: null,
         isAI: isAIChat
+		currentMatch: {        // <- HIER hinzufügen
+			match_id: numericMatchId,
+			user_id: matchUserId,
+			name: matchName,
+			image: matchImage,
+			isAI: isAIChat
+			}
     };
 
     const chatContainer = document.getElementById('chatContainer');
