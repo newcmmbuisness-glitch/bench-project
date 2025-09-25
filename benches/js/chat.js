@@ -43,6 +43,7 @@ function restoreAiTimers() {
 		dueAt: meta.dueAt,
 		id: setTimeout(() => triggerAiReply(convId), remaining)
 	  };
+	  console.log(`⏱️ Wiederhergestellter Timer für convId ${convId}, verbleibende Zeit: ${Math.round(remaining / 1000)}s`);
 	});
   } catch (e) { console.error('restoreAiTimers error', e); }
 }
@@ -516,13 +517,15 @@ async function sendAIMessage(messageText) {
         const delay = Math.floor(Math.random() * (60_000 - 8_000)) + 8_000;
         window.aiReplyTimers[convId].dueAt = Date.now() + delay;
         window.aiReplyTimers[convId].id = setTimeout(() => triggerAiReply(convId), delay);
+		
+		console.log("⏱️ aiReplyTimers after sendAIMessage", window.aiReplyTimers);
     } else {
         // Timer läuft schon, Nachricht nur anhängen
         window.aiReplyTimers[convId].pendingUserMessages.push({ text: messageText, ts: Date.now() });
+		console.log("⏱️ aiReplyTimers after sendAIMessage", window.aiReplyTimers);
     }
 }
 
-console.log("⏱️ aiReplyTimers after sendAIMessage", window.aiReplyTimers);
 
 async function triggerAiReply(convId) {
     const t = window.aiReplyTimers[convId];
