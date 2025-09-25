@@ -280,64 +280,46 @@
 			</div>
 		</div>
 	
-		<div id="matchesContainer" class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg mx-auto" style="display: none;">
-			<h2 class="text-2xl font-bold mb-4 text-center">Deine Matches</h2>
+		<div id="matchesContainer" class="flex flex-col bg-white p-6 rounded-lg shadow-xl w-full max-w-lg mx-auto" style="display: none;">
+			<h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Deine Matches</h2>
 
-			<div id="matchesList" class="space-y-4">
+			<!-- Liste der Matches -->
+			<div id="matchesList" class="space-y-4 flex-1 overflow-auto">
+				<p id="matchesLoading" class="text-gray-500 text-center">Lade Matches... 🔄</p>
+			</div>
 
-				<!-- Lade-Status -->
-				<div id="matchesLoading" class="text-center p-4 hidden">
-					Lade Matches... 🔄
-				</div>
+			<!-- Kein Matches Hinweis -->
+			<div id="noMatches" class="text-center py-16 hidden">
+				<div class="text-8xl mb-6">💔</div>
+				<h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
+				<p class="text-gray-500 mb-8 max-w-sm mx-auto">
+					Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
+				</p>
+			</div>
 
-				<!-- Match Vorlage -->
-				<div id="matchTemplate" class="match-item bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3 hidden">
-					<div class="flex items-center space-x-4">
-						<div class="flex-shrink-0 relative">
-							<img src="" alt="" class="w-16 h-16 rounded-full object-cover border-2 border-pink-200 match-image">
-						</div>
-						<div class="flex-1 min-w-0">
-							<h4 class="font-semibold text-lg text-gray-900 truncate match-name">Name, Alter</h4>
-							<p class="text-sm text-gray-600 truncate match-lastmsg">Letzte Nachricht</p>
-							<span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full match-badge">💕 Match</span>
-						</div>
-					</div>
-				</div>
-
-				<!-- Keine Matches -->
-				<div id="noMatches" class="text-center py-16 hidden">
-					<div class="text-8xl mb-6">💔</div>
-					<h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
-					<p class="text-gray-500 mb-8 max-w-sm mx-auto">
-						Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
-					</p>
-					<button onclick="showSwipeCards()" 
-							class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-full hover:from-pink-600 hover:to-red-600 transition-colors font-semibold text-lg">
-						💖 Jetzt swipen
-					</button>
-				</div>
-
-				<!-- Back-Button -->
-				<div id="backToSwipe" class="mt-6 text-center hidden">
-					<button onclick="showSwipeCards()" 
-							class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
-						← Zurück zum Swipen
-					</button>
-				</div>
-
-				<!-- Fehler beim Laden -->
-				<div id="matchesError" class="text-center py-16 hidden">
-					<div class="text-6xl mb-4">⚠️</div>
-					<h3 class="text-xl font-semibold text-gray-700 mb-2">Verbindungsfehler</h3>
-					<p class="text-gray-500 mb-6">Matches konnten nicht geladen werden</p>
-					<button id="retryLoadMatches" 
-							class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
-						🔄 Erneut versuchen
-					</button>
-				</div>
-
+			<!-- Back / Swipe Button immer unten -->
+			<div id="backToSwipe" class="mt-4 text-center hidden">
+				<button onclick="showSwipeCards()" 
+					class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
+					← Zurück zum Swipen
+				</button>
 			</div>
 		</div>
+
+		<!-- Template für einen Match (unsichtbar) -->
+		<div id="matchTemplate" class="match-item hidden bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-3">
+			<div class="flex items-center space-x-4">
+				<div class="flex-shrink-0 relative">
+					<img class="w-16 h-16 rounded-full object-cover border-2 border-pink-200" src="" alt="">
+				</div>
+				<div class="flex-1 min-w-0">
+					<h4 class="font-semibold text-lg text-gray-900 truncate">Name, ?</h4>
+					<p class="text-sm text-gray-600 truncate">Noch keine Nachrichten</p>
+					<span class="text-xs text-gray-400 bg-pink-100 px-2 py-1 rounded-full">💕 Match</span>
+				</div>
+			</div>
+		</div>
+
 
 	
 	
