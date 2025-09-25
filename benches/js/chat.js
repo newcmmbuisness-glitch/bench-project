@@ -160,14 +160,15 @@ async function loadMessages() {
 
 // ---------- SEND MESSAGE ----------
 async function sendMessage() {
-	console.log("🔥 sendMessage called", {
-    messageText,
-    currentMatchId: chatState.currentMatchId,
-    isAI: chatState.isAI,
-    currentUser: currentUser?.uid
-});
     const messageInput = document.getElementById('messageInput');
     const messageText = messageInput.value.trim();
+
+	console.log("🔥 sendMessage called", {
+	messageText, // ← Jetzt ist messageText definiert
+	currentMatchId: chatState.currentMatchId,
+	isAI: chatState.isAI,
+	currentUser: currentUser?.uid
+	});
     if (!messageText || !chatState.currentMatchId || !currentUser.uid) return;
 
     const isAIChat = chatState.isAI;
@@ -488,13 +489,14 @@ async function saveAIMessage(sender, text) {
 }
 
 async function sendAIMessage(messageText) {
-	console.log("🤖 sendAIMessage called", {
-	    messageText,
-	    convId: chatState.currentMatchId
-	});
     if (!chatState.currentMatchId || !messageText) return;
     await saveAIMessage('user', messageText);
     loadAIMessages();
+
+	console.log("🤖 sendAIMessage called", {
+	messageText,
+	convId: chatState.currentMatchId
+	});
 
     const convId = chatState.currentMatchId;
     if (!window.aiReplyTimers) window.aiReplyTimers = {};
