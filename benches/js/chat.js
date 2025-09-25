@@ -442,7 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (closeBtn) closeBtn.addEventListener('click', closeChat);
 
     const reportBtn = document.getElementById('reportChatBtn');
-    if (reportBtn) reportBtn.addEventListener('click', reportChat);
+    if (reportBtn) reportBtn.addEventListener('click', () => window.reportChat());
 
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
