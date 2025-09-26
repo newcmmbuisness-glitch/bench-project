@@ -11,12 +11,6 @@
 [functions]
   node_bundler = "esbuild"
   
-[[redirects]]
-  # ✅ FIX: Leitet die gewünschte URL auf den Ort um, den Eleventy erstellt.
-  # Dies behebt den 404-Fehler, während die URL im Browser gleich bleibt.
-  from = "/meet.html"
-  to = "/meet/index.html"
-  status = 200 # Wichtig: 200 (Rewrite), nicht 302 (Redirect)
 
 [[redirects]]
   from = "/"
