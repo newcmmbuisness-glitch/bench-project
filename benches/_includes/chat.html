@@ -1,0 +1,52 @@
+		    <div id="chatModal" data-chat-modal class="hidden fixed inset-0 bg-black bg-opacity-80 backdrop-blur-xl z-[2001] flex items-center justify-center p-5"> 
+		        
+		        <div id="chatBox" class="bg-gradient-to-br from-[#1e1e1e] to-[#2a2a2a] rounded-3xl max-w-md w-full h-[90vh] max-h-[800px] flex flex-col shadow-2xl overflow-hidden border border-gray-700/50"> 
+		            
+		            <div id="chatHeader" class="bg-gradient-to-r from-[#2d2d2d] to-[#3a3a3a] p-5 flex items-center justify-between rounded-t-3xl border-b border-gray-700/50 text-white">
+		                
+		                <div class="flex items-center space-x-4">
+		                    <div class="relative">
+		                         <img id="chatUserImage" src="/default-avatar.png" alt="" class="w-12 h-12 rounded-full object-cover border-4 border-gray-600/50 shadow-lg">
+		                         <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full ring-2 ring-[#2a2a2a] shadow-md"></div>
+		                    </div>
+		
+		                    <div>
+		                        <h3 id="chatUserName" class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300 mb-0.5"></h3>
+		                        <div class="text-sm text-green-400">Online</div>
+		                    </div>
+		                </div>
+		                
+		                <div class="flex items-center space-x-3">
+		                    <div id="aiBadge" class="hidden">
+		                        <span class="ki-beta-branding font-semibold text-xs uppercase tracking-wider px-2 py-1 border border-white/20 rounded-xl">One-KI Beta</span>
+		                    </div>
+		                    
+		                    <button id="reportChatBtn" class="text-gray-400 hover:text-red-500 transition-colors duration-200 p-2">
+		                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+		                    </button>
+		                    <button id="closeChatBtn" class="text-gray-400 hover:text-gray-200 transition-colors duration-200 p-2">
+		                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+		                    </button>
+		                </div>
+		            </div>
+		            
+		            <div id="chatMessages" class="flex-grow p-5 overflow-y-auto flex flex-col space-y-5 text-white">
+		                </div>
+		            
+		            <div id="aiSuggestionsContainer" class="p-4 flex flex-wrap gap-2 justify-center hidden">
+		                <div id="aiThinkingBubble" class="ki-beta-container hidden">
+		                    <span id="typingText" class="ki-beta-branding text-sm text-gray-300">KI denkt mit</span>
+		                </div>
+		            </div>
+		            
+		            <div class="p-5 bg-gradient-to-r from-[#2d2d2d] to-[#3a3a3a] rounded-b-3xl flex items-center space-x-4 border-t border-gray-700/50">
+		                <input type="text" id="messageInput" placeholder="Schreibe eine Nachricht..." 
+		                       class="flex-grow rounded-full py-3 px-5 text-base text-white border border-white/20 bg-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white/15 placeholder-gray-400 transition-all duration-300" 
+		                       maxlength="500">
+		                <button id="sendMessageBtn" class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all duration-300">
+		                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+		                </button>
+		            </div>
+		        </div>
+		    </div>
+		</div>
