@@ -957,13 +957,8 @@
 			const swipeActions = document.querySelector('.swipe-actions');
 			const backButtonContainer = document.querySelector('div[style*="text-align: center; margin-top: 20px;"]');
 			
-			// Hide swipe actions and back button
-			if (swipeActions) {
-				swipeActions.style.display = 'none';
-			}
-			if (backButtonContainer) {
-				backButtonContainer.style.display = 'none';
-			}
+			const floatingButtons = document.querySelector('.floating-buttons');
+			if (floatingButtons) floatingButtons.style.display = 'none';
 			
 			// Set cardStack to use the same positioning as loadSwipeCards
 			cardStack.style.cssText = '';
@@ -1131,6 +1126,9 @@
 					console.log(`🎯 ${currentProfiles.length} Profile geladen (${realProfiles.length} echt, ${currentProfiles.length - realProfiles.length} KI)`);
 					currentIndex = 0;
 					renderSwipeCards();
+					
+					const floatingButtons = document.querySelector('.floating-buttons');
+					if (floatingButtons) floatingButtons.style.display = 'flex';
 				} else {
 					showNoMoreProfilesInCardStack();
 				}
