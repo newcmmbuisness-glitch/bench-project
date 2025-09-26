@@ -12,14 +12,18 @@
   node_bundler = "esbuild"
   
 [[redirects]]
-  # Wenn jemand die Root-URL aufruft, liefere die meet.html aus
-  from = "/"
-  to = "/meet.html"
-  status = 302 # Temporäre Weiterleitung
+  # ✅ FIX: Leitet die gewünschte URL auf den Ort um, den Eleventy erstellt.
+  # Dies behebt den 404-Fehler, während die URL im Browser gleich bleibt.
+  from = "/meet.html"
+  to = "/meet/index.html"
+  status = 200 # Wichtig: 200 (Rewrite), nicht 302 (Redirect)
 
 [[redirects]]
-  # Wichtig: Wenn jemand eine URL mit der Erweiterung .njk aufruft, 
-  # wird er zur fertigen .html-Datei weitergeleitet, um Quellcode-Lecks zu beheben
+  from = "/"
+  to = "/meet.html"
+  status = 302
+
+[[redirects]]
   from = "/*.njk"
   to = "/:splat.html"
-  status = 301 # Permanente Weiterleitung
+  status = 301
