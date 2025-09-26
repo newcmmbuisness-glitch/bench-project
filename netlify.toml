@@ -2,11 +2,11 @@
   functions = "netlify/functions"
   publish = "."
   
-  command = "npx @11ty/eleventy --input=benches" 
+  command = "npx @11ty/eleventy --input=benches --output=."
 
   
 [[plugins]]
-  command = "npx @11ty/eleventy --input=benches --output=."
+  package = "@netlify/plugin-functions-install-core"
 
 [functions]
   node_bundler = "esbuild"
