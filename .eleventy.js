@@ -1,13 +1,17 @@
 // Inhalt von: .eleventy.js
-
 module.exports = function(eleventyConfig) {
     
-    // Deaktiviert das Parsen von .html Dateien
+    // Stellt sicher, dass nur Nunjucks und Markdown geparst werden
     eleventyConfig.setTemplateFormats([
         "njk", 
         "md", 
     ]);
 
-    // WICHTIG: KEIN RETURN-BLOCK MEHR. Eleventy nimmt alle Standardeinstellungen
-    // und wird dann nur durch den permalink gesteuert.
+    return {
+        // Explizit Input und Output definieren, um Standard-Konflikte zu vermeiden
+        dir: {
+            input: "benches",
+            output: "."
+        }
+    };
 };
