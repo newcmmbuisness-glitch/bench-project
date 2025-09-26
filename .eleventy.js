@@ -13,7 +13,7 @@ module.exports = function(eleventyConfig) {
     return {
         dir: {
             input: "benches",
-            output: "."
+            output: "benches"
         }
     };
 };
