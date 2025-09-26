@@ -11,3 +11,15 @@
 [functions]
   node_bundler = "esbuild"
   
+[[redirects]]
+  # Wenn jemand die Root-URL aufruft, liefere die meet.html aus
+  from = "/"
+  to = "/meet.html"
+  status = 302 # Temporäre Weiterleitung
+
+[[redirects]]
+  # Wichtig: Wenn jemand eine URL mit der Erweiterung .njk aufruft, 
+  # wird er zur fertigen .html-Datei weitergeleitet, um Quellcode-Lecks zu beheben
+  from = "/*.njk"
+  to = "/:splat.html"
+  status = 301 # Permanente Weiterleitung
