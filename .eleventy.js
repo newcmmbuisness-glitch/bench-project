@@ -4,7 +4,7 @@ module.exports = function(eleventyConfig) {
     // Die Pfade sind jetzt relativ zum "benches"-Ordner
     eleventyConfig.addPassthroughCopy("js"); 
     eleventyConfig.addPassthroughCopy("style.css"); 
-    eleventyConfig.addPassthroughCopy("OB.png"); 
+    eleventyConfig.addPassthroughCopy("ob.png"); 
 
     eleventyConfig.setTemplateFormats(["njk", "md"]);
 
