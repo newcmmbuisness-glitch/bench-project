@@ -1,14 +1,23 @@
 // Inhalt von: .eleventy.js
+
 module.exports = function(eleventyConfig) {
     
-    // Stellt sicher, dass nur Nunjucks und Markdown geparst werden
-    eleventyConfig.setTemplateFormats([
-        "njk", 
-        "md", 
-    ]);
-
+    // 🎨 ASSETS KOPIEREN (von benches/ ins Root-Verzeichnis)
+    // Kopiert benches/js/ nach ./js/
+    eleventyConfig.addPassthroughCopy("js"); 
+    // Kopiert benches/style.css nach ./style.css
+    eleventyConfig.addPassthroughCopy("style.css"); 
+    // Kopiert benches/OB.png nach ./OB.png
+    eleventyConfig.addPassthroughCopy("OB.png"); 
+    
+    // Optional: Falls Sie auch einen Ordner namens 'stylesheet' (wie früher) haben:
+    // eleventyConfig.addPassthroughCopy("stylesheet"); 
+    
+    // ⚙️ KONFIGURATION BEIBEHALTEN
+    eleventyConfig.setTemplateFormats(["njk", "md"]);
+    
     return {
-        // Explizit Input und Output definieren, um Standard-Konflikte zu vermeiden
+        // Definiert benches als Input und Root (.) als Output
         dir: {
             input: "benches",
             output: "."
