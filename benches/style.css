@@ -20,7 +20,9 @@
 			0% { background-position: -200% 0; }
 			100% { background-position: 200% 0; }
 		}
-
+		#loadingScreen {
+		  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+		}
 		/* Weißer Button */
 		.white-btn {
 			background: #fff;
