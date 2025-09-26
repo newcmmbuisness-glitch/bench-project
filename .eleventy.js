@@ -6,7 +6,7 @@ module.exports = function(eleventyConfig) {
     // Kopiert benches/style.css → ./style.css
     eleventyConfig.addPassthroughCopy("benches/style.css"); 
     // Kopiert benches/OB.png → ./OB.png
-    eleventyConfig.addPassthroughCopy("benches/OB.png"); 
+    eleventyConfig.addPassthroughCopy("benches/ob.png"); 
 
     eleventyConfig.setTemplateFormats(["njk", "md"]);
 
