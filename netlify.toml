@@ -6,7 +6,7 @@
 
   
 [[plugins]]
-  package = "@netlify/plugin-functions-install-core"
+  command = "npx @11ty/eleventy --input=benches --output=."
 
 [functions]
   node_bundler = "esbuild"
