@@ -2,7 +2,7 @@
   functions = "netlify/functions"
   publish = "."
   
-  command = "npx @11ty/eleventy --input=Benches --output=Benches/_temp_site && cp Benches/_temp_site/meet.html . && rm -rf Benches/_temp_site"
+  command = "npx @11ty/eleventy --input=Benches --output=."
 
   
 [[plugins]]
