@@ -1269,23 +1269,28 @@
 		}
 		
 		.ki-beta-container {
-		    padding: 2px 10px; /* Innenabstand für eine sehr enge Darstellung */
-		    border: 1px solid #333; /* Dunkler Rand, gut sichtbar */
-		    border-radius: 200px; /* Abgerundete Ecken */
+		    padding: 2px 10px;
+		    border: 1px solid #333;
+		    border-radius: 200px;
 		    display: inline-block;
 		}
 		
 		.ki-beta-branding {
 		    font-weight: 600;
-		    font-size: 0.65rem; /* Sehr kleine Schriftgröße */
+		    font-size: 0.65rem;
 		    letter-spacing: 0.05em;
 		    opacity: 0.95;
-		    /* Gradient von dunklem Silber zu hellem Silber */
 		    background: linear-gradient(90deg, #555, #ccc, #555);
 		    background-size: 200% 100%;
 		    -webkit-background-clip: text;
 		    -webkit-text-fill-color: transparent;
 		    animation: shimmer 5s infinite linear;
+		}
+		
+		@keyframes shimmer {
+		    0% { background-position: 0% 50%; }
+		    50% { background-position: 100% 50%; }
+		    100% { background-position: 0% 50%; }
 		}
 
 		/* Tipp-Effekt-Animation */
@@ -1324,26 +1329,45 @@
 
         /* Chat System */
 		.chat-container {
-			position: fixed;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-			z-index: 2000;
-			display: none;
-			width: 90%;
-			max-width: 500px;
-			height: auto; /* Chat behält trotzdem seine Höhe */
-			max-height: 90vh; /* verhindert, dass es zu groß wird */
-			overflow-y: auto;
+		    position: fixed;
+		    top: 50%;
+		    left: 50%;
+		    transform: translate(-50%, -50%);
+		    width: 420px;
+		    max-height: 90vh;
+		    display: flex;
+		    flex-direction: column;
+		    background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
+		    border-radius: 24px;
+		    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+		    overflow: hidden;
+		    z-index: 2000;
 		}
-
-        .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
+		
+		.chat-header {
+		    background: linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%);
+		    padding: 20px;
+		    display: flex;
+		    align-items: center;
+		    justify-content: space-between;
+		    border-bottom: 1px solid rgba(255,255,255,0.1);
+		    position: relative;
+		}
+		.chat-user-image {
+		    width: 52px;
+		    height: 52px;
+		    border-radius: 50%;
+		    object-fit: cover;
+		    border: 3px solid rgba(255,255,255,0.2);
+		    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+		}
+		
+		.chat-user-name {
+		    font-size: 1.3rem;
+		    background: linear-gradient(135deg, #ffffff, #e0e0e0);
+		    -webkit-background-clip: text;
+		    -webkit-text-fill-color: transparent;
+		}
 
         .chat-back-btn {
             position: absolute;
@@ -1435,73 +1459,96 @@
             background: rgba(255,255,255,0.3);
         }
 
-        .chat-messages {
-            padding: 20px;
-            height: calc(100% - 160px);
-            overflow-y: auto;
-        }
-
-        .message {
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .message.sent {
-            align-items: flex-end;
-        }
-
-        .message.received {
-            align-items: flex-start;
-        }
-
-        .message-bubble {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 20px;
-            word-wrap: break-word;
-        }
-
-        .message.sent .message-bubble {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .message.received .message-bubble {
-            background: #f1f1f1;
-            color: #333;
-        }
-
-        .message-input-area {
-            padding: 20px;
-            border-top: 1px solid #eee;
-            display: flex;
-            gap: 10px;
-        }
-
-        .message-input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 25px;
-            outline: none;
-			color: #000;
-        }
-
-        .send-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-
-        .send-btn:hover {
-            transform: scale(1.05);
-        }
-
+		.chat-messages {
+		    flex: 1;
+		    padding: 24px;
+		    overflow-y: auto;
+		    display: flex;
+		    flex-direction: column;
+		    gap: 20px;
+		    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+		}
+		
+		.message {
+		    display: flex;
+		    flex-direction: column;
+		    max-width: 85%;
+		    animation: messageSlide 0.4s ease-out;
+		}
+		
+		.message.sent {
+		    align-self: flex-end;
+		    align-items: flex-end;
+		}
+		
+		.message.received {
+		    align-self: flex-start;
+		    align-items: flex-start;
+		}
+		
+		.message-bubble {
+		    padding: 16px 20px;
+		    border-radius: 24px;
+		    backdrop-filter: blur(20px);
+		    border: 1px solid rgba(255,255,255,0.1);
+		    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+		    font-size: 1rem;
+		    line-height: 1.5;
+		    word-wrap: break-word;
+		    position: relative;
+		}
+		
+		.message.sent .message-bubble {
+		    background: linear-gradient(135deg, #667eea, #764ba2);
+		    color: white;
+		}
+		
+		.message.received .message-bubble {
+		    background: rgba(255,255,255,0.08);
+		    color: #f0f0f0;
+		}
+		
+		@keyframes messageSlide {
+		    from { opacity: 0; transform: translateY(20px); }
+		    to { opacity: 1; transform: translateY(0); }
+		}
+		
+		.message-input-area {
+		    padding: 20px;
+		    display: flex;
+		    gap: 16px;
+		    background: linear-gradient(135deg, #2d2d2d, #1e1e1e);
+		    border-top: 1px solid rgba(255,255,255,0.1);
+		}
+		
+		.message-input {
+		    flex: 1;
+		    padding: 14px 20px;
+		    border-radius: 25px;
+		    font-size: 1rem;
+		    border: 1px solid rgba(255,255,255,0.15);
+		    color: white;
+		    outline: none;
+		    backdrop-filter: blur(10px);
+		    background: rgba(255,255,255,0.08);
+		}
+		
+		.send-btn {
+		    width: 50px;
+		    height: 50px;
+		    border-radius: 50%;
+		    background: linear-gradient(135deg, #667eea, #764ba2);
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    cursor: pointer;
+		    transition: all 0.3s ease;
+		    box-shadow: 0 8px 20px rgba(102,126,234,0.3);
+		}
+		.send-btn:hover {
+		    transform: scale(1.1);
+		    box-shadow: 0 12px 30px rgba(102,126,234,0.4);
+		}
         /* Responsive */
         @media (max-width: 768px) {
             .app-container {
