@@ -1,23 +1,16 @@
 [build]
-  functions = "netlify/functions"
-  publish = "."
-  
-  command = "npx @11ty/eleventy --input=benches --output=."
+functions = "netlify/functions"
+publish = "."
 
-  
+command = "npx @11ty/eleventy --input=benches --output=."
+
 [[plugins]]
-  package = "@netlify/plugin-functions-install-core"
+package = "@netlify/plugin-functions-install-core"
 
 [functions]
-  node_bundler = "esbuild"
-  
+node_bundler = "esbuild"
 
 [[redirects]]
-  from = "/"
-  to = "/meet.html"
-  status = 302
-
-[[redirects]]
-  from = "/*.njk"
-  to = "/:splat.html"
-  status = 301
+from = "/"
+to = "/meet/"
+status = 301
