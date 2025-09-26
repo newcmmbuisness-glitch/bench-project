@@ -2,7 +2,7 @@
 functions = "netlify/functions"
 publish = "."
 
-command = "npx @11ty/eleventy --input=benches --output=."
+command = "npx @11ty/eleventy --input=benches --output=benches"
 
 [[plugins]]
 package = "@netlify/plugin-functions-install-core"
