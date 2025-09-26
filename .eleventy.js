@@ -1,13 +1,25 @@
-// Inhalt von: Main/.eleventy.js
+// Inhalt von: .eleventy.js
 
 module.exports = function(eleventyConfig) {
-    // Weist Eleventy an, alle .html Dateien zu kopieren (Passthrough),
-    // anstatt sie als Liquid/Nunjucks-Templates zu parsen.
-    // Nur Dateien, die Sie explizit umbenennen (z.B. meet.njk), 
-    // werden als Templates behandelt.
-    eleventyConfig.addPassthroughCopy("**/*.html"); 
+    
+    // Deaktiviert die Template-Verarbeitung für HTML-Dateien im Input-Ordner.
+    // HTML-Dateien werden jetzt automatisch kopiert (Passthrough), 
+    // anstatt sie als Liquid/Nunjucks zu parsen.
+    eleventyConfig.setTemplateFormats([
+        "njk", 
+        "md", 
+        // Füge hier weitere Formate hinzu, die du parsen willst (z.B. "liquid"), 
+        // aber lasse "html" weg!
+    ]);
+
+    // Korrektur: Die Passthrough-Regel muss den Input-Ordner spezifisch beachten
+    // Diese Regel ist nicht mehr notwendig, da setTemplateFormats das Problem löst.
     
     return {
-        // Hier können Sie bei Bedarf weitere Einstellungen vornehmen
+        // Konfiguriert den Input/Output Ordner, falls nicht in der CLI gesetzt
+        dir: {
+            input: "benches",
+            output: "."
+        }
     };
 };
