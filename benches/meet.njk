@@ -2050,18 +2050,6 @@ permalink: meet/index.html
 			}
 		}
 
-		function addToLocalMatches(match) {
-			let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
-			const exists = localMatches.some(m => m.match_id == match.match_id);
-			if (!exists) {
-				localMatches.push(match);
-				localStorage.setItem('userMatches', JSON.stringify(localMatches));
-				console.log('✅ Match added to localMatches', match.match_id);
-			} else {
-				console.log('ℹ️ Match already exists (local)', match.match_id);
-			}
-		}
-
 
 		function addToLocalMatches(match) {
 		  let localMatches = JSON.parse(localStorage.getItem('userMatches') || '[]');
