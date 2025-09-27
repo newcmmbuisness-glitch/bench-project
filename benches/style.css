@@ -1501,7 +1501,70 @@
         .send-btn:hover {
             transform: scale(1.05);
         }
-
+        .animation-delay-500 {
+            animation-delay: 0.5s;
+        }
+        .animation-delay-1000 {
+            animation-delay: 1s;
+        }
+        
+        /* Custom animations for startup/tech feel */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes glow-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(236, 72, 153, 0.3),
+                           0 0 40px rgba(147, 51, 234, 0.2);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(236, 72, 153, 0.5),
+                           0 0 60px rgba(147, 51, 234, 0.3);
+            }
+        }
+        
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .glow-effect {
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+        
+        /* Glassmorphism effects */
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Tech-style borders */
+        .tech-border {
+            position: relative;
+        }
+        
+        .tech-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(45deg, transparent, rgba(236, 72, 153, 0.3), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: exclude;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+        }
+        
+        /* Startup-style hover effects */
+        .startup-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .startup-hover:hover {
+            transform: translateY(-2px);
+        }
         /* Responsive */
         @media (max-width: 768px) {
             .app-container {
