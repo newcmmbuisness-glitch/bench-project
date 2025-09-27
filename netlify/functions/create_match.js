@@ -11,8 +11,15 @@ exports.handler = async (event) => {
 
     try {
         // Hole isInstaMatch aus dem Body und setze es standardmäßig auf false
-        const { likerId, likedId, aiProfileId, isInstaMatch = false } = JSON.parse(event.body);
-    
+        let { likerId, likedId, aiProfileId, isInstaMatch = false } = JSON.parse(event.body);
+        
+        // Minimal Fix: ensure integers
+        likerId = parseInt(likerId, 10);
+        likedId = parseInt(likedId, 10);
+        if (aiProfileId) aiProfileId = parseInt(aiProfileId, 10);
+
+
+        
         if (!likerId || likedId === undefined || likedId === null) {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'Fehlende IDs' }) };
         }
