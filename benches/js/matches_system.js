@@ -88,6 +88,19 @@ async function loadUserMatches(forceRefresh = false) {
             matchesList.innerHTML = '';
 
             if (allMatches.length > 0) {
+                // Zuerst alle fehlenden Koordinaten berechnen (PLZ → Lat/Lng)
+                await Promise.all(allMatches.map(async (match) => {
+                    if (!match.latitude && !match.longitude && match.postal_code) {
+                        try {
+                            const coords = await getCoordinatesFromPostalCode(match.postal_code);
+                            match.latitude = coords.lat;
+                            match.longitude = coords.lng;
+                        } catch (e) {
+                            console.warn("PLZ konnte nicht geocoded werden:", match.postal_code);
+                        }
+                    }
+                }));
+                
                 allMatches.forEach(match => {
                     const clone = template.cloneNode(true);
                     clone.classList.remove('hidden');
@@ -96,31 +109,15 @@ async function loadUserMatches(forceRefresh = false) {
                     clone.querySelector('img').alt = match.profile_name;
                     clone.querySelector('h4').textContent = `${match.profile_name}, ${match.age || '?'}`;
 
-                    // Entfernung berechnen
+                    // Entfernung berechnen (jetzt synchron möglich)
                     let distanceText = "-";
                     if (match.latitude && match.longitude) {
-                        // AI-Profil
                         distanceText = calculateDistance(
                             currentUser.latitude, currentUser.longitude,
                             match.latitude, match.longitude
                         ) + " km";
-                    } else if (match.postal_code) {
-                        // Echte Profile: PLZ → Koordinaten
-                        try {
-                            const coords = await getCoordinatesFromPostalCode(match.postal_code);
-                            distanceText = calculateDistance(
-                                currentUser.latitude, currentUser.longitude,
-                                coords.lat, coords.lng
-                            ) + " km";
-                            // Optional: im Match speichern, damit nicht jedes Mal neu geholt wird
-                            match.latitude = coords.lat;
-                            match.longitude = coords.lng;
-                        } catch (e) {
-                            console.warn("PLZ konnte nicht geocoded werden:", match.postal_code);
-                            distanceText = "-";
-                        }
                     }
-                
+            
                     clone.querySelector(".match-distance").textContent = distanceText;
 
                     const lastMsg = match.last_message
