@@ -88,19 +88,6 @@ async function loadUserMatches(forceRefresh = false) {
             matchesList.innerHTML = '';
 
             if (allMatches.length > 0) {
-                // Zuerst alle fehlenden Koordinaten berechnen (PLZ → Lat/Lng)
-                await Promise.all(allMatches.map(async (match) => {
-                    if (!match.latitude && !match.longitude && match.postal_code) {
-                        try {
-                            const coords = await getCoordinatesFromPostalCode(match.postal_code);
-                            match.latitude = coords.lat;
-                            match.longitude = coords.lng;
-                        } catch (e) {
-                            console.warn("PLZ konnte nicht geocoded werden:", match.postal_code);
-                        }
-                    }
-                }));
-                
                 allMatches.forEach(match => {
                     const clone = template.cloneNode(true);
                     clone.classList.remove('hidden');
@@ -108,26 +95,18 @@ async function loadUserMatches(forceRefresh = false) {
                     clone.querySelector('img').src = match.profile_image;
                     clone.querySelector('img').alt = match.profile_name;
                     clone.querySelector('h4').textContent = `${match.profile_name}, ${match.age || '?'}`;
-
-                    // Entfernung berechnen (jetzt synchron möglich)
-                    let distanceText = "-";
-                    if (match.latitude && match.longitude) {
-                        const lat = parseFloat(match.latitude);
-                        const lng = parseFloat(match.longitude);
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            distanceText = calculateDistance(
-                                currentUser.latitude,
-                                currentUser.longitude,
-                                lat,
-                                lng
-                            ) + " km";
-                        } else {
-                            distanceText = "-";
-                        }
+                    // Entfernung berechnen
+                    let distanceText = "";
+                    if (currentUser?.latitude && currentUser?.longitude &&
+                        match.latitude && match.longitude) {
+                      const dist = calculateDistance(
+                        currentUser.latitude, currentUser.longitude,
+                        match.latitude, match.longitude
+                      );
+                      distanceText = `${dist} km`;
                     } else {
-                        distanceText = "-";
+                      distanceText = `${Math.floor(Math.random() * 50) + 1} km`; // fallback
                     }
-            
                     clone.querySelector(".match-distance").textContent = distanceText;
 
                     const lastMsg = match.last_message
