@@ -127,7 +127,8 @@ exports.handler = async (event) => {
                 await sql`
                     INSERT INTO likes (liker_id, liked_id)
                     VALUES (${likerId}, ${likedId})
-                    ON CONFLICT (liker_id, liked_id) DO NOTHING
+                    ON CONFLICT (liker_id, liked_id) DO UPDATE
+                    SET created_at = NOW()
                 `;
                 
                 // Gegenseitigen Like prüfen
