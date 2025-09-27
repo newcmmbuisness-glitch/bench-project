@@ -72,49 +72,52 @@
             </button>
         </div>    
     </div>
-    <!-- Template für einen Match (unsichtbar) -->
-<div id="matchTemplate" class="match-item hidden bg-gradient-to-r from-[#2d2d2d] to-[#3a3a3a] p-4 rounded-2xl shadow-lg border border-gray-700/30 hover:border-pink-500/50 transition-all duration-300 cursor-pointer mb-3 group relative overflow-hidden">
-	<div class="flex items-center space-x-4">
-		<div class="flex-shrink-0 relative">
-			<div class="relative group-hover:scale-105 transition-transform duration-300">
-				<img class="w-16 h-16 rounded-full object-cover border-4 border-pink-500/50 shadow-lg group-hover:border-pink-500 transition-all duration-300" src="" alt="">
-				<!-- Match indicator -->
-				<div class="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg border-2 border-[#2d2d2d]">
-					<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-					</svg>
-				</div>
-			</div>
-		</div>
-		<div class="flex-1 min-w-0">
-			<div class="flex items-center justify-between mb-2">
-				<h4 class="font-bold text-lg text-white truncate group-hover:text-pink-300 transition-colors duration-300">Name, ?</h4>
-				<span class="text-xs text-pink-400 bg-pink-500/10 border border-pink-500/20 px-3 py-1 rounded-full font-medium backdrop-blur-sm">
-					✨ MATCH
-				</span>
-			</div>
-			<p class="text-sm text-gray-400 truncate mb-2 group-hover:text-gray-300 transition-colors duration-300">Noch keine Nachrichten</p>
-			
-			<!-- Match info row -->
-			<div class="flex items-center space-x-3 text-xs">
-				<div class="flex items-center space-x-1">
-					<div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-					<span class="text-green-400 font-medium">Online</span>
-				</div>
-				<div class="flex items-center space-x-1">
-					<svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-					</svg>
-					<span class="text-indigo-400 font-medium">2km</span>
-				</div>
-			</div>
-		</div>
-	</div>
-	
-	<!-- Hover effect overlay -->
-	<div class="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-purple-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-	
-	<!-- Shimmer effect on hover -->
-	<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none"></div>
+   <!-- Template für einen Match (unsichtbar) -->
+    <div id="matchTemplate" 
+        class="match-item hidden bg-gradient-to-r from-[#2d2d2d] to-[#3a3a3a] p-4 rounded-2xl shadow-lg border border-gray-700/30 hover:border-pink-500/50 transition-all duration-300 cursor-pointer mb-3 group relative overflow-hidden">
+        
+        <div class="flex items-center space-x-4">
+            <div class="flex-shrink-0 relative">
+                <div class="relative group-hover:scale-105 transition-transform duration-300">
+                    <img class="w-16 h-16 rounded-full object-cover border-4 border-pink-500/50 shadow-lg group-hover:border-pink-500 transition-all duration-300" src="" alt="">
+                    <!-- Match indicator -->
+                    <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg border-2 border-[#2d2d2d]">
+                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-bold text-lg text-white truncate group-hover:text-pink-300 transition-colors duration-300">Name, ?</h4>
+                    <span class="text-xs text-pink-400 bg-pink-500/10 border border-pink-500/20 px-3 py-1 rounded-full font-medium backdrop-blur-sm">
+                        ✨ MATCH
+                    </span>
+                </div>
+                <p class="text-sm text-gray-400 truncate mb-2 group-hover:text-gray-300 transition-colors duration-300">Noch keine Nachrichten</p>
+                
+                <!-- Match info row -->
+                <div class="flex items-center space-x-3 text-xs">
+                    <div class="flex items-center space-x-1">
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span class="text-green-400 font-medium">Online</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        </svg>
+                        <span class="text-indigo-400 font-medium">2km</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hover effect overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-purple-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+        
+        <!-- Shimmer effect on hover -->
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none"></div>
+    </div>
 </div>
 
