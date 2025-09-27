@@ -17,6 +17,15 @@ exports.handler = async (event) => {
         likerId = parseInt(likerId, 10);
         likedId = parseInt(likedId, 10);
         if (aiProfileId) aiProfileId = parseInt(aiProfileId, 10);
+        // Debug: IDs prüfen
+        console.log('Debug IDs:', { 
+            likerId, 
+            likedId, 
+            likerId_isNaN: isNaN(likerId), 
+            likedId_isNaN: isNaN(likedId),
+            typeof_likerId: typeof likerId,
+            typeof_likedId: typeof likedId
+        });
 
 
         
