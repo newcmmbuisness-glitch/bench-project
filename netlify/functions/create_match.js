@@ -25,8 +25,8 @@ exports.handler = async (event) => {
         
         let matchId = null;
         let newMatch = false;
-    
-        // --- 0. InstaMatch: UserPlus Berechtigungsprüfung (aus altem Code) ---
+
+        // --- 0. InstaMatch: UserPlus Berechtigungsprüfung ---
         if (isInstaMatch) {
             const userCheck = await sql`
                 SELECT is_user_plus, is_admin FROM users WHERE id = ${likerId}
@@ -40,23 +40,46 @@ exports.handler = async (event) => {
                 };
             }
         }
-    
-        // --- 1. AUF EXISTIERENDES MATCH PRÜFEN (für alle Profile) ---
-        // AI-Profile werden durch die Kombination aus user_id_1/2 UND ai_profile_id erkannt.
-        const existingMatch = await sql`
-            SELECT id FROM matches
-            WHERE ((user_id_1 = ${likerId} AND user_id_2 = ${likedId})
-                OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId}))
-            ${isAIMatch && aiProfileId ? sql` AND ai_profile_id = ${aiProfileId}` : sql``}
-        `;
-    
-        if (existingMatch.length > 0) {
-            matchId = existingMatch[0].id;
-            newMatch = false;
+
+        // --- 1. AUF EXISTIERENDES MATCH PRÜFEN (Zwei getrennte, stabile Abfragen) ---
+        let existingMatch;
+        
+        if (isAIMatch) {
+            // Prüfung für AI Match (Muss ai_profile_id prüfen)
+            existingMatch = await sql`
+                SELECT id FROM matches
+                WHERE ((user_id_1 = ${likerId} AND user_id_2 = ${likedId})
+                    OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId}))
+                    AND ai_profile_id = ${aiProfileId}
+            `;
         } else {
-    
+            // Prüfung für ECHTE Matches (Muss ai_profile_id IS NULL prüfen)
+            existingMatch = await sql`
+                SELECT id FROM matches
+                WHERE ((user_id_1 = ${likerId} AND user_id_2 = ${likedId})
+                    OR (user_id_1 = ${likedId} AND user_id_2 = ${likerId}))
+                    AND ai_profile_id IS NULL
+            `;
+        }
+
+        if (existingMatch.length > 0) {
+            // Match existiert bereits (Early Exit ist hier NICHT mehr nötig)
+            matchId = existingMatch[0].id;
+            newMatch = false; 
+
+        } else {
             // --- 2. MATCH ERSTELLEN / LIKE SPEICHERN ---
-    
+            
+            // Swipe History und Like nur für ECHTE Profile speichern
+            if (!isAIMatch) {
+                // Record the swipe in swipe_history (wie von Ihnen gewünscht)
+                await sql`
+                    INSERT INTO swipe_history (user_id, swiped_user_id, swipe_direction)
+                    VALUES (${likerId}, ${likedId}, 'right')
+                    ON CONFLICT (user_id, swiped_user_id) DO NOTHING
+                `;
+            }
+
             if (isAIMatch) {
                 // AI Match: Sofort erstellen
                 const result = await sql`
@@ -66,9 +89,9 @@ exports.handler = async (event) => {
                 `;
                 matchId = result[0].id;
                 newMatch = true;
-    
+
             } else if (isInstaMatch) {
-                // InstaMatch: Sofort erstellen + Reverse Like
+                // InstaMatch: Sofort erstellen + Reverse Like + Forward Like
                 const result = await sql`
                     INSERT INTO matches (user_id_1, user_id_2)
                     VALUES (${likerId}, ${likedId})
@@ -76,18 +99,24 @@ exports.handler = async (event) => {
                 `;
                 matchId = result[0].id;
                 newMatch = true;
-    
-                // Reverse Like für Konsistenz (Wichtig für Matches)
+
+                // Speichere den Like (Forward)
+                await sql`
+                    INSERT INTO likes (liker_id, liked_id)
+                    VALUES (${likerId}, ${likedId})
+                    ON CONFLICT (liker_id, liked_id) DO NOTHING
+                `;
+                // Speichere den Like (Reverse)
                 await sql`
                     INSERT INTO likes (liker_id, liked_id)
                     VALUES (${likedId}, ${likerId})
                     ON CONFLICT (liker_id, liked_id) DO NOTHING
                 `;
-    
+
             } else {
                 // Regulärer Like: Speichern und auf Gegenseitigkeit prüfen
                 
-                // Speichere den Like
+                // Speichere den Like (Muss vor mutualLike Check passieren)
                 await sql`
                     INSERT INTO likes (liker_id, liked_id)
                     VALUES (${likerId}, ${likedId})
@@ -112,8 +141,8 @@ exports.handler = async (event) => {
                 }
             }
         }
-    
-        // --- 3. FINALES RETURN (WICHTIG: außerhalb aller if/else Blöcke) ---
+
+        // --- 3. FINALES RETURN (Wird immer als letztes aufgerufen) ---
         return {
             statusCode: 200,
             headers,
@@ -122,16 +151,18 @@ exports.handler = async (event) => {
                 newMatch, 
                 matchId,
                 isAIMatch,
-                isInstaMatch, // Rückgabe für den Client
+                isInstaMatch, 
                 aiProfileId: isAIMatch ? aiProfileId : null
             })
         };
-    
+
     } catch (error) {
         console.error('Fehler in create_match:', error);
+        // Stellt sicher, dass bei einem Absturz immer gültiges JSON zurückkommt.
         return { 
             statusCode: 500, 
             headers, 
             body: JSON.stringify({ error: error.message || 'Interner Serverfehler' }) 
         };
     }
+};
