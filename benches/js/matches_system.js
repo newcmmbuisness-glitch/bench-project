@@ -112,10 +112,20 @@ async function loadUserMatches(forceRefresh = false) {
                     // Entfernung berechnen (jetzt synchron möglich)
                     let distanceText = "-";
                     if (match.latitude && match.longitude) {
-                        distanceText = calculateDistance(
-                            currentUser.latitude, currentUser.longitude,
-                            match.latitude, match.longitude
-                        ) + " km";
+                        const lat = parseFloat(match.latitude);
+                        const lng = parseFloat(match.longitude);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            distanceText = calculateDistance(
+                                currentUser.latitude,
+                                currentUser.longitude,
+                                lat,
+                                lng
+                            ) + " km";
+                        } else {
+                            distanceText = "-";
+                        }
+                    } else {
+                        distanceText = "-";
                     }
             
                     clone.querySelector(".match-distance").textContent = distanceText;
