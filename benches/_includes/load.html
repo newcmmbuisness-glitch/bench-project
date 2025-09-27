@@ -1,0 +1,40 @@
+	<div id="loadingScreen" class="fixed inset-0 flex flex-col items-center justify-center z-[9999]">
+	  <!-- Infinity Animation -->
+	  <div class="infinity-loader">
+		<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+		  <path d="M 50,50 C 50,20 100,20 100,50 C 100,80 150,80 150,50 C 150,20 100,20 100,50 C 100,80 50,80 50,50Z"
+				fill="none" stroke="url(#chromeStroke)" stroke-width="6" stroke-linecap="round"/>
+		  <path d="M 50,50 C 50,20 100,20 100,50 C 100,80 150,80 150,50 C 150,20 100,20 100,50 C 100,80 50,80 50,50Z"
+				fill="none" stroke="url(#activeChromeStroke)" stroke-width="3" stroke-linecap="round" stroke-dasharray="30 20" stroke-dashoffset="0">
+			<animate attributeName="stroke-dashoffset" values="0;-50;0" dur="3s" repeatCount="indefinite"/>
+		  </path>
+		  <path d="M 50,50 C 50,20 100,20 100,50 C 100,80 150,80 150,50 C 150,20 100,20 100,50 C 100,80 50,80 50,50Z"
+				fill="none" stroke="url(#shineStroke)" stroke-width="10" stroke-linecap="round" stroke-dasharray="100 300" stroke-dashoffset="0" opacity="0.6">
+			<animate attributeName="stroke-dashoffset" values="0;-400" dur="5s" repeatCount="indefinite"/>
+		  </path>
+		  <defs>
+			<linearGradient id="chromeStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+			  <stop offset="0%" stop-color="#f8f9fa"/>
+			  <stop offset="25%" stop-color="#dee2e6"/>
+			  <stop offset="50%" stop-color="#adb5bd"/>
+			  <stop offset="75%" stop-color="#6c757d"/>
+			  <stop offset="100%" stop-color="#212529"/>
+			</linearGradient>
+			<linearGradient id="activeChromeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+			  <stop offset="0%" stop-color="#ffffff">
+				<animate attributeName="stop-color" values="#ffffff;#e9ecef;#ffffff" dur="3s" repeatCount="indefinite"/>
+			  </stop>
+			  <stop offset="100%" stop-color="#495057">
+				<animate attributeName="stop-color" values="#495057;#212529;#495057" dur="3s" repeatCount="indefinite"/>
+			  </stop>
+			</linearGradient>
+			<linearGradient id="shineStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+			  <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+			  <stop offset="50%" stop-color="#ffffff" stop-opacity="1"/>
+			  <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+			</linearGradient>
+		  </defs>
+		</svg>
+	  </div>
+	  <p class="mt-4 text-gray-500">Lade Inhalte...</p>
+	</div>
