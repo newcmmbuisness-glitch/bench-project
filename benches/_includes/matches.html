@@ -1,0 +1,25 @@
+		<div id="matchesContainer" class="flex flex-col bg-white p-6 rounded-lg shadow-xl w-full max-w-lg mx-auto" style="display: none;">
+			<h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Deine Matches</h2>
+
+			<!-- Liste der Matches -->
+			<div id="matchesList" class="space-y-4 flex-1 overflow-auto">
+				<p id="matchesLoading" class="text-gray-500 text-center">Lade Matches... 🔄</p>
+			</div>
+
+			<!-- Kein Matches Hinweis -->
+			<div id="noMatches" class="text-center py-16 hidden">
+				<div class="text-8xl mb-6">💔</div>
+				<h3 class="text-2xl font-bold text-gray-700 mb-4">Noch keine Matches</h3>
+				<p class="text-gray-500 mb-8 max-w-sm mx-auto">
+					Keine Sorge! Swipe weiter nach rechts und finde deine perfekte Verbindung.
+				</p>
+			</div>
+
+			<!-- Back / Swipe Button immer unten -->
+			<div id="backToSwipe" class="mt-4 text-center hidden">
+				<button onclick="showSwipeCards()" 
+					class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
+					← Zurück zum Swipen
+				</button>
+			</div>
+		</div>
