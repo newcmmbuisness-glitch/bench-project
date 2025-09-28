@@ -53,6 +53,10 @@ function updateAuthButtons(currentUser) {
 function addUserPlusToSidebar(isUserPlus, isAdmin) {
     if (!sidebar) return;
 
+        // Vorhandenes entfernen
+    const existingItem = sidebar.querySelector('.userplus-ui');
+    if (existingItem && existingItem.parentNode) existingItem.parentNode.remove();
+
     const userPlusItem = document.createElement('a');
     userPlusItem.href = '#';
     userPlusItem.onclick = () => {
