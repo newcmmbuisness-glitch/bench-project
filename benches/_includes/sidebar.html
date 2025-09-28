@@ -1,106 +1,33 @@
-    <!-- Main Logo -->
-    <div class="main-logo" id="mainLogo">
-        <img src="/ob.png" alt="OB Logo" class="w-12 h-12 rounded-full object-contain cursor-pointer startup-hover glow-effect">
-    </div>
+	<div class="main-logo" id="mainLogo">
+		<img src="/ob.png" alt="OB Logo">
+	</div>
 
-    <!-- Sidebar -->
-    <div id="sidebar" class="sidebar bg-gradient-to-b from-[#1a1a1a] to-[#2a2a2a] backdrop-blur-xl border-r border-gray-700/50 shadow-2xl relative overflow-hidden">
-        
-        <!-- Animated background -->
-        <div class="absolute inset-0 bg-gradient-to-b from-pink-500/5 via-purple-500/5 to-indigo-500/5 opacity-50"></div>
-        <div class="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-pink-500 via-purple-500 to-indigo-500 opacity-60"></div>
-        
-        <!-- Sidebar Header -->
-        <div class="sidebar-header relative p-8 border-b border-gray-700/30">
-            <div class="sidebar-logo relative group inline-block">
-                <img src="/ob.png" alt="OB Logo" class="w-full h-full rounded-full object-contain group-hover:scale-110 transition-transform duration-300 glow-effect">
-                <!-- Pulse rings -->
-                <div class="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-purple-600/20 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping"></div>
-            </div>
-            <div class="sidebar-title text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-pink-200 to-purple-200 transition-all duration-300 mt-4">
-                One-T-Meet
-            </div>
-        </div>
+	<div id="sidebar" class="sidebar">
+		<div class="sidebar-header">
+			<div class="sidebar-logo">
+				<img src="/ob.png" alt="OB Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: contain;">
+			</div>
+			<div class="sidebar-title">One-T-Meet</div>
+		</div>
+		<div class="sidebar-content">
+			<a href="#" class="sidebar-item" id="loginSidebarBtn">
+				<span class="sidebar-icon">🔐</span>
+				<span>Anmelden</span>
+			</a>
+			<a href="#" class="sidebar-item" id="logoutSidebarBtn" style="display: none;">
+				<span class="sidebar-icon">🚪</span>
+				<span>Abmelden</span>
+			</a>
+			<a href="index.html" class="sidebar-item">
+				<span class="sidebar-icon">🗺️</span>
+				<span>Zur Bench-Karte</span>
+			</a>
+			<a href="contact.html" class="sidebar-item">
+				<span class="sidebar-icon">📧</span>
+				<span>Kontakt</span>
+			</a>
+		</div>
+		<div class="sidebar-footer" id="user-email-display"></div>
+	</div>
 
-        <!-- Sidebar Content -->
-        <div class="sidebar-content relative p-6 space-y-3">
-            
-            <!-- Login Button -->
-            <a href="#" class="sidebar-item group relative bg-gradient-to-r from-[#2d2d2d] to-[#3a3a3a] rounded-2xl p-4 border border-gray-700/30 hover:border-green-500/50 transition-all duration-300 cursor-pointer startup-hover tech-border overflow-hidden menu-item-enter" id="loginSidebarBtn">
-                <div class="flex items-center space-x-4">
-                    <div class="sidebar-icon w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-green-500/30 transition-all duration-300">
-                        <svg class="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m8-2.414V9a2 2 0 00-2-2H8a2 2 0 00-2 2v4.586a1 1 0 001.707.707L9 12.586V11a1 1 0 112 0v1.586l1.293 1.293A1 1 0 0014 14.414z"/>
-                        </svg>
-                    </div>
-                    <span class="text-lg font-semibold text-white group-hover:text-green-300 transition-colors duration-300">Anmelden</span>
-                </div>
-                <!-- Hover overlay -->
-                <div class="absolute inset-0 bg-gradient-to-r from-green-500/5 to-emerald-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <!-- Shimmer effect -->
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-            </a>
-
-            <!-- Logout Button (hidden by default) -->
-            <a href="#" class="sidebar-item group relative bg-gradient-to-r from-[#2d2d2d] to-[#3a3a3a] rounded-2xl p-4 border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 cursor-pointer startup-hover tech-border overflow-hidden menu-item-enter animation-delay-500 hidden" id="logoutSidebarBtn">
-                <div class="flex items-center space-x-4">
-                    <div class="sidebar-icon w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-red-500/30 transition-all duration-300">
-                        <svg class="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                    </div>
-                    <span class="text-lg font-semibold text-white group-hover:text-red-300 transition-colors duration-300">Abmelden</span>
-                </div>
-                <!-- Hover overlay -->
-                <div class="absolute inset-0 bg-gradient-to-r from-red-500/5 to-red-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <!-- Shimmer effect -->
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-            </a>
-
-            <!-- Bench-Karte -->
-            <a href="index.html" class="sidebar-item group relative bg-gradient-to-r from-[#2d2d2d] to-[#3a3a3a] rounded-2xl p-4 border border-gray-700/30 hover:border-blue-500/50 transition-all duration-300 cursor-pointer startup-hover tech-border overflow-hidden menu-item-enter animation-delay-1000">
-                <div class="flex items-center space-x-4">
-                    <div class="sidebar-icon w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-blue-500/30 transition-all duration-300">
-                        <svg class="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                        </svg>
-                    </div>
-                    <span class="text-lg font-semibold text-white group-hover:text-blue-300 transition-colors duration-300">Zur Bench-Karte</span>
-                </div>
-                <!-- Hover overlay -->
-                <div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-cyan-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <!-- Shimmer effect -->
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-            </a>
-
-            <!-- Kontakt -->
-            <a href="contact.html" class="sidebar-item group relative bg-gradient-to-r from-[#2d2d2d] to-[#3a3a3a] rounded-2xl p-4 border border-gray-700/30 hover:border-purple-500/50 transition-all duration-300 cursor-pointer startup-hover tech-border overflow-hidden menu-item-enter animation-delay-1000">
-                <div class="flex items-center space-x-4">
-                    <div class="sidebar-icon w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-purple-500/30 transition-all duration-300">
-                        <svg class="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <span class="text-lg font-semibold text-white group-hover:text-purple-300 transition-colors duration-300">Kontakt</span>
-                </div>
-                <!-- Hover overlay -->
-                <div class="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <!-- Shimmer effect -->
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-            </a>
-
-        </div>
-
-        <!-- Sidebar Footer -->
-        <div class="sidebar-footer absolute bottom-0 left-0 right-0 p-6 border-t border-gray-700/30 bg-gradient-to-t from-[#1a1a1a] to-transparent">
-            <div id="user-email-display" class="text-sm text-gray-400 text-center bg-gradient-to-r from-gray-700/30 to-gray-600/30 rounded-xl p-3 backdrop-blur-sm border border-gray-600/20">
-                <div class="flex items-center justify-center space-x-2">
-                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span>Bereit für Matches!</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay fixed inset-0 bg-black/50 backdrop-blur-sm z-30 opacity-0 pointer-events-none transition-all duration-300" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+	<div class="sidebar-overlay" id="sidebarOverlay"></div>
