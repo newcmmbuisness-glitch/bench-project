@@ -1,45 +1,92 @@
-	<div id="loginModal" class="modal">
-	  <div class="modal-content">
-		<span class="close" id="loginCloseBtn">&times;</span>
-		<h2>Anmelden / Registrieren</h2>
-		<div class="auth-tabs">
-		  <button class="tab-btn active" id="loginTabBtn">Anmelden</button>
-		  <button class="tab-btn" id="registerTabBtn">Registrieren</button>
-		</div>
-		<div id="loginTab" class="tab-content active">
-		  <form id="loginForm">
-			<input type="email" id="loginEmail" placeholder="E-Mail" required>
-			<input type="password" id="loginPassword" placeholder="Passwort" required>
-			<div class="captcha-box">
-			  <p id="loginCaptcha"></p>
-			  <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
-			</div>
-			<button type="submit">Anmelden</button>
-			<p style="margin-top:10px;">
-			  <a href="#" id="passwordResetLink">Passwort vergessen?</a>
-			</p>
-		  </form>
+<div id="loginModal" class="modal">
+	<div class="modal-content bg-gradient-to-br from-[#1e1e1e] to-[#2a2a2a] rounded-3xl max-w-lg w-full flex flex-col shadow-2xl overflow-hidden border border-gray-700/50 p-6">
+		
+		<div class="bg-gradient-to-r from-[#2d2d2d] to-[#3a3a3a] p-4 -mt-6 -mx-6 mb-4 rounded-t-3xl border-b border-gray-700/50 relative overflow-hidden flex items-center justify-between">
+			<span class="close group relative text-gray-400 hover:text-gray-200 transition-all duration-300 p-3 rounded-full hover:bg-white/10 backdrop-blur-sm" id="loginCloseBtn" style="order: 2;">
+				<div class="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-purple-600/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+				<svg class="relative w-6 h-6 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: block;">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+				</svg>
+			</span>
+			<h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-pink-200 to-purple-200 transition-all duration-300 hover:from-pink-300 hover:to-purple-300 relative" style="order: 1;">
+				Anmelden / Registrieren
+			</h2>
 		</div>
 
-		<div id="registerTab" class="tab-content">
-		  <form id="registerForm">
-			<input type="email" id="registerEmail" placeholder="E-Mail" required>
-			<input type="password" id="registerPassword" placeholder="Passwort" required>
-			<input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" required>
-			<div class="captcha-box">
-			  <p id="registerCaptcha"></p>
-			  <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" required>
-			</div>
-			<button type="submit">Registrieren</button>
-		  </form>
+		<div class="auth-tabs flex space-x-3 mb-6 relative">
+			<button class="tab-btn active flex-1 group relative bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 overflow-hidden" id="loginTabBtn">
+				<div class="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+				<span class="relative">Anmelden</span>
+			</button>
+			<button class="tab-btn flex-1 relative bg-gray-700 text-gray-300 py-3 px-6 rounded-xl hover:bg-gray-600 transition-all duration-300 font-semibold shadow-md hover:shadow-lg overflow-hidden border border-gray-600" id="registerTabBtn">
+				<span class="relative">Registrieren</span>
+			</button>
 		</div>
 
-		<div id="passwordResetDiv" style="display:none;">
-		  <form id="passwordResetForm">
-			<input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required>
-			<button type="submit">Passwort zurücksetzen</button>
-			<button type="button" id="passwordResetCancelBtn">Abbrechen</button>
-		  </form>
+		<div id="loginTab" class="tab-content active space-y-4">
+			<form id="loginForm" class="space-y-4">
+				<input type="email" id="loginEmail" placeholder="E-Mail" required 
+					class="w-full bg-[#2d2d2d] text-white p-3 rounded-xl border border-gray-700 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 shadow-inner">
+				<input type="password" id="loginPassword" placeholder="Passwort" required 
+					class="w-full bg-[#2d2d2d] text-white p-3 rounded-xl border border-gray-700 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 shadow-inner">
+				
+				<div class="captcha-box flex items-center space-x-3 bg-[#2d2d2d] p-3 rounded-xl border border-gray-700">
+					<p id="loginCaptcha" class="text-white font-mono text-lg flex-shrink-0">?</p>
+					<input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required 
+						class="flex-1 bg-transparent text-white focus:outline-none focus:ring-0">
+				</div>
+				
+				<button type="submit" 
+					class="w-full group relative bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-2xl hover:from-pink-600 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 overflow-hidden">
+					<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+					<span class="relative">Anmelden</span>
+				</button>
+				
+				<p class="text-center text-sm text-gray-400 mt-2">
+					<a href="#" id="passwordResetLink" class="text-pink-400 hover:text-pink-300 transition-colors duration-300">Passwort vergessen?</a>
+				</p>
+			</form>
 		</div>
-	  </div>
+
+		<div id="registerTab" class="tab-content space-y-4">
+			<form id="registerForm" class="space-y-4">
+				<input type="email" id="registerEmail" placeholder="E-Mail" required 
+					class="w-full bg-[#2d2d2d] text-white p-3 rounded-xl border border-gray-700 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 shadow-inner">
+				<input type="password" id="registerPassword" placeholder="Passwort" required 
+					class="w-full bg-[#2d2d2d] text-white p-3 rounded-xl border border-gray-700 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 shadow-inner">
+				<input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" required 
+					class="w-full bg-[#2d2d2d] text-white p-3 rounded-xl border border-gray-700 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 shadow-inner">
+				
+				<div class="captcha-box flex items-center space-x-3 bg-[#2d2d2d] p-3 rounded-xl border border-gray-700">
+					<p id="registerCaptcha" class="text-white font-mono text-lg flex-shrink-0">?</p>
+					<input type="number" id="registerCaptchaAnswer" placeholder="Antwort" required 
+						class="flex-1 bg-transparent text-white focus:outline-none focus:ring-0">
+				</div>
+				
+				<button type="submit" 
+					class="w-full group relative bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-2xl hover:from-pink-600 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 overflow-hidden">
+					<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+					<span class="relative">Registrieren</span>
+				</button>
+			</form>
+		</div>
+
+		<div id="passwordResetDiv" style="display:none;" class="space-y-4">
+			<form id="passwordResetForm" class="space-y-4">
+				<input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required 
+					class="w-full bg-[#2d2d2d] text-white p-3 rounded-xl border border-gray-700 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 shadow-inner">
+				
+				<button type="submit" 
+					class="w-full group relative bg-gradient-to-r from-indigo-500 to-blue-600 text-white py-3 px-6 rounded-2xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 font-semibold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 overflow-hidden">
+					<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+					<span class="relative">Passwort zurücksetzen</span>
+				</button>
+				
+				<button type="button" id="passwordResetCancelBtn"
+					class="w-full relative bg-gray-700 text-gray-300 py-3 px-6 rounded-2xl hover:bg-gray-600 transition-all duration-300 font-semibold shadow-md hover:shadow-lg overflow-hidden border border-gray-600">
+					<span class="relative">Abbrechen</span>
+				</button>
+			</form>
+		</div>
 	</div>
+</div>
