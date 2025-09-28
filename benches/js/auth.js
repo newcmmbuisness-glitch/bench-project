@@ -2,11 +2,20 @@ let loginCaptcha = null, registerCaptcha = null;
 window.currentUser = null;
 
         // Auth Functions
-        function showLogin() {
-            document.getElementById('loginModal').style.display = 'block';
-			generateCaptchas();
-        }
-        
+		function showLogin() {
+		    // ÄNDERUNG 1: display von 'block' auf 'flex' für die Zentrierung
+		    document.getElementById('loginModal').style.display = 'flex'; 
+		    generateCaptchas();
+		    
+		    // NEU: Beim Öffnen immer zur Login-Ansicht zurückkehren,
+		    // falls man es im Passwort-Reset-Modus geschlossen hat.
+		    document.getElementById("passwordResetDiv").style.display = "none";
+		    document.getElementById("loginTab").style.display = "block";
+		    
+		    // Tabs Container manuell anzeigen, falls er vorher versteckt war (s. unten)
+		    document.getElementById("authTabsContainer").style.display = "flex";
+		}
+		        
         function closeLogin() {
             document.getElementById('loginModal').style.display = 'none';
         }
@@ -177,14 +186,18 @@ window.currentUser = null;
 			window.location.reload(); 
         }
 		function showPasswordResetForm() {
-		  document.getElementById("loginTab").style.display = "none";
-		  document.getElementById("registerTab").style.display = "none";
-		  document.getElementById("passwordResetDiv").style.display = "block";
+		  document.getElementById("loginTab").style.display = "none";
+		  document.getElementById("registerTab").style.display = "none";
+		  // ÄNDERUNG 2: Tabs-Container ausblenden
+		  document.getElementById("authTabsContainer").style.display = "none"; 
+		  document.getElementById("passwordResetDiv").style.display = "block";
 		}
 		
 		function hidePasswordResetForm() {
-		  document.getElementById("passwordResetDiv").style.display = "none";
-		  document.getElementById("loginTab").style.display = "block"; // zurück zu Login
+		  document.getElementById("passwordResetDiv").style.display = "none";
+		  // ÄNDERUNG 3: Tabs-Container wieder als 'flex' anzeigen
+		  document.getElementById("authTabsContainer").style.display = "flex"; 
+		  document.getElementById("loginTab").style.display = "block"; // zurück zu Login
 		}
 		
 		async function requestPasswordReset() {
