@@ -5,6 +5,34 @@
 			color: #000;
 			min-height: 100vh;
 		}
+		/* Füge das zu deinem body CSS hinzu: */
+		body::after {
+		    content: "ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET";
+		    position: fixed;
+		    top: -50%;
+		    left: -50%;
+		    width: 200%;
+		    height: 200%;
+		    z-index: 1;
+		    pointer-events: none;
+		    font-family: 'Inter', Arial, sans-serif;
+		    font-weight: 800;
+		    font-size: 48px;
+		    color: rgba(255, 255, 255, 0.03);  /* Sehr subtil sichtbar */
+		    transform: rotate(45deg);  /* Diagonal */
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    word-spacing: 40px;
+		    letter-spacing: 8px;
+		    animation: subtle-move 20s linear infinite;  /* Optionale leichte Bewegung */
+		}
+		
+		@keyframes subtle-move {
+		    0% { transform: rotate(45deg) translateX(-20px) translateY(-20px); }
+		    100% { transform: rotate(45deg) translateX(20px) translateY(20px); }
+		}
+
 
 		/* leichter Silber-Schimmer-Effekt für Überschriften */
 		.shimmer {
