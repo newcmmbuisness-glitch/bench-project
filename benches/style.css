@@ -1,34 +1,36 @@
 		body { 
-			margin: 0; 
-			font-family: 'Inter', Arial, sans-serif;   /* wieder deine Hauptschrift */
-			background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); /* schwarz-grau Hintergrund */
-			color: #000;
-			min-height: 100vh;
+		    margin: 0; 
+		    font-family: 'Inter', Arial, sans-serif;
+		    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+		    color: #fff; /* WICHTIG: Ändere zu #fff statt #000 */
+		    min-height: 100vh;
+		    position: relative; /* WICHTIG: Hinzufügen */
 		}
-		/* Füge das zu deinem body CSS hinzu: */
+		
 		body::after {
-		    content: "ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET";
+		    content: "ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET";
 		    position: fixed;
-		    top: -20%;
-		    left: -20%;
-		    width: 140%;
-		    height: 140%;
+		    top: 0;
+		    left: 0;
+		    width: 100vw;
+		    height: 100vh;
 		    z-index: 1;
 		    pointer-events: none;
 		    font-family: 'Inter', Arial, sans-serif;
-		    font-weight: 100;  /* Sehr leicht */
-		    font-size: 16px;   /* Klein */
-		    color: rgba(255, 255, 255, 0.012);  /* Kaum sichtbar */
-		    transform: rotate(40deg);
-		    display: block;
-		    line-height: 2;
-		    word-spacing: 20px;
-		    letter-spacing: 1px;
-		    white-space: pre-wrap;
-		    text-align: left;
-		    padding: 20px;
+		    font-weight: 200;
+		    font-size: 14px;
+		    color: rgba(255, 255, 255, 0.04);
+		    transform: rotate(45deg);
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    word-spacing: 15px;
+		    letter-spacing: 2px;
+		    white-space: nowrap;
 		    overflow: hidden;
-		    
+		    text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+		}
+			    
 		    /* Imprint-Effekt */
 		    text-shadow: 
 		        1px 1px 0px rgba(0,0,0,0.3),
