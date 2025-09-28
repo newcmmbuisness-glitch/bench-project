@@ -1,46 +1,44 @@
 <div id="loginModal" class="modal">
-  <div class="modal-content startup-hover">
+  <div class="modal-content startup-hover bg-gradient-to-br from-[#1e1e1e] to-[#2a2a2a] rounded-3xl p-6 shadow-2xl overflow-hidden border border-gray-700/50">
     <span class="close glow-effect" id="loginCloseBtn">&times;</span>
-    <h2 class="gradient-text">Anmelden / Registrieren</h2>
     
-    <div class="auth-tabs">
-      <button class="tab-btn startup-hover glow-effect active" id="loginTabBtn">Anmelden</button>
-      <button class="tab-btn startup-hover glow-effect" id="registerTabBtn">Registrieren</button>
+    <h2 class="gradient-text text-2xl font-bold mb-4">Anmelden / Registrieren</h2>
+
+    <div class="auth-tabs flex mb-6 gap-2">
+      <button class="tab-btn startup-hover premium-item green-hover tech-border flex-1 text-white font-semibold py-2 rounded-lg" id="loginTabBtn">Anmelden</button>
+      <button class="tab-btn startup-hover premium-item blue-hover tech-border flex-1 text-white font-semibold py-2 rounded-lg" id="registerTabBtn">Registrieren</button>
     </div>
 
-    <div id="loginTab" class="tab-content active">
-      <form id="loginForm">
-        <input type="email" id="loginEmail" placeholder="E-Mail" class="startup-hover glow-effect" required>
-        <input type="password" id="loginPassword" placeholder="Passwort" class="startup-hover glow-effect" required>
-        <div class="captcha-box">
+    <div id="loginTab" class="tab-content active flex flex-col gap-4">
+      <form id="loginForm" class="flex flex-col gap-4">
+        <input type="email" id="loginEmail" placeholder="E-Mail" class="startup-hover glow-effect p-3 rounded-lg bg-[#2d2d2d] text-white border border-gray-700/50" required>
+        <input type="password" id="loginPassword" placeholder="Passwort" class="startup-hover glow-effect p-3 rounded-lg bg-[#2d2d2d] text-white border border-gray-700/50" required>
+        <div class="captcha-box p-3 rounded-lg bg-[#2d2d2d] text-white border border-gray-700/50 text-center">
           <p id="loginCaptcha"></p>
-          <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" class="startup-hover glow-effect" required>
+          <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" class="startup-hover glow-effect p-2 rounded-lg w-full mt-2 text-white bg-[#1e1e1e] border border-gray-700/50" required>
         </div>
-        <button type="submit" class="startup-hover glow-effect">Anmelden</button>
-        <p style="margin-top:10px;">
-          <a href="#" id="passwordResetLink" class="gradient-text">Passwort vergessen?</a>
-        </p>
+        <button type="submit" class="startup-hover premium-item purple-hover tech-border py-3 rounded-xl text-white font-semibold">Anmelden</button>
       </form>
     </div>
 
-    <div id="registerTab" class="tab-content">
-      <form id="registerForm">
-        <input type="email" id="registerEmail" placeholder="E-Mail" class="startup-hover glow-effect" required>
-        <input type="password" id="registerPassword" placeholder="Passwort" class="startup-hover glow-effect" required>
-        <input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" class="startup-hover glow-effect" required>
-        <div class="captcha-box">
+    <div id="registerTab" class="tab-content flex flex-col gap-4">
+      <form id="registerForm" class="flex flex-col gap-4">
+        <input type="email" id="registerEmail" placeholder="E-Mail" class="startup-hover glow-effect p-3 rounded-lg bg-[#2d2d2d] text-white border border-gray-700/50" required>
+        <input type="password" id="registerPassword" placeholder="Passwort" class="startup-hover glow-effect p-3 rounded-lg bg-[#2d2d2d] text-white border border-gray-700/50" required>
+        <input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" class="startup-hover glow-effect p-3 rounded-lg bg-[#2d2d2d] text-white border border-gray-700/50" required>
+        <div class="captcha-box p-3 rounded-lg bg-[#2d2d2d] text-white border border-gray-700/50 text-center">
           <p id="registerCaptcha"></p>
-          <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" class="startup-hover glow-effect" required>
+          <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" class="startup-hover glow-effect p-2 rounded-lg w-full mt-2 text-white bg-[#1e1e1e] border border-gray-700/50" required>
         </div>
-        <button type="submit" class="startup-hover glow-effect">Registrieren</button>
+        <button type="submit" class="startup-hover premium-item red-hover tech-border py-3 rounded-xl text-white font-semibold">Registrieren</button>
       </form>
     </div>
 
     <div id="passwordResetDiv" style="display:none;">
-      <form id="passwordResetForm">
-        <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" class="startup-hover glow-effect" required>
-        <button type="submit" class="startup-hover glow-effect">Passwort zurücksetzen</button>
-        <button type="button" id="passwordResetCancelBtn" class="startup-hover glow-effect">Abbrechen</button>
+      <form id="passwordResetForm" class="flex flex-col gap-4">
+        <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" class="startup-hover glow-effect p-3 rounded-lg bg-[#2d2d2d] text-white border border-gray-700/50" required>
+        <button type="submit" class="startup-hover premium-item green-hover tech-border py-3 rounded-xl text-white font-semibold">Passwort zurücksetzen</button>
+        <button type="button" id="passwordResetCancelBtn" class="startup-hover premium-item blue-hover tech-border py-3 rounded-xl text-white font-semibold">Abbrechen</button>
       </form>
     </div>
   </div>
