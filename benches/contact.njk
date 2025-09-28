@@ -22,20 +22,30 @@ permalink: meet/contact.html
             overflow: hidden;
         }
 
-        /* Silberner Glanz/Shimmer auf dem Hintergrund */
-        body::before {
+        /* Mehrere Shimmer-Streifen für metallischen Glanz */
+        body::before, body::after, .shimmer-layer {
             content: "";
             position: absolute;
             inset: 0;
+            z-index: 0;
             background: linear-gradient(
                 120deg, 
                 rgba(255,255,255,0) 0%, 
-                rgba(255,255,255,0.2) 50%, 
+                rgba(255,255,255,0.15) 50%, 
                 rgba(255,255,255,0) 100%
             );
             transform: translateX(-100%);
-            animation: silverShimmer 3s infinite linear;
-            z-index: 0;
+            animation: silverShimmer 4s infinite linear;
+        }
+
+        body::after {
+            animation-duration: 6s;
+            background: linear-gradient(
+                150deg, 
+                rgba(255,255,255,0) 0%, 
+                rgba(255,255,255,0.1) 50%, 
+                rgba(255,255,255,0) 100%
+            );
         }
 
         @keyframes silverShimmer {
@@ -43,24 +53,24 @@ permalink: meet/contact.html
             100% { transform: translateX(100%); }
         }
 
-        /* Container */
+        /* Lila Container */
         .container {
             position: relative;
             z-index: 1;
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
+            background: linear-gradient(135deg, rgba(147,51,234,0.85), rgba(79,70,229,0.85));
             border-radius: 2rem;
             padding: 40px;
             max-width: 500px;
             width: 90%;
             text-align: center;
-            box-shadow: 0 0 20px rgba(255,255,255,0.1), 0 0 40px rgba(255,255,255,0.05);
+            box-shadow: 0 10px 30px rgba(147,51,234,0.3), 0 0 40px rgba(79,70,229,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         h1 {
             font-size: 2rem;
             font-weight: 800;
-            background: linear-gradient(90deg, #ffffff, #cfcfcf);
+            background: linear-gradient(90deg, #fff, #d1c4ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 20px;
@@ -68,7 +78,7 @@ permalink: meet/contact.html
 
         p {
             font-size: 1rem;
-            color: #ddd;
+            color: #eee;
             line-height: 1.6;
             margin-bottom: 15px;
         }
@@ -88,14 +98,14 @@ permalink: meet/contact.html
             color: #1e1e1e;
             text-decoration: none;
             border-radius: 1rem;
-            background: linear-gradient(90deg, #fff, #ccc);
-            box-shadow: 0 4px 15px rgba(255,255,255,0.3);
+            background: linear-gradient(90deg, #a855f7, #7c3aed);
+            box-shadow: 0 4px 15px rgba(147,51,234,0.3);
             transition: all 0.3s ease;
         }
 
         a:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(255,255,255,0.4);
+            box-shadow: 0 6px 25px rgba(147,51,234,0.5);
         }
 
         /* Subtiler Float-Effekt */
