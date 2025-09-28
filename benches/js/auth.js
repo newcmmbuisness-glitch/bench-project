@@ -6,8 +6,11 @@ window.currentUser = null;
             document.getElementById('loginModal').style.display = 'flex';
 			generateCaptchas();
 
-			document.getElementById('loginTab').classList.add('active');
-   		    document.getElementById('loginTabBtn').classList.add('active');
+		    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+		    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+		
+		    document.getElementById('loginTab').classList.add('active');
+		    document.getElementById('loginTabBtn').classList.add('active');
         }
         
         function closeLogin() {
