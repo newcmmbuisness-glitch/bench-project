@@ -169,14 +169,13 @@
             inset: 0;
             background: rgba(0,0,0,0.3);
             z-index: 1400;
-            display: none;
             opacity: 0;
             transition: opacity 0.3s ease;
         }
-        .sidebar-overlay.active {
-            display: block;
-            opacity: 1;
-        }
+		.sidebar-overlay.active {
+		    opacity: 1;
+		    pointer-events: auto;
+		}
 
 		/* New Button Styling */
 		/* Floating Buttons - Updated CSS */
