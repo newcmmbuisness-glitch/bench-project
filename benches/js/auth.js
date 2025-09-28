@@ -2,25 +2,10 @@ let loginCaptcha = null, registerCaptcha = null;
 window.currentUser = null;
 
         // Auth Functions
-		function showLogin() {
-		    // ÄNDERUNG: 'block' durch 'flex' ersetzen, um die Zentrierung zu aktivieren
-		    document.getElementById('loginModal').style.display = 'flex'; 
-		    
-		    // NEU: Sicherstellen, dass die Login-Form beim Öffnen im Fokus ist und die Tabs sichtbar sind
-		    // Dies behebt das Problem, dass beim erneuten Öffnen das Passwort-Reset-Feld angezeigt wird.
-		    document.getElementById("passwordResetDiv").style.display = "none";
-		    document.getElementById("authTabsContainer").style.display = "flex";
-		    document.getElementById("loginTab").style.display = "block";
-		    document.getElementById("registerTab").style.display = "none";
-		    
-		    // Optional: Setze den Login-Tab als aktiv, falls beim Schließen der Registrieren-Tab aktiv war
-		    document.getElementById("loginTabBtn").classList.add("active");
-		    document.getElementById("registerTabBtn").classList.remove("active");
-		    document.getElementById('loginTab').classList.add('active');
-		    document.getElementById('registerTab').classList.remove('active');
-		    
-		    generateCaptchas();
-		}
+        function showLogin() {
+            document.getElementById('loginModal').style.display = 'block';
+			generateCaptchas();
+        }
         
         function closeLogin() {
             document.getElementById('loginModal').style.display = 'none';
@@ -194,13 +179,11 @@ window.currentUser = null;
 		function showPasswordResetForm() {
 		  document.getElementById("loginTab").style.display = "none";
 		  document.getElementById("registerTab").style.display = "none";
-		  document.getElementById("authTabsContainer").style.display = "none";
 		  document.getElementById("passwordResetDiv").style.display = "block";
 		}
 		
 		function hidePasswordResetForm() {
 		  document.getElementById("passwordResetDiv").style.display = "none";
-		  document.getElementById("authTabsContainer").style.display = "flex";
 		  document.getElementById("loginTab").style.display = "block"; // zurück zu Login
 		}
 		
