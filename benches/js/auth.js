@@ -179,6 +179,7 @@ window.currentUser = null;
 		function showPasswordResetForm() {
 		  document.getElementById("loginTab").style.display = "none";
 		  document.getElementById("registerTab").style.display = "none";
+		  document.getElementById("authTabsContainer").style.display = "none";
 		  document.getElementById("passwordResetDiv").style.display = "block";
 		}
 		
