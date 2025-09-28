@@ -66,6 +66,88 @@ permalink: meet/contact.html
             }
         }
 
+        /* Startup Loading Animation */
+        @keyframes holographic-materialize {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) rotateY(180deg) rotateX(45deg);
+                filter: blur(20px) hue-rotate(0deg);
+                box-shadow: 0 0 0 rgba(236,72,153,0);
+            }
+            15% {
+                opacity: 0.3;
+                transform: scale(0.6) rotateY(90deg) rotateX(22deg);
+                filter: blur(15px) hue-rotate(90deg);
+                box-shadow: 0 0 80px rgba(236,72,153,0.3);
+            }
+            30% {
+                opacity: 0.6;
+                transform: scale(0.8) rotateY(45deg) rotateX(11deg);
+                filter: blur(10px) hue-rotate(180deg);
+                box-shadow: 0 0 120px rgba(147,51,234,0.5);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1) rotateY(10deg) rotateX(5deg);
+                filter: blur(5px) hue-rotate(270deg);
+                box-shadow: 0 0 160px rgba(79,70,229,0.7);
+            }
+            70% {
+                opacity: 0.9;
+                transform: scale(1.05) rotateY(2deg) rotateX(1deg);
+                filter: blur(2px) hue-rotate(315deg);
+                box-shadow: 0 0 120px rgba(236,72,153,0.5);
+            }
+            85% {
+                opacity: 0.95;
+                transform: scale(1.02) rotateY(0deg) rotateX(0deg);
+                filter: blur(1px) hue-rotate(350deg);
+                box-shadow: 0 0 80px rgba(147,51,234,0.3);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotateY(0deg) rotateX(0deg);
+                filter: blur(0px) hue-rotate(360deg);
+                box-shadow: 0 0 40px rgba(0,0,0,0.3);
+            }
+        }
+
+        @keyframes quantum-grid-scan {
+            0% {
+                background-position: -200% -200%;
+                opacity: 0;
+            }
+            50% {
+                background-position: 200% 200%;
+                opacity: 1;
+            }
+            100% {
+                background-position: -200% -200%;
+                opacity: 0;
+            }
+        }
+
+        @keyframes neural-network-pulse {
+            0%, 100% {
+                background: 
+                    radial-gradient(circle at 20% 30%, rgba(236,72,153,0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(147,51,234,0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 60% 80%, rgba(79,70,229,0.1) 0%, transparent 50%);
+            }
+            33% {
+                background: 
+                    radial-gradient(circle at 20% 30%, rgba(236,72,153,0.3) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(147,51,234,0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 60% 80%, rgba(79,70,229,0.1) 0%, transparent 50%);
+            }
+            66% {
+                background: 
+                    radial-gradient(circle at 20% 30%, rgba(236,72,153,0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(147,51,234,0.3) 0%, transparent 50%),
+                    radial-gradient(circle at 60% 80%, rgba(79,70,229,0.1) 0%, transparent 50%);
+            }
+        }
+
         /* Container - ohne eigenen Shimmer */
         .container {
             position: relative;
@@ -79,6 +161,41 @@ permalink: meet/contact.html
             box-shadow: 0 0 40px rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1);
             text-align: center;
+            
+            /* Startup Animation */
+            animation: holographic-materialize 2.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            transform-origin: center center;
+            perspective: 1000px;
+        }
+
+        /* Quantum Grid Overlay für Container */
+        .container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: 
+                linear-gradient(45deg, transparent 48%, rgba(236,72,153,0.1) 49%, rgba(236,72,153,0.1) 51%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, rgba(147,51,234,0.1) 49%, rgba(147,51,234,0.1) 51%, transparent 52%);
+            background-size: 20px 20px;
+            animation: quantum-grid-scan 2.5s ease-out;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Neural Network Background während Startup */
+        .container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(236,72,153,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(147,51,234,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 60% 80%, rgba(79,70,229,0.1) 0%, transparent 50%);
+            animation: neural-network-pulse 2.5s ease-in-out;
+            pointer-events: none;
+            z-index: -1;
         }
 
         /* Überschrift */
