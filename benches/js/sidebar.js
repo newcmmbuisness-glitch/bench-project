@@ -65,14 +65,14 @@ function addUserPlusToSidebar(isUserPlus, isAdmin) {
     };
 
         userPlusItem.innerHTML = `
-            <div class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 group hover:shadow-xl hover:scale-105 relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600/50">
+            <div class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 group hover:shadow-xl hover:scale-105 relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600/50 userplus-ui">
                 
                 <!-- Shimmer Overlay -->
-                <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-white/50 to-white/20 rounded-xl opacity-70 pointer-events-none animate-shimmer"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-white/50 to-white/20 rounded-xl opacity-70 pointer-events-none userplus-shimmer"></div>
                 
                 <!-- Icon -->
-                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg group-hover:shadow-2xl">
-                    <span class="text-white text-lg animate-glow">⭐</span>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg userplus-icon">
+                    <span class="text-white text-lg userplus-glow">⭐</span>
                 </div>
         
                 <!-- Text -->
@@ -94,7 +94,6 @@ function addUserPlusToSidebar(isUserPlus, isAdmin) {
                 </div>
             </div>
         `;
-
 
     const profileLink = sidebar.querySelector('a[onclick*="showProfilePopup"]');
     if (profileLink && profileLink.parentNode) {
