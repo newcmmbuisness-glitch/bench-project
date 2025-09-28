@@ -1565,6 +1565,30 @@
         .startup-hover:hover {
             transform: translateY(-2px);
         }
+        /* Sidebar specific animations */
+        .sidebar-slide {
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .sidebar-slide.active {
+            transform: translateX(0);
+        }
+        
+        .menu-item-enter {
+            animation: slideInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
         /* Responsive */
         @media (max-width: 768px) {
             .app-container {
