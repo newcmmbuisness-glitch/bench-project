@@ -4,55 +4,66 @@
 </div>
 
 <!-- Sidebar -->
-<div id="sidebar" class="sidebar sidebar-slide">
-    <!-- Animated background -->
-    <div class="absolute inset-0 bg-gradient-to-b from-pink-500/5 via-purple-500/5 to-indigo-500/5 pointer-events-none"></div>
-    <div class="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-pink-500 via-purple-500 to-indigo-500 opacity-60 pointer-events-none"></div>
+<div id="sidebar" class="sidebar">
+
+    <!-- Animated background overlays -->
+    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(236,72,153,0.03) 0%, rgba(147,51,234,0.03) 50%, rgba(79,70,229,0.03) 100%); pointer-events: none;"></div>
+    <div style="position: absolute; top: 0; left: 0; width: 2px; height: 100%; background: linear-gradient(180deg, #ec4899 0%, #9333ea 50%, #4f46e5 100%); opacity: 0.4; pointer-events: none;"></div>
 
     <!-- Sidebar Header -->
-    <div class="sidebar-header tech-border">
-        <div class="sidebar-logo startup-hover glow-effect">
-            <img src="/ob.png" alt="OB Logo">
-            <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-pink-500/20 to-purple-600/20 opacity-0 group-hover:opacity-100 group-hover:animate-ping"></div>
+    <div class="sidebar-header tech-border" style="position: relative;">
+        <div class="sidebar-logo startup-hover glow-effect relative group">
+            <img src="/ob.png" alt="OB Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: contain;">
+            <!-- Pulse rings -->
+            <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-pink-500/20 to-purple-600/20 opacity-0 group-hover:opacity-100 group-hover:animate-ping rounded-full"></div>
         </div>
         <div class="sidebar-title gradient-text">One-T-Meet</div>
     </div>
 
     <!-- Sidebar Content -->
-    <div class="sidebar-content">
-        <a href="#" class="sidebar-item startup-hover premium-item green-hover tech-border" id="loginSidebarBtn">
+    <div class="sidebar-content" style="position: relative;">
+        <!-- Login Button -->
+        <a href="#" class="sidebar-item startup-hover premium-item green-hover tech-border group" id="loginSidebarBtn">
             <span class="sidebar-icon">🔐</span>
             <span>Anmelden</span>
-            <div class="hover-overlay green-overlay"></div>
+            <div class="hover-overlay green-overlay rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 rounded-xl pointer-events-none"></div>
         </a>
 
-        <a href="#" class="sidebar-item startup-hover premium-item red-hover tech-border" id="logoutSidebarBtn" style="display: none;">
+        <!-- Logout Button -->
+        <a href="#" class="sidebar-item startup-hover premium-item red-hover tech-border group" id="logoutSidebarBtn" style="display: none;">
             <span class="sidebar-icon">🚪</span>
             <span>Abmelden</span>
-            <div class="hover-overlay red-overlay"></div>
+            <div class="hover-overlay red-overlay rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 rounded-xl pointer-events-none"></div>
         </a>
 
-        <a href="index.html" class="sidebar-item startup-hover premium-item blue-hover tech-border">
+        <!-- Bench-Karte -->
+        <a href="index.html" class="sidebar-item startup-hover premium-item blue-hover tech-border group">
             <span class="sidebar-icon">🗺️</span>
             <span>Zur Bench-Karte</span>
-            <div class="hover-overlay blue-overlay"></div>
+            <div class="hover-overlay blue-overlay rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 rounded-xl pointer-events-none"></div>
         </a>
 
-        <a href="contact.html" class="sidebar-item startup-hover premium-item purple-hover tech-border">
+        <!-- Kontakt -->
+        <a href="contact.html" class="sidebar-item startup-hover premium-item purple-hover tech-border group">
             <span class="sidebar-icon">📧</span>
             <span>Kontakt</span>
-            <div class="hover-overlay purple-overlay"></div>
+            <div class="hover-overlay purple-overlay rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 rounded-xl pointer-events-none"></div>
         </a>
     </div>
 
     <!-- Sidebar Footer -->
-    <div class="sidebar-footer tech-border" id="user-email-display">
-        <div class="flex items-center justify-center gap-2 text-gray-400 text-sm">
-            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span>Bereit für Matches!</span>
+    <div class="sidebar-footer tech-border" style="position: relative;" id="user-email-display">
+        <div style="text-align: center; background: linear-gradient(90deg, rgba(75,85,99,0.3) 0%, rgba(107,114,128,0.3) 100%); border-radius: 8px; padding: 8px; color: #9ca3af; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite;"></div>
+            <span>Ready for Matches!</span>
         </div>
     </div>
+
 </div>
 
 <!-- Sidebar Overlay -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
