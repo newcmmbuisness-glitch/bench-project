@@ -5,6 +5,9 @@ window.currentUser = null;
         function showLogin() {
             document.getElementById('loginModal').style.display = 'flex';
 			generateCaptchas();
+
+			document.getElementById('loginTab').classList.add('active');
+   		    document.getElementById('loginTabBtn').classList.add('active');
         }
         
         function closeLogin() {
