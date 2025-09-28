@@ -10,7 +10,6 @@ permalink: meet/contact.html
     <title>Kontakt - Benches</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* Grundstil & Layout */
         body {
             font-family: 'Inter', Arial, sans-serif;
             display: flex;
@@ -24,42 +23,37 @@ permalink: meet/contact.html
             position: relative;
         }
 
-        /* Glänzender Metall-Hintergrund */
+        /* Shimmer nur hinter dem Container */
         .shiny-background {
             position: absolute;
             inset: 0;
             z-index: 0;
-            overflow: hidden;
+            pointer-events: none;
         }
 
-        .shiny-background span {
+        .shiny-background::before {
+            content: "";
             position: absolute;
-            display: block;
-            width: 200%;
-            height: 100%;
-            background: linear-gradient(120deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.05) 100%);
-            animation: shine 5s linear infinite;
+            inset: 0;
+            background: linear-gradient(
+                45deg,
+                rgba(255,255,255,0.0) 0%,
+                rgba(255,255,255,0.15) 50%,
+                rgba(255,255,255,0.0) 100%
+            );
+            transform: translate(-100%, -100%);
+            animation: shimmer 5s linear infinite;
         }
 
-        .shiny-background span:nth-child(2) {
-            animation-duration: 7s;
-            background: linear-gradient(150deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.03) 100%);
-        }
-
-        .shiny-background span:nth-child(3) {
-            animation-duration: 6s;
-            background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.02) 100%);
-        }
-
-        @keyframes shine {
-            0% { transform: translateX(-100%) skewX(-20deg); }
-            100% { transform: translateX(100%) skewX(-20deg); }
+        @keyframes shimmer {
+            0% { transform: translate(-100%, -100%) rotate(25deg); }
+            100% { transform: translate(100%, 100%) rotate(25deg); }
         }
 
         /* Container */
         .container {
             position: relative;
-            z-index: 1;
+            z-index: 1; /* vor dem shimmer */
             background: linear-gradient(135deg, rgba(147,51,234,0.85), rgba(79,70,229,0.85));
             border-radius: 2rem;
             padding: 40px;
@@ -70,7 +64,6 @@ permalink: meet/contact.html
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* Überschrift */
         h1 {
             font-size: 2rem;
             font-weight: 800;
@@ -80,7 +73,6 @@ permalink: meet/contact.html
             margin-bottom: 20px;
         }
 
-        /* Text */
         p {
             font-size: 1rem;
             color: #eee;
@@ -95,7 +87,6 @@ permalink: meet/contact.html
             color: #fff;
         }
 
-        /* Zurück Button */
         a {
             display: inline-block;
             margin-top: 25px;
@@ -114,7 +105,6 @@ permalink: meet/contact.html
             box-shadow: 0 6px 25px rgba(236,72,153,0.4), 0 6px 50px rgba(147,51,234,0.3);
         }
 
-        /* Float/Glowing Effekte */
         @keyframes float {
             0%,100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
@@ -127,16 +117,11 @@ permalink: meet/contact.html
 
         .float-animation { animation: float 3s ease-in-out infinite; }
         .glow-effect { animation: glow-pulse 2s ease-in-out infinite; }
-
     </style>
 </head>
 <body>
-    <!-- Glänzender Hintergrund -->
-    <div class="shiny-background">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
+    <!-- Glänzender Hintergrund nur hinter dem Container -->
+    <div class="shiny-background"></div>
 
     <!-- Kontakt Container -->
     <div class="container float-animation glow-effect">
