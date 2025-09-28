@@ -1,45 +1,47 @@
-	<div id="loginModal" class="modal">
-	  <div class="modal-content">
-		<span class="close" id="loginCloseBtn">&times;</span>
-		<h2>Anmelden / Registrieren</h2>
-		<div class="auth-tabs">
-		  <button class="tab-btn active" id="loginTabBtn">Anmelden</button>
-		  <button class="tab-btn" id="registerTabBtn">Registrieren</button>
-		</div>
-		<div id="loginTab" class="tab-content active">
-		  <form id="loginForm">
-			<input type="email" id="loginEmail" placeholder="E-Mail" required>
-			<input type="password" id="loginPassword" placeholder="Passwort" required>
-			<div class="captcha-box">
-			  <p id="loginCaptcha"></p>
-			  <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" required>
-			</div>
-			<button type="submit">Anmelden</button>
-			<p style="margin-top:10px;">
-			  <a href="#" id="passwordResetLink">Passwort vergessen?</a>
-			</p>
-		  </form>
-		</div>
+<div id="loginModal" class="modal">
+  <div class="modal-content startup-hover">
+    <span class="close glow-effect" id="loginCloseBtn">&times;</span>
+    <h2 class="gradient-text">Anmelden / Registrieren</h2>
+    
+    <div class="auth-tabs">
+      <button class="tab-btn startup-hover glow-effect active" id="loginTabBtn">Anmelden</button>
+      <button class="tab-btn startup-hover glow-effect" id="registerTabBtn">Registrieren</button>
+    </div>
 
-		<div id="registerTab" class="tab-content">
-		  <form id="registerForm">
-			<input type="email" id="registerEmail" placeholder="E-Mail" required>
-			<input type="password" id="registerPassword" placeholder="Passwort" required>
-			<input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" required>
-			<div class="captcha-box">
-			  <p id="registerCaptcha"></p>
-			  <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" required>
-			</div>
-			<button type="submit">Registrieren</button>
-		  </form>
-		</div>
+    <div id="loginTab" class="tab-content active">
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="E-Mail" class="startup-hover glow-effect" required>
+        <input type="password" id="loginPassword" placeholder="Passwort" class="startup-hover glow-effect" required>
+        <div class="captcha-box">
+          <p id="loginCaptcha"></p>
+          <input type="number" id="loginCaptchaAnswer" placeholder="Antwort" class="startup-hover glow-effect" required>
+        </div>
+        <button type="submit" class="startup-hover glow-effect">Anmelden</button>
+        <p style="margin-top:10px;">
+          <a href="#" id="passwordResetLink" class="gradient-text">Passwort vergessen?</a>
+        </p>
+      </form>
+    </div>
 
-		<div id="passwordResetDiv" style="display:none;">
-		  <form id="passwordResetForm">
-			<input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" required>
-			<button type="submit">Passwort zurücksetzen</button>
-			<button type="button" id="passwordResetCancelBtn">Abbrechen</button>
-		  </form>
-		</div>
-	  </div>
-	</div>
+    <div id="registerTab" class="tab-content">
+      <form id="registerForm">
+        <input type="email" id="registerEmail" placeholder="E-Mail" class="startup-hover glow-effect" required>
+        <input type="password" id="registerPassword" placeholder="Passwort" class="startup-hover glow-effect" required>
+        <input type="password" id="registerPasswordConfirm" placeholder="Passwort bestätigen" class="startup-hover glow-effect" required>
+        <div class="captcha-box">
+          <p id="registerCaptcha"></p>
+          <input type="number" id="registerCaptchaAnswer" placeholder="Antwort" class="startup-hover glow-effect" required>
+        </div>
+        <button type="submit" class="startup-hover glow-effect">Registrieren</button>
+      </form>
+    </div>
+
+    <div id="passwordResetDiv" style="display:none;">
+      <form id="passwordResetForm">
+        <input type="email" id="resetEmail" placeholder="E-Mail zum Zurücksetzen" class="startup-hover glow-effect" required>
+        <button type="submit" class="startup-hover glow-effect">Passwort zurücksetzen</button>
+        <button type="button" id="passwordResetCancelBtn" class="startup-hover glow-effect">Abbrechen</button>
+      </form>
+    </div>
+  </div>
+</div>
