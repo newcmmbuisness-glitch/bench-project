@@ -184,6 +184,7 @@ window.currentUser = null;
 		
 		function hidePasswordResetForm() {
 		  document.getElementById("passwordResetDiv").style.display = "none";
+		  document.getElementById("authTabsContainer").style.display = "flex";
 		  document.getElementById("loginTab").style.display = "block"; // zurück zu Login
 		}
 		
