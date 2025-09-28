@@ -8,25 +8,23 @@
 		/* Füge das zu deinem body CSS hinzu: */
 		#diagonalText {
 		    position: fixed;
-		    top: -20%;
-		    left: -20%;
-		    width: 140%;
-		    height: 140%;
+		    top: 0;
+		    left: 0;
+		    width: 100vw;
+		    height: 100vh;
 		    z-index: -1;
 		    pointer-events: none;
 		    font-family: 'Inter', Arial, sans-serif;
-		    font-weight: 100;  /* Sehr leicht */
-		    font-size: 16px;   /* Klein */
-		    color: rgba(255, 0, 0, 0.5);  /* Kaum sichtbar */
-		    transform: rotate(40deg);
-		    display: block;
-		    line-height: 2;
-		    word-spacing: 20px;
-		    letter-spacing: 1px;
-		    white-space: pre-wrap;
-		    text-align: left;
-		    padding: 20px;
-		    overflow: hidden;
+		    font-weight: bold;
+		    font-size: 48px;
+		    color: rgba(255, 0, 0, 0.5); /* ROT zum Testen */
+		    transform: rotate(45deg);
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    white-space: nowrap;
+		    overflow: hidden; /* Wichtig! */
+		}
 		    
 		    /* Imprint-Effekt */
 		    text-shadow: 
