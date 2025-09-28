@@ -17,7 +17,7 @@
 		    font-family: 'Inter', Arial, sans-serif;
 		    font-weight: 100;  /* Sehr leicht */
 		    font-size: 16px;   /* Klein */
-		    color: rgba(255, 255, 255, 0.012);  /* Kaum sichtbar */
+		    color: rgba(255, 0, 0, 0.5);  /* Kaum sichtbar */
 		    transform: rotate(40deg);
 		    display: block;
 		    line-height: 2;
