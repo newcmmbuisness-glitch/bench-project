@@ -10,7 +10,6 @@ permalink: meet/contact.html
     <title>Kontakt - Benches</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* Grundstil & Layout */
         body {
             font-family: 'Inter', Arial, sans-serif;
             display: flex;
@@ -18,53 +17,55 @@ permalink: meet/contact.html
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            background-color: #1e1e1e;
+            position: relative;
             overflow: hidden;
-            color: white;
         }
 
-        /* Shimmer / animated background */
+        /* Silberner Glanz/Shimmer auf dem Hintergrund */
         body::before {
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(120deg, rgba(236,72,153,0.1), rgba(147,51,234,0.1), rgba(79,70,229,0.1));
-            animation: shimmer 4s ease-in-out infinite;
+            background: linear-gradient(
+                120deg, 
+                rgba(255,255,255,0) 0%, 
+                rgba(255,255,255,0.2) 50%, 
+                rgba(255,255,255,0) 100%
+            );
+            transform: translateX(-100%);
+            animation: silverShimmer 3s infinite linear;
             z-index: 0;
         }
 
-        @keyframes shimmer {
+        @keyframes silverShimmer {
             0% { transform: translateX(-100%); }
-            50% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
         /* Container */
         .container {
             position: relative;
             z-index: 1;
-            background: rgba(30,30,30,0.6);
+            background: rgba(255,255,255,0.05);
             backdrop-filter: blur(10px);
             border-radius: 2rem;
             padding: 40px;
             max-width: 500px;
             width: 90%;
-            box-shadow: 0 0 40px rgba(236,72,153,0.3), 0 0 80px rgba(147,51,234,0.2);
-            border: 1px solid rgba(236,72,153,0.3);
             text-align: center;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1), 0 0 40px rgba(255,255,255,0.05);
         }
 
-        /* Überschrift */
         h1 {
             font-size: 2rem;
             font-weight: 800;
-            background: linear-gradient(90deg, #ec4899, #9333ea);
+            background: linear-gradient(90deg, #ffffff, #cfcfcf);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 20px;
         }
 
-        /* Text */
         p {
             font-size: 1rem;
             color: #ddd;
@@ -79,43 +80,36 @@ permalink: meet/contact.html
             color: #fff;
         }
 
-        /* Zurück Button */
         a {
             display: inline-block;
             margin-top: 25px;
             padding: 12px 25px;
             font-weight: 600;
-            color: white;
+            color: #1e1e1e;
             text-decoration: none;
             border-radius: 1rem;
-            background: linear-gradient(90deg, #ec4899, #9333ea);
-            box-shadow: 0 4px 20px rgba(236,72,153,0.3), 0 4px 40px rgba(147,51,234,0.2);
+            background: linear-gradient(90deg, #fff, #ccc);
+            box-shadow: 0 4px 15px rgba(255,255,255,0.3);
             transition: all 0.3s ease;
         }
 
         a:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(236,72,153,0.4), 0 6px 50px rgba(147,51,234,0.3);
+            box-shadow: 0 6px 25px rgba(255,255,255,0.4);
         }
 
-        /* Float/Glowing Effekte */
+        /* Subtiler Float-Effekt */
         @keyframes float {
             0%,100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        @keyframes glow-pulse {
-            0%,100% { box-shadow: 0 0 20px rgba(236,72,153,0.3),0 0 40px rgba(147,51,234,0.2); }
-            50% { box-shadow: 0 0 30px rgba(236,72,153,0.5),0 0 60px rgba(147,51,234,0.3); }
+            50% { transform: translateY(-5px); }
         }
 
         .float-animation { animation: float 3s ease-in-out infinite; }
-        .glow-effect { animation: glow-pulse 2s ease-in-out infinite; }
 
     </style>
 </head>
 <body>
-    <div class="container float-animation glow-effect">
+    <div class="container float-animation">
         <h1>Kontakt</h1>
         <p>Für Anfragen oder Feedback erreichst du mich unter folgender E-Mail-Adresse:</p>
         <strong>benchessendyou@outlook.com</strong>
