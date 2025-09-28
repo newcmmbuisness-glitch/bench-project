@@ -1,42 +1,37 @@
 		body { 
-		    margin: 0; 
-		    font-family: 'Inter', Arial, sans-serif;
-		    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-		    color: #fff; /* WICHTIG: Ändere zu #fff statt #000 */
-		    min-height: 100vh;
-		    position: relative; /* WICHTIG: Hinzufügen */
+			margin: 0; 
+			font-family: 'Inter', Arial, sans-serif;   /* wieder deine Hauptschrift */
+			background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); /* schwarz-grau Hintergrund */
+			color: #000;
+			min-height: 100vh;
 		}
-		
+		/* Füge das zu deinem body CSS hinzu: */
 		body::after {
-		    content: "ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET";
+		    content: "ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET";
 		    position: fixed;
-		    top: 0;
-		    left: 0;
-		    width: 100vw;
-		    height: 100vh;
+		    top: -50%;
+		    left: -50%;
+		    width: 200%;
+		    height: 200%;
 		    z-index: 1;
 		    pointer-events: none;
 		    font-family: 'Inter', Arial, sans-serif;
-		    font-weight: 200;
-		    font-size: 14px;
-		    color: rgba(255, 255, 255, 0.04);
-		    transform: rotate(45deg);
+		    font-weight: 800;
+		    font-size: 48px;
+		    color: rgba(255, 255, 255, 0.03);  /* Sehr subtil sichtbar */
+		    transform: rotate(45deg);  /* Diagonal */
 		    display: flex;
 		    align-items: center;
 		    justify-content: center;
-		    word-spacing: 15px;
-		    letter-spacing: 2px;
-		    white-space: nowrap;
-		    overflow: hidden;
-		    text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+		    word-spacing: 40px;
+		    letter-spacing: 8px;
+		    animation: subtle-move 20s linear infinite;  /* Optionale leichte Bewegung */
 		}
-			    
-		    /* Imprint-Effekt */
-		    text-shadow: 
-		        1px 1px 0px rgba(0,0,0,0.3),
-		        -1px -1px 0px rgba(255,255,255,0.01);
+		
+		@keyframes subtle-move {
+		    0% { transform: rotate(45deg) translateX(-20px) translateY(-20px); }
+		    100% { transform: rotate(45deg) translateX(20px) translateY(20px); }
 		}
-
 
 		/* leichter Silber-Schimmer-Effekt für Überschriften */
 		.shimmer {
