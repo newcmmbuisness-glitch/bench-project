@@ -3,7 +3,7 @@ window.currentUser = null;
 
         // Auth Functions
         function showLogin() {
-            document.getElementById('loginModal').style.display = 'block';
+            document.getElementById('loginModal').style.display = 'flex';
 			generateCaptchas();
         }
         
@@ -179,12 +179,14 @@ window.currentUser = null;
 		function showPasswordResetForm() {
 		  document.getElementById("loginTab").style.display = "none";
 		  document.getElementById("registerTab").style.display = "none";
+		  document.getElementById("authTabsContainer").style.display = "none";
 		  document.getElementById("passwordResetDiv").style.display = "block";
 		}
 		
 		function hidePasswordResetForm() {
 		  document.getElementById("passwordResetDiv").style.display = "none";
 		  document.getElementById("loginTab").style.display = "block"; // zurück zu Login
+		  document.getElementById("authTabsContainer").style.display = "flex"; 
 		}
 		
 		async function requestPasswordReset() {
