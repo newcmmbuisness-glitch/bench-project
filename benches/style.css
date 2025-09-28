@@ -1650,24 +1650,25 @@
 		    border-color: rgba(147, 51, 234, 0.5) !important;
 		    color: #9333ea !important;
 		}
-		/* Platinum Shimmer Animation */
-		@keyframes shimmer {
+		/* Platinum Shimmer Animation nur für UserPlus */
+		@keyframes userplus-shimmer-key {
 		    0% { transform: translateX(-100%); opacity: 0; }
 		    50% { transform: translateX(100%); opacity: 0.7; }
 		    100% { transform: translateX(100%); opacity: 0; }
 		}
-		.animate-shimmer {
-		    animation: shimmer 2s infinite;
+		.userplus-shimmer {
+		    animation: userplus-shimmer-key 2s infinite;
 		}
 		
-		/* Glow für Icon */
-		@keyframes glow {
+		/* Glow Animation nur für UserPlus Icon */
+		@keyframes userplus-glow-key {
 		    0%, 100% { text-shadow: 0 0 5px #fff, 0 0 10px #fff; }
 		    50% { text-shadow: 0 0 10px #fff, 0 0 20px #fff; }
 		}
-		.animate-glow {
-		    animation: glow 2s ease-in-out infinite;
+		.userplus-glow {
+		    animation: userplus-glow-key 2s ease-in-out infinite;
 		}
+
 
         /* Responsive */
         @media (max-width: 768px) {
