@@ -37,10 +37,11 @@ function updateAuthButtons(currentUser) {
         logoutBtn.style.display = 'flex';
         if (userEmailDisplay) {
             userEmailDisplay.innerHTML = `
-                <span style="color: #333; background: rgba(76,175,80,0.1); padding: 8px 12px; border-radius: 5px; display: block; text-align: center;">
+                <span class="block text-white text-sm text-center px-4 py-2 rounded-xl bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 shadow-sm">
                     👤 ${currentUser.email}
                 </span>
             `;
+
         }
     } else {
         loginBtn.style.display = 'flex';
@@ -63,18 +64,37 @@ function addUserPlusToSidebar(isUserPlus, isAdmin) {
         closeSidebar();
     };
 
-    userPlusItem.innerHTML = `
-        <div class="flex items-center space-x-3 p-3 hover:bg-gray-100 rounded-lg transition-colors">
-            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <span class="text-white text-lg">⭐</span>
+        userPlusItem.innerHTML = `
+            <div class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 group hover:shadow-xl hover:scale-105 relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600/50">
+                
+                <!-- Shimmer Overlay -->
+                <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-white/50 to-white/20 rounded-xl opacity-70 pointer-events-none animate-shimmer"></div>
+                
+                <!-- Icon -->
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg group-hover:shadow-2xl">
+                    <span class="text-white text-lg animate-glow">⭐</span>
+                </div>
+        
+                <!-- Text -->
+                <div class="flex-1">
+                    <div class="font-semibold text-white">
+                        ${isUserPlus || isAdmin ? 'UserPlus Aktiv' : 'UserPlus kaufen'}
+                    </div>
+                    <div class="text-xs text-gray-300">
+                        ${isUserPlus || isAdmin ? 'Premium Features aktiv' : '€4,99 - Swipe Back & InstaMatch'}
+                    </div>
+                </div>
+        
+                <!-- Status -->
+                <div>
+                    ${isUserPlus || isAdmin 
+                        ? '<span class="text-green-400 font-bold">✓</span>' 
+                        : '<span class="text-purple-400 font-semibold">€4,99</span>'
+                    }
+                </div>
             </div>
-            <div class="flex-1">
-                <div class="font-semibold text-gray-800">${isUserPlus || isAdmin ? 'UserPlus Aktiv' : 'UserPlus kaufen'}</div>
-                <div class="text-xs text-gray-500">${isUserPlus || isAdmin ? 'Premium Features aktiv' : '€4,99 - Swipe Back & InstaMatch'}</div>
-            </div>
-            ${isUserPlus || isAdmin ? '<span class="text-green-500">✓</span>' : '<span class="text-purple-500">€4,99</span>'}
-        </div>
-    `;
+        `;
+
 
     const profileLink = sidebar.querySelector('a[onclick*="showProfilePopup"]');
     if (profileLink && profileLink.parentNode) {
