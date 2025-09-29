@@ -16,7 +16,7 @@
 		    pointer-events: none;
 		    font-family: 'Inter', Arial, sans-serif;
 		    font-weight: bold;
-		    font-size: 48px;
+		    font-size: 24px;
 		    color: rgba(255, 0, 0, 0.5); /* ROT zum Testen */
 		    transform: rotate(45deg);
 		    display: flex;
