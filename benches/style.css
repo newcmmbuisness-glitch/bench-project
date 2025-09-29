@@ -1,37 +1,43 @@
-		body { 
-			margin: 0; 
-			font-family: 'Inter', Arial, sans-serif;   /* wieder deine Hauptschrift */
-			background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); /* schwarz-grau Hintergrund */
-			color: #000;
-			min-height: 100vh;
-		}
-		/* Füge das zu deinem body CSS hinzu: */
-		.bg-text {
-		    position: fixed;
-		    top: 0;
-		    left: 0;
-		    width: 100vw;
-		    height: 100vh;
-		    pointer-events: none;
-		    font-family: 'Inter', Arial, sans-serif;
-		    font-weight: 200;
-		    font-size: 16px;
-		    color: rgba(255, 255, 255, 0.08);
-		    transform: rotate(40deg);
-		    display: flex;
-		    align-items: center;
-		    justify-content: center;
-		    word-spacing: 20px;
-		    letter-spacing: 1px;
-		    white-space: nowrap;
-		    overflow: hidden;
+		    body {
+		      margin: 0;
+		      height: 100vh;
+		      background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+		      font-family: 'Inter', sans-serif;
+		      overflow: hidden;
+		      position: relative;
+		    }
 		
-		    /* Trick für "eingestanzt" */
-		    mix-blend-mode: overlay;  
-		    text-shadow: 
-		        1px 1px 2px rgba(0,0,0,0.5),
-		        -1px -1px 2px rgba(255,255,255,0.1);
-		}
+		    .bg-text {
+		      position: fixed;
+		      top: 0;
+		      left: 0;
+		      width: 100vw;
+		      height: 100vh;
+		      display: flex;
+		      align-items: center;
+		      justify-content: center;
+		      transform: rotate(40deg);
+		      word-spacing: 20px;
+		      letter-spacing: 1px;
+		      white-space: nowrap;
+		      pointer-events: none;
+		
+		      /* Sichtbarer Abdruck-Effekt */
+		      color: transparent;
+		      font-size: 40px;
+		      font-weight: 700;
+		      text-shadow:
+		        2px 2px 4px rgba(0,0,0,0.7),
+		       -2px -2px 4px rgba(255,255,255,0.15);
+		    }
+		
+		    .content {
+		      position: relative;
+		      z-index: 1;
+		      color: white;
+		      text-align: center;
+		      margin-top: 50px;
+		    }
 		/* leichter Silber-Schimmer-Effekt für Überschriften */
 		.shimmer {
 			background: linear-gradient(90deg, #aaa, #ddd, #aaa);
