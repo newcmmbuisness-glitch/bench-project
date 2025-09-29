@@ -12,25 +12,25 @@
 		    left: 0;
 		    width: 100vw;
 		    height: 100vh;
-		    z-index: 0;
 		    pointer-events: none;
 		    font-family: 'Inter', Arial, sans-serif;
-		    font-weight: 200;  /* Etwas leichter */
-		    font-size: 16px;   /* Klein wie gewünscht */
-		    color: rgba(255, 255, 255, 0.04);  /* Subtiler aber sichtbar */
-		    transform: rotate(40deg);  /* Dein Winkel */
+		    font-weight: 200;
+		    font-size: 16px;
+		    color: rgba(255, 255, 255, 0.08);
+		    transform: rotate(40deg);
 		    display: flex;
 		    align-items: center;
 		    justify-content: center;
-		    word-spacing: 20px;  /* Deine Abstände */
+		    word-spacing: 20px;
 		    letter-spacing: 1px;
 		    white-space: nowrap;
 		    overflow: hidden;
-		    
-		    /* Dein Imprint-Effekt */
+		
+		    /* Trick für "eingestanzt" */
+		    mix-blend-mode: overlay;  
 		    text-shadow: 
-		        1px 1px 0px rgba(0,0,0,0.3),
-		        -1px -1px 0px rgba(255,255,255,0.01);
+		        1px 1px 2px rgba(0,0,0,0.5),
+		        -1px -1px 2px rgba(255,255,255,0.1);
 		}
 		/* leichter Silber-Schimmer-Effekt für Überschriften */
 		.shimmer {
