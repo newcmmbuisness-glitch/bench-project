@@ -8,25 +8,33 @@
 		    }
 		
 		    .bg-text {
-		      position: fixed;
-			  top: 20%;         /* Verschiebt die Schrift vertikal */
-			  left: -10%;       /* Etwas aus dem Bildschirm raus für Randwirkung */
-			  transform: rotate(40deg);  /* Schräg diagonal am Rand */
-		      width: 100vw;
-		      height: 100vh;
-			  word-spacing: 20px;
-		      letter-spacing: 1px;
-		      white-space: nowrap;
-		      pointer-events: none;
-		
-		      /* Sichtbarer Abdruck-Effekt */
-		      color: transparent;
-		      font-size: 40px;
-		      font-weight: 700;
+			  position: fixed;
+			  top: 0;
+			  left: 0;
+			  width: 200%;        /* extra groß, damit es den Screen auch diagonal füllt */
+			  height: 200%;
+			  display: flex;
+			  align-items: center;
+			  justify-content: center;
+			  transform: rotate(40deg);
+			  pointer-events: none;
+			  z-index: 0;
+				
+			  font-family: 'Inter', Arial, sans-serif;
+			  font-weight: 700;
+			  font-size: 48px;
+			  white-space: nowrap;
+			  line-height: 1.6;   /* Abstand zwischen den Zeilen */
+			  color: transparent;				
+					
+
 		      text-shadow:
 		        2px 2px 4px rgba(0,0,0,0.7),
 		       -2px -2px 4px rgba(255,255,255,0.15);
 		    }
+			.bg-text span {
+			  display: block;     /* jeder span = neue Zeile */
+			}
 
 		/* leichter Silber-Schimmer-Effekt für Überschriften */
 		.shimmer {
