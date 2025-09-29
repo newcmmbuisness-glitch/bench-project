@@ -11,7 +11,7 @@
 		      position: fixed;
 			  top: 20%;         /* Verschiebt die Schrift vertikal */
 			  left: -10%;       /* Etwas aus dem Bildschirm raus für Randwirkung */
-			  transform: rotate(-45deg);  /* Schräg diagonal am Rand */
+			  transform: rotate(40deg);  /* Schräg diagonal am Rand */
 		      width: 100vw;
 		      height: 100vh;
 		      display: flex;
