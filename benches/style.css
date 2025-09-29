@@ -7,33 +7,51 @@
 		      position: relative;
 		    }
 		
-		    .bg-text {
+			.bg-text {
 			  position: fixed;
 			  top: 0;
 			  left: 0;
-			  width: 200%;        /* extra groß, damit es den Screen auch diagonal füllt */
-			  height: 200%;
+			  width: 100vw;
+			  height: 100vh;
+			  pointer-events: none;
+			  z-index: 0;
+			  overflow: hidden;
+			
 			  display: flex;
 			  align-items: center;
 			  justify-content: center;
-			  transform: rotate(40deg);
-			  pointer-events: none;
-			  z-index: 0;
-				
+			
 			  font-family: 'Inter', Arial, sans-serif;
 			  font-weight: 700;
-			  font-size: 48px;
+			  font-size: 40px;
+			  word-spacing: 20px;
+			  letter-spacing: 1px;
+			
+			  color: transparent; /* Text selbst unsichtbar */
+			  text-shadow:
+			    2px 2px 4px rgba(0,0,0,0.6),
+			   -2px -2px 4px rgba(255,255,255,0.1);
+			
+			  /* Drehung */
+			  transform: rotate(40deg);
+			}
+			
+			/* Container, der Textzeilen mehrfach erzeugt */
+			.bg-text::before {
+			  content: "ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ";
+			  display: block;
 			  white-space: nowrap;
-			  line-height: 1.6;   /* Abstand zwischen den Zeilen */
-			  color: transparent;				
-					
-
-		      text-shadow:
-		        2px 2px 4px rgba(0,0,0,0.7),
-		       -2px -2px 4px rgba(255,255,255,0.15);
-		    }
-			.bg-text span {
-			  display: block;     /* jeder span = neue Zeile */
+			  line-height: 1.6;
+			  animation: scrollPattern 20s linear infinite; /* optional Bewegung */
+			}
+			
+			/* Zweite Ebene für Füllung */
+			.bg-text::after {
+			  content: "ONTO ONTO ME ONTO MEET ONTO ONTO ME ONTO MEET ";
+			  display: block;
+			  white-space: nowrap;
+			  line-height: 1.6;
+			  margin-top: 3em;
 			}
 
 		/* leichter Silber-Schimmer-Effekt für Überschriften */
