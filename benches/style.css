@@ -14,10 +14,7 @@
 			  transform: rotate(40deg);  /* Schräg diagonal am Rand */
 		      width: 100vw;
 		      height: 100vh;
-		      display: flex;
-		      align-items: center;
-		      justify-content: center;
-		      word-spacing: 20px;
+			  word-spacing: 20px;
 		      letter-spacing: 1px;
 		      white-space: nowrap;
 		      pointer-events: none;
